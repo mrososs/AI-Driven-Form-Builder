@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="FormAI is an AI-powered form builder. Describe what you need, and let AI generate dynamic, validated forms instantly — no code required." />
+    <meta property="og:title" content="FormAI — AI-Powered Form Builder" />
+    <meta property="og:description" content="Embed intelligence into your product's data collection. Generative forms, structured schemas, and streaming validation — powered by LLMs." />
+    <meta property="og:type" content="website" />
+    <title>FormAI — Build Intelligent Forms with AI</title>
+    <script>
+      // Prevent dark mode flash on page load
+      ;(function () {
+        var stored = localStorage.getItem('vueuse-color-scheme')
+        var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+        if (stored === 'dark' || (!stored && prefersDark)) {
+          document.documentElement.classList.add('dark')
+        }
+      })()
+    </script>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
