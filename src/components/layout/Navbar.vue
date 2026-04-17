@@ -1,18 +1,26 @@
 <script setup lang="ts">
 import { useWindowScroll } from '@vueuse/core'
 import { computed, ref } from 'vue'
-import { Moon, Sun, Languages, ArrowRight, Sparkles, Menu, X } from 'lucide-vue-next'
-import { RouterLink } from 'vue-router'
+import { Moon, Sun, Languages, ArrowRight, Sparkles, Menu, X, LogOut } from 'lucide-vue-next'
+import { RouterLink, useRouter } from 'vue-router'
 import { useTheme } from '../../composables/useTheme'
 import { useLanguage } from '../../composables/useLanguage'
+import { useAuthStore } from '../../stores/auth'
 
 const { isDark, toggleDark } = useTheme()
 const { t, locale, toggleLanguage } = useLanguage()
+const authStore = useAuthStore()
+const router = useRouter()
 
 const { y } = useWindowScroll()
 const isScrolled = computed(() => y.value > 16)
 const isMenuOpen = ref(false)
 const toggleMenu = () => { isMenuOpen.value = !isMenuOpen.value }
+
+async function handleLogout() {
+  await authStore.logout()
+  router.push('/')
+}
 </script>
 
 <template>
@@ -98,9 +106,34 @@ const toggleMenu = () => { isMenuOpen.value = !isMenuOpen.value }
           <!-- Divider -->
           <div class="hidden sm:block w-px h-5 bg-slate-200 dark:bg-white/10 mx-1"></div>
 
-          <!-- CTA -->
+          <!-- Authenticated user menu -->
+          <div v-if="authStore.isAuthenticated" class="hidden sm:flex items-center gap-3">
+            <div class="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600
+              flex items-center justify-center text-white text-sm font-semibold shrink-0
+              shadow-md shadow-indigo-500/30 ring-1 ring-white/20">
+              {{ authStore.userInitial }}
+            </div>
+            <span class="text-sm text-slate-300 dark:text-slate-300 max-w-[140px] truncate hidden md:block">
+              {{ authStore.userDisplayName }}
+            </span>
+            <button
+              @click="handleLogout"
+              class="flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-xl
+                text-slate-400 hover:text-white
+                bg-white/[0.04] hover:bg-white/[0.08]
+                border border-white/[0.07] hover:border-white/[0.14]
+                transition-all duration-200"
+              :aria-label="t('nav.logout')"
+            >
+              <LogOut class="h-3.5 w-3.5" />
+              <span class="hidden lg:inline">{{ t('nav.logout') }}</span>
+            </button>
+          </div>
+
+          <!-- CTA (guest) -->
           <RouterLink
-            to="/builder"
+            v-else
+            to="/register"
             class="hidden sm:flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-xl
               text-white
               bg-indigo-600 hover:bg-indigo-500
@@ -166,8 +199,32 @@ const toggleMenu = () => { isMenuOpen.value = !isMenuOpen.value }
           
           <div class="h-px bg-slate-200 dark:bg-white/10 my-2 w-full"></div>
           
+          <!-- Mobile: authenticated -->
+          <div v-if="authStore.isAuthenticated" class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600
+                flex items-center justify-center text-white text-sm font-semibold ring-1 ring-white/20">
+                {{ authStore.userInitial }}
+              </div>
+              <span class="text-sm font-medium text-slate-700 dark:text-slate-300 truncate max-w-[160px]">
+                {{ authStore.userDisplayName }}
+              </span>
+            </div>
+            <button
+              @click="handleLogout(); isMenuOpen = false"
+              class="flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-xl
+                text-slate-500 dark:text-slate-400 hover:text-rose-500 dark:hover:text-rose-400
+                transition-colors"
+            >
+              <LogOut class="h-4 w-4" />
+              {{ t('nav.logout') }}
+            </button>
+          </div>
+
+          <!-- Mobile: guest CTA -->
           <RouterLink
-            to="/builder"
+            v-else
+            to="/register"
             @click="isMenuOpen = false"
             class="flex items-center justify-center gap-2 px-4 py-3 text-sm font-bold rounded-xl text-white bg-indigo-600 dark:bg-gradient-to-r dark:from-indigo-500 dark:to-violet-600 shadow-md shadow-indigo-500/20"
           >
