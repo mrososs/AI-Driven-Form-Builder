@@ -11,16 +11,16 @@ const formStore = useFormStore()
 <template>
   <main class="flex-1 flex flex-col min-w-0">
     <!-- Top Bar -->
-    <header class="h-16 bg-white border-b border-slate-200 px-8 flex items-center justify-between gap-4 shrink-0">
+    <header class="h-16 bg-white dark:bg-[#111118] border-b border-slate-200 dark:border-white/[0.07] px-8 flex items-center justify-between gap-4 shrink-0">
       <input
         v-model="formStore.title"
-        class="text-lg font-bold text-slate-900 bg-transparent border-none focus:outline-none focus:ring-0 min-w-0 w-56 truncate placeholder:text-slate-500"
+        class="text-lg font-bold text-slate-900 dark:text-white bg-transparent border-none focus:outline-none focus:ring-0 min-w-0 w-56 truncate placeholder:text-slate-500 dark:placeholder:text-white/30"
         aria-label="Form title"
         placeholder="Untitled Form"
       />
       <div class="flex items-center gap-2 shrink-0">
         <button
-          class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-400 rounded-lg cursor-not-allowed"
+          class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-400 dark:text-white/25 rounded-lg cursor-not-allowed"
           disabled
           title="Preview coming soon"
         >
@@ -39,19 +39,19 @@ const formStore = useFormStore()
     </header>
 
     <!-- Canvas Area -->
-    <div class="flex-1 overflow-y-auto p-8 lg:p-12 flex justify-center bg-slate-50">
+    <div class="flex-1 overflow-y-auto p-8 lg:p-12 flex justify-center bg-slate-50 dark:bg-[#0d0d14]">
       <div class="w-full max-w-2xl space-y-4">
         <!-- Form Header Card -->
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
+        <div class="bg-white dark:bg-[#111118] rounded-2xl shadow-sm dark:shadow-black/30 border border-slate-200 dark:border-white/[0.07] p-8">
           <input
             v-model="formStore.title"
-            class="text-3xl font-bold text-slate-900 w-full border-none focus:outline-none focus:ring-0 p-0 mb-2 placeholder:text-slate-300"
+            class="text-3xl font-bold text-slate-900 dark:text-white w-full border-none focus:outline-none focus:ring-0 p-0 mb-2 placeholder:text-slate-300 dark:placeholder:text-white/20 bg-transparent"
             placeholder="Form Title"
             aria-label="Form title"
           />
           <textarea
             v-model="formStore.description"
-            class="text-slate-500 w-full border-none focus:outline-none focus:ring-0 p-0 resize-none h-10 text-sm placeholder:text-slate-500"
+            class="text-slate-500 dark:text-white/40 w-full border-none focus:outline-none focus:ring-0 p-0 resize-none h-10 text-sm placeholder:text-slate-500 dark:placeholder:text-white/30 bg-transparent"
             placeholder="Add a description..."
             aria-label="Form description"
           ></textarea>
@@ -74,13 +74,13 @@ const formStore = useFormStore()
           <template #footer>
             <div
               v-if="formStore.elements.length === 0"
-              class="border-2 border-dashed border-slate-200 rounded-2xl p-16 text-center"
+              class="border-2 border-dashed border-slate-200 dark:border-white/[0.08] rounded-2xl p-16 text-center"
             >
-              <div class="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-4">
-                <Layers class="h-6 w-6 text-slate-500" aria-hidden="true" />
+              <div class="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-white/[0.05] flex items-center justify-center mx-auto mb-4">
+                <Layers class="h-6 w-6 text-slate-500 dark:text-white/30" aria-hidden="true" />
               </div>
-              <p class="text-slate-600 font-semibold text-sm mb-1">Your form is empty</p>
-              <p class="text-slate-500 text-sm">Add elements from the sidebar, or let AI build it for you.</p>
+              <p class="text-slate-600 dark:text-white/50 font-semibold text-sm mb-1">Your form is empty</p>
+              <p class="text-slate-500 dark:text-white/30 text-sm">Add elements from the sidebar, or let AI build it for you.</p>
             </div>
           </template>
         </draggable>

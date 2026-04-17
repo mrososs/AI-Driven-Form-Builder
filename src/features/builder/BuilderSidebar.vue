@@ -32,9 +32,9 @@ function cloneElement(original: any): FormElement {
 </script>
 
 <template>
-  <aside class="w-72 bg-white border-r border-slate-200 flex flex-col">
-    <div class="p-6 border-b border-slate-100">
-      <h2 class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Elements</h2>
+  <aside class="w-72 bg-white dark:bg-[#111118] border-r border-slate-200 dark:border-white/[0.07] flex flex-col">
+    <div class="p-6 border-b border-slate-100 dark:border-white/[0.05]">
+      <h2 class="text-xs font-semibold text-slate-500 dark:text-white/40 uppercase tracking-wider">Elements</h2>
     </div>
     <div class="p-4 space-y-2 overflow-y-auto flex-1">
       <draggable
@@ -47,13 +47,13 @@ function cloneElement(original: any): FormElement {
       >
         <template #item="{ element }">
           <div
-            class="w-full flex items-center gap-3 p-3 rounded-xl border border-slate-200 hover:border-primary-400 hover:bg-primary-50 transition-all group text-left cursor-grab active:cursor-grabbing"
+            class="w-full flex items-center gap-3 p-3 rounded-xl border border-slate-200 dark:border-white/[0.07] hover:border-primary-400 dark:hover:border-indigo-500/50 hover:bg-primary-50 dark:hover:bg-indigo-500/10 transition-all group text-left cursor-grab active:cursor-grabbing"
             :aria-label="`Drag ${element.label} field`"
           >
-            <div class="p-2 rounded-lg bg-slate-100 group-hover:bg-primary-100 text-slate-500 group-hover:text-primary-600 transition-colors">
+            <div class="p-2 rounded-lg bg-slate-100 dark:bg-white/[0.06] group-hover:bg-primary-100 dark:group-hover:bg-indigo-500/20 text-slate-500 dark:text-white/50 group-hover:text-primary-600 dark:group-hover:text-indigo-400 transition-colors">
               <component :is="element.icon" class="h-4 w-4" />
             </div>
-            <span class="text-sm font-medium text-slate-700 group-hover:text-primary-700">{{ element.label }}</span>
+            <span class="text-sm font-medium text-slate-700 dark:text-white/80 group-hover:text-primary-700 dark:group-hover:text-indigo-300">{{ element.label }}</span>
           </div>
         </template>
       </draggable>
