@@ -1,4 +1,16 @@
 import { defineStore } from 'pinia'
+import { db } from '../firebase'
+import { 
+  collection, 
+  addDoc, 
+  getDocs, 
+  query, 
+  where, 
+  orderBy, 
+  serverTimestamp,
+  type Timestamp
+} from 'firebase/firestore'
+import { useAuthStore } from './auth'
 
 export interface FormElement {
   id: string
@@ -8,6 +20,16 @@ export interface FormElement {
   required: boolean
   options?: string[]
   children?: FormElement[]
+}
+
+export interface SavedForm {
+  id: string
+  title: string
+  description: string
+  elements: FormElement[]
+  userId: string
+  createdAt: Timestamp
+  updatedAt: Timestamp
 }
 
 const STORAGE_KEY = 'form-builder-draft'
@@ -29,7 +51,9 @@ export const useFormStore = defineStore('form', {
       title: saved?.title ?? 'Untitled Form',
       description: saved?.description ?? 'A brief description of your form',
       isSaving: false,
+      isLoading: false,
       selectedElementId: null as string | null,
+      userForms: [] as SavedForm[],
     }
   },
   getters: {
@@ -96,16 +120,59 @@ export const useFormStore = defineStore('form', {
     setElements(elements: FormElement[]) {
       this.elements = elements
     },
-    saveForm() {
+    saveDraft() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        elements: this.elements,
+        title: this.title,
+        description: this.description,
+      }))
+    },
+    async saveFormToFirestore() {
+      const authStore = useAuthStore()
+      if (!authStore.user) return
+
       this.isSaving = true
       try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({
-          elements: this.elements,
+        const formData = {
           title: this.title,
           description: this.description,
-        }))
+          elements: this.elements,
+          userId: authStore.user.uid,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        }
+
+        await addDoc(collection(db, 'forms'), formData)
+        // Optionally clear draft after successful save
+        // localStorage.removeItem(STORAGE_KEY)
+      } catch (error) {
+        console.error('Error saving form to Firestore:', error)
+        throw error
       } finally {
         this.isSaving = false
+      }
+    },
+    async fetchUserForms() {
+      const authStore = useAuthStore()
+      if (!authStore.user) return
+
+      this.isLoading = true
+      try {
+        const q = query(
+          collection(db, 'forms'),
+          where('userId', '==', authStore.user.uid),
+          orderBy('updatedAt', 'desc')
+        )
+
+        const querySnapshot = await getDocs(q)
+        this.userForms = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as SavedForm[]
+      } catch (error) {
+        console.error('Error fetching forms:', error)
+      } finally {
+        this.isLoading = false
       }
     }
   }

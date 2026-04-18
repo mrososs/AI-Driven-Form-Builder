@@ -6,6 +6,15 @@ import FormElementCard from './components/FormElementCard.vue'
 import RowElementCard from './components/RowElementCard.vue'
 
 const formStore = useFormStore()
+
+async function handleSave() {
+  try {
+    await formStore.saveFormToFirestore()
+    // Optional: add local success feedback if needed
+  } catch (error) {
+    alert('Failed to save form. Please try again.')
+  }
+}
 </script>
 
 <template>
@@ -28,11 +37,11 @@ const formStore = useFormStore()
           Preview
         </button>
         <button
-          @click="formStore.saveForm()"
+          @click="handleSave"
           class="btn-primary flex items-center gap-2 text-sm"
           :disabled="formStore.isSaving"
         >
-          <Save class="h-4 w-4" />
+          <Save class="h-4 w-4" :class="{ 'animate-spin': formStore.isSaving }" />
           {{ formStore.isSaving ? 'Saving...' : 'Save' }}
         </button>
       </div>
