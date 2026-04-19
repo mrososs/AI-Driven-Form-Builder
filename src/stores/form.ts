@@ -57,6 +57,7 @@ export const useFormStore = defineStore('form', {
     }
   },
   getters: {
+    hasElements: (state) => state.elements.length > 0,
     selectedElement: (state) => {
       if (!state.selectedElementId) return null
       const findInList = (list: FormElement[]): FormElement | undefined => {

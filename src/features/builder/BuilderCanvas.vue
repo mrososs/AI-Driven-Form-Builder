@@ -2,10 +2,12 @@
 import draggable from 'vuedraggable'
 import { useFormStore } from '../../stores/form'
 import { Layers, Save, Eye } from 'lucide-vue-next'
+import { useRouter } from 'vue-router'
 import FormElementCard from './components/FormElementCard.vue'
 import RowElementCard from './components/RowElementCard.vue'
 
 const formStore = useFormStore()
+const router = useRouter()
 
 async function handleSave() {
   try {
@@ -29,9 +31,12 @@ async function handleSave() {
       />
       <div class="flex items-center gap-2 shrink-0">
         <button
-          class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-400 dark:text-white/25 rounded-lg cursor-not-allowed"
-          disabled
-          title="Preview coming soon"
+          @click="formStore.hasElements && router.push('/preview')"
+          :disabled="!formStore.hasElements"
+          :class="formStore.hasElements
+            ? 'flex items-center gap-2 px-4 py-2 text-sm font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 rounded-lg transition-colors'
+            : 'flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-400 dark:text-white/25 rounded-lg cursor-not-allowed'"
+          :title="formStore.hasElements ? 'Preview form' : 'Add elements to preview'"
         >
           <Eye class="h-4 w-4" />
           Preview

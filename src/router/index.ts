@@ -47,6 +47,12 @@ const router = createRouter({
       meta: { guestOnly: true },
     },
     {
+      path: '/preview',
+      name: 'preview',
+      component: () => import('../views/PreviewView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/:pathMatch(.*)*',
       redirect: '/',
     },
