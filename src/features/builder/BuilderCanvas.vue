@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import draggable from 'vuedraggable'
 import { useFormStore } from '../../stores/form'
-import { Layers, Save, Eye } from 'lucide-vue-next'
+import { Layers, Save, Eye, Eraser } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
 import FormElementCard from './components/FormElementCard.vue'
 import RowElementCard from './components/RowElementCard.vue'
+import AppDialog from '../../components/shared/AppDialog.vue'
 
 const formStore = useFormStore()
 const router = useRouter()
@@ -30,6 +31,17 @@ async function handleSave() {
 function goToPreview() {
   if (formStore.hasElements) router.push('/preview')
 }
+
+const isClearDialogOpen = ref(false)
+
+function openClearDialog() {
+  isClearDialogOpen.value = true
+}
+
+function confirmClear() {
+  formStore.clearElements()
+  isClearDialogOpen.value = false
+}
 </script>
 
 <template>
@@ -43,6 +55,15 @@ function goToPreview() {
         placeholder="Untitled Form"
       />
       <div class="flex items-center gap-2 shrink-0">
+        <button
+          v-if="formStore.hasElements"
+          @click="openClearDialog"
+          class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 dark:text-white/60 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-colors"
+          title="Clear all fields"
+        >
+          <Eraser class="h-4 w-4" />
+          Clear
+        </button>
         <button
           @click="goToPreview"
           :disabled="!formStore.hasElements"
@@ -111,6 +132,16 @@ function goToPreview() {
         </draggable>
       </div>
     </div>
+
+    <AppDialog
+      v-model:open="isClearDialogOpen"
+      variant="danger"
+      title="Clear all fields?"
+      description="This will remove every field you've added to the form and clear your local draft. This action cannot be undone."
+      confirm-text="Clear fields"
+      cancel-text="Cancel"
+      @confirm="confirmClear"
+    />
   </main>
 </template>
 

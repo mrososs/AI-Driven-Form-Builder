@@ -167,6 +167,12 @@ export const useFormStore = defineStore('form', () => {
     localStorage.removeItem(STORAGE_KEY)
   }
 
+  function clearElements() {
+    elements.value = []
+    selectedElementId.value = null
+    localStorage.removeItem(STORAGE_KEY)
+  }
+
   async function saveFormToFirestore() {
     const authStore = useAuthStore()
     if (!authStore.user) return
@@ -274,6 +280,7 @@ export const useFormStore = defineStore('form', () => {
     updateOption,
     saveDraft,
     clearDraft,
+    clearElements,
     saveFormToFirestore,
     fetchUserForms,
     loadFormById,
