@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted } from 'vue'
+import { computed } from 'vue'
+import { useEventListener } from '@vueuse/core'
 import { useFormStore } from '../../stores/form'
 import { Settings2, X, Trash2 } from 'lucide-vue-next'
 
@@ -11,30 +12,41 @@ function closeProperties() {
   formStore.selectElement(null)
 }
 
-function handleKeydown(e: KeyboardEvent) {
-  if (e.key === 'Escape' && selectedElement.value) {
-    closeProperties()
-  }
-}
-
-onMounted(() => {
-  window.addEventListener('keydown', handleKeydown)
+useEventListener(window, 'keydown', (e: KeyboardEvent) => {
+  if (e.key === 'Escape' && selectedElement.value) closeProperties()
 })
 
-onUnmounted(() => {
-  window.removeEventListener('keydown', handleKeydown)
-} )
+const label = computed({
+  get: () => selectedElement.value?.label ?? '',
+  set: (v) => {
+    if (selectedElement.value) formStore.updateElement(selectedElement.value.id, { label: v })
+  },
+})
+
+const required = computed({
+  get: () => selectedElement.value?.required ?? false,
+  set: (v) => {
+    if (selectedElement.value) formStore.updateElement(selectedElement.value.id, { required: v })
+  },
+})
+
+const placeholder = computed({
+  get: () => selectedElement.value?.placeholder ?? '',
+  set: (v) => {
+    if (selectedElement.value) formStore.updateElement(selectedElement.value.id, { placeholder: v })
+  },
+})
 
 function addOption() {
-  if (selectedElement.value && selectedElement.value.options) {
-    selectedElement.value.options.push(`Option ${selectedElement.value.options.length + 1}`)
-  }
+  if (selectedElement.value) formStore.addOption(selectedElement.value.id)
 }
 
 function removeOption(index: number) {
-  if (selectedElement.value && selectedElement.value.options) {
-    selectedElement.value.options.splice(index, 1)
-  }
+  if (selectedElement.value) formStore.removeOption(selectedElement.value.id, index)
+}
+
+function updateOptionAt(index: number, value: string) {
+  if (selectedElement.value) formStore.updateOption(selectedElement.value.id, index, value)
 }
 </script>
 
@@ -57,7 +69,7 @@ function removeOption(index: number) {
       <div>
         <label class="block text-xs font-semibold text-slate-500 dark:text-white/40 uppercase tracking-wider mb-2">Label</label>
         <input
-          v-model="selectedElement.label"
+          v-model="label"
           class="w-full border border-slate-200 dark:border-white/[0.07] rounded-lg px-3 py-2 text-sm text-slate-700 dark:text-white bg-transparent dark:bg-white/[0.03] focus:outline-none focus:border-primary-500 dark:focus:border-indigo-500 focus:ring-1 focus:ring-primary-500 dark:focus:ring-indigo-500"
           placeholder="Field Label"
         />
@@ -67,7 +79,7 @@ function removeOption(index: number) {
         <label class="flex items-center gap-3 p-3 border border-slate-200 dark:border-white/[0.07] rounded-lg cursor-pointer hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors">
           <input
             type="checkbox"
-            v-model="selectedElement.required"
+            v-model="required"
             class="h-4 w-4 text-primary-600 rounded border-slate-300 focus:ring-primary-500 cursor-pointer"
           />
           <span class="text-sm font-medium text-slate-700 dark:text-white/70">Required field</span>
@@ -77,7 +89,7 @@ function removeOption(index: number) {
       <div v-if="selectedElement.type === 'text' || selectedElement.type === 'textarea'">
         <label class="block text-xs font-semibold text-slate-500 dark:text-white/40 uppercase tracking-wider mb-2">Placeholder</label>
         <input
-          v-model="selectedElement.placeholder"
+          v-model="placeholder"
           class="w-full border border-slate-200 dark:border-white/[0.07] rounded-lg px-3 py-2 text-sm text-slate-700 dark:text-white bg-transparent dark:bg-white/[0.03] focus:outline-none focus:border-primary-500 dark:focus:border-indigo-500 focus:ring-1 focus:ring-primary-500 dark:focus:ring-indigo-500"
           placeholder="Hint text..."
         />
@@ -88,9 +100,10 @@ function removeOption(index: number) {
           <label class="block text-xs font-semibold text-slate-500 dark:text-white/40 uppercase tracking-wider">Options</label>
         </div>
         <div class="space-y-2 mb-3">
-          <div v-for="(_, idx) in selectedElement.options" :key="idx" class="flex items-center gap-2">
+          <div v-for="(option, idx) in selectedElement.options" :key="idx" class="flex items-center gap-2">
             <input
-              v-model="selectedElement.options[idx]"
+              :value="option"
+              @input="updateOptionAt(idx, ($event.target as HTMLInputElement).value)"
               class="flex-1 flex-shrink min-w-0 border border-slate-200 dark:border-white/[0.07] rounded-lg px-3 py-1.5 text-sm text-slate-700 dark:text-white bg-transparent dark:bg-white/[0.03] focus:outline-none focus:border-primary-500 dark:focus:border-indigo-500 focus:ring-1 focus:ring-primary-500 dark:focus:ring-indigo-500"
             />
             <button @click="removeOption(idx)" class="p-1.5 text-slate-500 dark:text-white/40 hover:text-red-500 dark:hover:text-rose-400 hover:bg-red-50 dark:hover:bg-rose-500/10 rounded-lg shrink-0">

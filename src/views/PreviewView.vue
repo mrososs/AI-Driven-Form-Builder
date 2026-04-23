@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { shallowRef, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { ArrowLeft, Save, Monitor, Smartphone, Wifi, Battery } from 'lucide-vue-next'
 import { useFormStore } from '../stores/form'
@@ -9,16 +9,15 @@ type ViewMode = 'desktop' | 'mobile'
 
 const router = useRouter()
 const formStore = useFormStore()
-const viewMode = ref<ViewMode>('mobile')
-const isSaving = ref(false)
+const viewMode = shallowRef<ViewMode>('mobile')
+
+const TOGGLE_BASE =
+  'flex items-center gap-1.5 px-3.5 py-1.5 text-xs rounded-md transition-all duration-200'
+const TOGGLE_ACTIVE = `${TOGGLE_BASE} font-semibold text-indigo-600 dark:text-indigo-300 bg-indigo-500/10 dark:bg-indigo-500/20`
+const TOGGLE_INACTIVE = `${TOGGLE_BASE} font-medium text-slate-500 dark:text-white/40 hover:text-slate-800 dark:hover:text-white/60 cursor-pointer`
 
 function toggleClass(mode: ViewMode) {
-  const active = viewMode.value === mode
-  const base = 'flex items-center gap-1.5 px-3.5 py-1.5 text-xs rounded-md transition-all duration-200'
-  if (active) {
-    return `${base} font-semibold text-indigo-600 dark:text-indigo-300 bg-indigo-500/10 dark:bg-indigo-500/20`
-  }
-  return `${base} font-medium text-slate-500 dark:text-white/40 hover:text-slate-800 dark:hover:text-white/60 cursor-pointer`
+  return viewMode.value === mode ? TOGGLE_ACTIVE : TOGGLE_INACTIVE
 }
 
 const currentTime = computed(() => {
@@ -27,13 +26,10 @@ const currentTime = computed(() => {
 })
 
 async function handleSave() {
-  isSaving.value = true
   try {
     await formStore.saveFormToFirestore()
   } catch {
     alert('Failed to save form. Please try again.')
-  } finally {
-    isSaving.value = false
   }
 }
 </script>
@@ -76,11 +72,11 @@ async function handleSave() {
 
       <button
         @click="handleSave"
-        :disabled="isSaving"
+        :disabled="formStore.isSaving"
         class="flex items-center gap-2 px-4 py-1.5 text-sm font-medium bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 disabled:opacity-50 text-white rounded-lg transition-colors"
       >
-        <Save class="h-3.5 w-3.5" :class="{ 'animate-spin': isSaving }" />
-        {{ isSaving ? 'Saving…' : 'Save Form' }}
+        <Save class="h-3.5 w-3.5" :class="{ 'animate-spin': formStore.isSaving }" />
+        {{ formStore.isSaving ? 'Saving…' : 'Save Form' }}
       </button>
     </header>
 

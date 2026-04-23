@@ -1,4 +1,17 @@
 import { createI18n } from 'vue-i18n'
+import { watch } from 'vue'
+
+const LOCALE_KEY = 'preferred-locale'
+type Locale = 'en' | 'ar'
+
+function readSavedLocale(): Locale {
+  const saved = localStorage.getItem(LOCALE_KEY)
+  return saved === 'ar' ? 'ar' : 'en'
+}
+
+const initialLocale = readSavedLocale()
+document.documentElement.dir = initialLocale === 'ar' ? 'rtl' : 'ltr'
+document.documentElement.lang = initialLocale
 
 const messages = {
   en: {
@@ -255,7 +268,18 @@ const messages = {
 
 export const i18n = createI18n({
   legacy: false, // use Composition API
-  locale: 'en', // default locale
+  locale: initialLocale,
   fallbackLocale: 'en',
   messages,
 })
+
+// Single source of truth for locale side effects: whoever sets locale,
+// DOM direction/lang and localStorage stay in sync.
+watch(
+  () => i18n.global.locale.value,
+  (next) => {
+    document.documentElement.dir = next === 'ar' ? 'rtl' : 'ltr'
+    document.documentElement.lang = next
+    localStorage.setItem(LOCALE_KEY, next)
+  }
+)

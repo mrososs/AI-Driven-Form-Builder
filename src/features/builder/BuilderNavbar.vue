@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { shallowRef, useTemplateRef } from 'vue'
 import { useRouter, useRoute, RouterLink } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { Sparkles, Moon, Sun, LogOut, ChevronDown } from 'lucide-vue-next'
@@ -13,8 +13,8 @@ const { t } = useI18n()
 const authStore = useAuthStore()
 const { isDark, toggleDark } = useTheme()
 
-const isProfileOpen = ref(false)
-const profileMenuRef = ref<HTMLElement | null>(null)
+const isProfileOpen = shallowRef(false)
+const profileMenuRef = useTemplateRef<HTMLElement>('profileMenuRef')
 
 onClickOutside(profileMenuRef, () => {
   isProfileOpen.value = false

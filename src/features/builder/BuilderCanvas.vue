@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import draggable from 'vuedraggable'
 import { useFormStore } from '../../stores/form'
 import { Layers, Save, Eye } from 'lucide-vue-next'
@@ -9,13 +10,25 @@ import RowElementCard from './components/RowElementCard.vue'
 const formStore = useFormStore()
 const router = useRouter()
 
+const PREVIEW_ENABLED =
+  'flex items-center gap-2 px-4 py-2 text-sm font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 rounded-lg transition-colors'
+const PREVIEW_DISABLED =
+  'flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-400 dark:text-white/25 rounded-lg cursor-not-allowed'
+
+const previewButtonClass = computed(() =>
+  formStore.hasElements ? PREVIEW_ENABLED : PREVIEW_DISABLED
+)
+
 async function handleSave() {
   try {
     await formStore.saveFormToFirestore()
-    // Optional: add local success feedback if needed
-  } catch (error) {
+  } catch {
     alert('Failed to save form. Please try again.')
   }
+}
+
+function goToPreview() {
+  if (formStore.hasElements) router.push('/preview')
 }
 </script>
 
@@ -31,11 +44,9 @@ async function handleSave() {
       />
       <div class="flex items-center gap-2 shrink-0">
         <button
-          @click="formStore.hasElements && router.push('/preview')"
+          @click="goToPreview"
           :disabled="!formStore.hasElements"
-          :class="formStore.hasElements
-            ? 'flex items-center gap-2 px-4 py-2 text-sm font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 rounded-lg transition-colors'
-            : 'flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-400 dark:text-white/25 rounded-lg cursor-not-allowed'"
+          :class="previewButtonClass"
           :title="formStore.hasElements ? 'Preview form' : 'Add elements to preview'"
         >
           <Eye class="h-4 w-4" />

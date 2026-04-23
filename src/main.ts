@@ -7,10 +7,11 @@ import { useAuthStore } from './stores/auth'
 
 import './assets/css/main.css'
 
-// Default to dark mode on first visit (respects any saved preference)
+// Default to dark mode on first visit so useDark() reads the preferred value
+// from the same key it writes to. The inline script in index.html applies the
+// `.dark` class pre-hydration to prevent a flash.
 if (!localStorage.getItem('vueuse-color-scheme')) {
   localStorage.setItem('vueuse-color-scheme', 'dark')
-  document.documentElement.classList.add('dark')
 }
 
 const app = createApp(App)

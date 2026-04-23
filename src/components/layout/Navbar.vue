@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useWindowScroll } from "@vueuse/core";
-import { computed, ref } from "vue";
+import { computed, shallowRef } from "vue";
 import {
   Moon,
   Sun,
@@ -23,7 +23,7 @@ const router = useRouter();
 
 const { y } = useWindowScroll();
 const isScrolled = computed(() => y.value > 16);
-const isMenuOpen = ref(false);
+const isMenuOpen = shallowRef(false);
 const toggleMenu = () => {
   isMenuOpen.value = !isMenuOpen.value;
 };

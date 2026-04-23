@@ -2,12 +2,13 @@
 import { useI18n } from 'vue-i18n'
 import { Sparkles, ArrowRight } from 'lucide-vue-next'
 import { RouterLink } from 'vue-router'
-import { ref } from 'vue'
+import { shallowRef } from 'vue'
 
 const { t } = useI18n()
 
-const activeTab = ref('schema.json')
-const tabs = ['schema.json', 'model.ts', 'Form.vue', 'Form.tsx', 'form.component.ts']
+const tabs = ['schema.json', 'model.ts', 'Form.vue', 'Form.tsx', 'form.component.ts'] as const
+type Tab = typeof tabs[number]
+const activeTab = shallowRef<Tab>('schema.json')
 </script>
 
 <template>

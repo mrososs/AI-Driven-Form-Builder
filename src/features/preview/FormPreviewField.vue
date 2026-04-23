@@ -2,6 +2,7 @@
 import { ChevronDown } from 'lucide-vue-next'
 import type { FormElement } from '../../stores/form'
 
+defineOptions({ name: 'FormPreviewField' })
 defineProps<{ element: FormElement }>()
 </script>
 

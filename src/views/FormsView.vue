@@ -4,7 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { useFormStore } from '../stores/form'
 import BuilderNavbar from '../features/builder/BuilderNavbar.vue'
-import { Layers, FileText, Calendar, MoreVertical, Edit, Trash2, Plus } from 'lucide-vue-next'
+import { Layers, FileText, Calendar, Edit, Trash2, Plus } from 'lucide-vue-next'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -26,9 +26,17 @@ const formatDate = (timestamp: any) => {
 }
 
 const handleEdit = (formId: string) => {
-  // Logic to load form into builder and navigate
-  // For now just navigate
-  router.push(`/builder?id=${formId}`)
+  router.push({ name: 'builder', query: { id: formId } })
+}
+
+const handleDelete = async (form: { id: string; title?: string }) => {
+  const ok = window.confirm(`Delete "${form.title || 'Untitled Form'}"? This cannot be undone.`)
+  if (!ok) return
+  try {
+    await formStore.deleteForm(form.id)
+  } catch {
+    alert('Failed to delete form. Please try again.')
+  }
 }
 </script>
 
@@ -93,7 +101,8 @@ const handleEdit = (formId: string) => {
               >
                 <Edit class="h-4 w-4" />
               </button>
-              <button 
+              <button
+                @click="handleDelete(form)"
                 class="p-2 rounded-lg bg-white dark:bg-[#1a1a24] shadow-sm border border-slate-200 dark:border-white/[0.1] text-slate-600 dark:text-white/60 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
                 title="Delete form"
               >

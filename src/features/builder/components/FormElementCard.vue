@@ -1,11 +1,17 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { GripVertical, Settings2, Trash2, ChevronDown } from 'lucide-vue-next'
 import type { FormElement } from '../../../stores/form'
 import { useFormStore } from '../../../stores/form'
 
-defineProps<{ element: FormElement }>()
+const props = defineProps<{ element: FormElement }>()
 
 const formStore = useFormStore()
+
+const label = computed({
+  get: () => props.element.label,
+  set: (value) => formStore.updateElement(props.element.id, { label: value }),
+})
 </script>
 
 <template>
@@ -17,7 +23,7 @@ const formStore = useFormStore()
     <div class="flex justify-between items-start mb-3">
       <div class="flex-1 mr-4">
         <input
-          v-model="element.label"
+          v-model="label"
           class="font-semibold text-slate-800 dark:text-white w-full border-none focus:outline-none focus:ring-0 p-0 bg-transparent text-sm"
           :aria-label="`Label for ${element.type} field`"
         />

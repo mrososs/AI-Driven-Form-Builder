@@ -1,12 +1,27 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import draggable from 'vuedraggable'
 import { GripVertical, Settings2, Trash2, ChevronDown } from 'lucide-vue-next'
 import type { FormElement } from '../../../stores/form'
 import { useFormStore } from '../../../stores/form'
 
-defineProps<{ element: FormElement }>()
+const props = defineProps<{ element: FormElement }>()
 
 const formStore = useFormStore()
+
+const rowLabel = computed({
+  get: () => props.element.label,
+  set: (value) => formStore.updateElement(props.element.id, { label: value }),
+})
+
+const rowChildren = computed({
+  get: () => props.element.children ?? [],
+  set: (next) => formStore.setRowChildren(props.element.id, next),
+})
+
+function updateChildLabel(id: string, value: string) {
+  formStore.updateElement(id, { label: value })
+}
 </script>
 
 <template>
@@ -18,7 +33,7 @@ const formStore = useFormStore()
     <div class="flex justify-between items-start mb-3">
       <div class="flex-1 mr-4">
         <input
-          v-model="element.label"
+          v-model="rowLabel"
           class="font-semibold text-slate-800 dark:text-white w-full border-none focus:outline-none focus:ring-0 p-0 bg-transparent text-sm"
           aria-label="Label for row layout"
         />
@@ -44,7 +59,7 @@ const formStore = useFormStore()
 
     <div class="mt-4 border border-dashed border-slate-300 dark:border-white/[0.08] rounded-xl p-4 bg-slate-50/50 dark:bg-white/[0.02]">
       <draggable
-        v-model="element.children"
+        v-model="rowChildren"
         item-key="id"
         group="canvas"
         handle=".drag-handle"
@@ -59,7 +74,8 @@ const formStore = useFormStore()
 
             <div class="flex justify-between items-start mb-2">
               <input
-                v-model="colElement.label"
+                :value="colElement.label"
+                @input="updateChildLabel(colElement.id, ($event.target as HTMLInputElement).value)"
                 class="font-semibold text-slate-800 dark:text-white w-full border-none focus:outline-none focus:ring-0 p-0 bg-transparent text-sm flex-1 mr-2"
                 :aria-label="`Label for ${colElement.type} field`"
               />
@@ -93,7 +109,7 @@ const formStore = useFormStore()
           </div>
         </template>
         <template #footer>
-          <div v-if="!element.children || element.children.length === 0" class="flex-1 flex items-center justify-center text-xs text-slate-500 dark:text-white/30 font-medium h-full italic">
+          <div v-if="rowChildren.length === 0" class="flex-1 flex items-center justify-center text-xs text-slate-500 dark:text-white/30 font-medium h-full italic">
             Drag elements here to build columns
           </div>
         </template>

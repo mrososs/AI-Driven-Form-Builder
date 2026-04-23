@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, shallowRef, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter, useRoute, RouterLink } from 'vue-router'
 import { Mail, Lock, Eye, EyeOff, ArrowRight, AlertCircle } from 'lucide-vue-next'
@@ -11,9 +11,9 @@ const authStore = useAuthStore()
 const router = useRouter()
 const route = useRoute()
 
-const email = ref('')
-const password = ref('')
-const showPassword = ref(false)
+const email = shallowRef('')
+const password = shallowRef('')
+const showPassword = shallowRef(false)
 const errors = ref<{ email?: string; password?: string }>({})
 
 const isRTL = computed(() => locale.value === 'ar')
