@@ -1,9 +1,18 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import draggable from 'vuedraggable'
-import { GripVertical, Settings2, Trash2, ChevronDown } from 'lucide-vue-next'
+import { GripVertical, Settings2, Trash2, ChevronDown, Calendar, Clock, CalendarClock, Upload } from 'lucide-vue-next'
 import type { FormElement } from '../../../stores/form'
 import { useFormStore } from '../../../stores/form'
+
+const TEXT_INPUT_TYPES = ['text', 'textarea', 'number', 'email', 'phone', 'url']
+const DATE_TYPES = ['date', 'time', 'datetime']
+
+function dateIcon(type: string) {
+  if (type === 'time') return Clock
+  if (type === 'datetime') return CalendarClock
+  return Calendar
+}
 
 const props = defineProps<{ element: FormElement }>()
 
@@ -94,16 +103,36 @@ function updateChildLabel(id: string, value: string) {
             </div>
 
             <div class="mt-1">
-              <div v-if="colElement.type === 'text' || colElement.type === 'textarea'" class="border border-slate-200 dark:border-white/[0.07] rounded bg-slate-50 dark:bg-white/[0.04] px-2 py-1.5 text-xs text-slate-500 dark:text-white/30">
+              <div v-if="TEXT_INPUT_TYPES.includes(colElement.type)" class="border border-slate-200 dark:border-white/[0.07] rounded bg-slate-50 dark:bg-white/[0.04] px-2 py-1.5 text-xs text-slate-500 dark:text-white/30">
                 {{ colElement.placeholder || 'User input...' }}
               </div>
               <div v-else-if="colElement.type === 'select'" class="border border-slate-200 dark:border-white/[0.07] rounded bg-slate-50 dark:bg-white/[0.04] px-2 py-1.5 flex justify-between items-center">
                 <span class="text-xs text-slate-500 dark:text-white/30">Select option</span>
                 <ChevronDown class="h-3 w-3 text-slate-500 dark:text-white/30" />
               </div>
+              <div v-else-if="colElement.type === 'radio'" class="space-y-1">
+                <div
+                  v-for="opt in (colElement.options ?? []).slice(0, 2)"
+                  :key="opt"
+                  class="flex items-center gap-2"
+                >
+                  <div class="h-3 w-3 rounded-full border border-slate-300 dark:border-white/20 bg-white dark:bg-white/[0.05] shrink-0"></div>
+                  <span class="text-xs text-slate-500 dark:text-white/30 truncate">{{ opt }}</span>
+                </div>
+              </div>
               <div v-else-if="colElement.type === 'checkbox'" class="flex items-center gap-2">
                 <div class="h-3 w-3 border border-slate-300 dark:border-white/20 rounded bg-white dark:bg-white/[0.05] shrink-0"></div>
                 <span class="text-xs text-slate-500 dark:text-white/30">Option</span>
+              </div>
+              <div v-else-if="DATE_TYPES.includes(colElement.type)" class="border border-slate-200 dark:border-white/[0.07] rounded bg-slate-50 dark:bg-white/[0.04] px-2 py-1.5 flex justify-between items-center">
+                <span class="text-xs text-slate-500 dark:text-white/30">
+                  {{ colElement.type === 'time' ? 'HH:MM' : colElement.type === 'datetime' ? 'YYYY-MM-DD HH:MM' : 'YYYY-MM-DD' }}
+                </span>
+                <component :is="dateIcon(colElement.type)" class="h-3 w-3 text-slate-500 dark:text-white/30" />
+              </div>
+              <div v-else-if="colElement.type === 'file'" class="border border-dashed border-slate-300 dark:border-white/[0.12] rounded bg-slate-50 dark:bg-white/[0.04] px-2 py-1.5 flex items-center justify-center gap-1.5 text-xs text-slate-500 dark:text-white/30">
+                <Upload class="h-3 w-3" />
+                <span>Upload</span>
               </div>
             </div>
           </div>

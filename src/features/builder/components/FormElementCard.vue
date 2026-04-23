@@ -1,6 +1,15 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { GripVertical, Settings2, Trash2, ChevronDown } from 'lucide-vue-next'
+import {
+  GripVertical,
+  Settings2,
+  Trash2,
+  ChevronDown,
+  Calendar,
+  Clock,
+  CalendarClock,
+  Upload,
+} from 'lucide-vue-next'
 import type { FormElement } from '../../../stores/form'
 import { useFormStore } from '../../../stores/form'
 
@@ -11,6 +20,32 @@ const formStore = useFormStore()
 const label = computed({
   get: () => props.element.label,
   set: (value) => formStore.updateElement(props.element.id, { label: value }),
+})
+
+const TEXT_INPUT_TYPES = ['text', 'textarea', 'number', 'email', 'phone', 'url']
+
+const isTextInput = computed(() => TEXT_INPUT_TYPES.includes(props.element.type))
+
+const placeholderFallback = computed(() => {
+  switch (props.element.type) {
+    case 'number': return '0'
+    case 'email': return 'you@example.com'
+    case 'phone': return '+1 (555) 123-4567'
+    case 'url': return 'https://example.com'
+    default: return 'User input goes here...'
+  }
+})
+
+const dateTimeIcon = computed(() => {
+  if (props.element.type === 'time') return Clock
+  if (props.element.type === 'datetime') return CalendarClock
+  return Calendar
+})
+
+const dateTimePlaceholder = computed(() => {
+  if (props.element.type === 'time') return 'HH:MM'
+  if (props.element.type === 'datetime') return 'YYYY-MM-DD HH:MM'
+  return 'YYYY-MM-DD'
 })
 </script>
 
@@ -49,10 +84,10 @@ const label = computed({
 
     <div class="mt-1">
       <div
-        v-if="element.type === 'text' || element.type === 'textarea'"
+        v-if="isTextInput"
         class="border border-slate-200 dark:border-white/[0.07] rounded-lg px-3 py-2.5 bg-slate-50 dark:bg-white/[0.04] text-slate-500 dark:text-white/30 text-sm"
       >
-        {{ element.placeholder || 'User input goes here...' }}
+        {{ element.placeholder || placeholderFallback }}
       </div>
       <div
         v-else-if="element.type === 'select'"
@@ -61,9 +96,33 @@ const label = computed({
         <span class="text-slate-500 dark:text-white/30 text-sm">Select an option</span>
         <ChevronDown class="h-4 w-4 text-slate-500 dark:text-white/30" aria-hidden="true" />
       </div>
+      <div v-else-if="element.type === 'radio'" class="space-y-2">
+        <div
+          v-for="opt in (element.options ?? [])"
+          :key="opt"
+          class="flex items-center gap-3"
+        >
+          <div class="h-4 w-4 rounded-full border-2 border-slate-300 dark:border-white/20 bg-white dark:bg-white/[0.05] shrink-0"></div>
+          <span class="text-slate-500 dark:text-white/30 text-sm">{{ opt }}</span>
+        </div>
+      </div>
       <div v-else-if="element.type === 'checkbox'" class="flex items-center gap-3">
         <div class="h-4 w-4 border-2 border-slate-300 dark:border-white/20 rounded bg-white dark:bg-white/[0.05] shrink-0"></div>
         <span class="text-slate-500 dark:text-white/30 text-sm">Checkbox option</span>
+      </div>
+      <div
+        v-else-if="element.type === 'date' || element.type === 'time' || element.type === 'datetime'"
+        class="border border-slate-200 dark:border-white/[0.07] rounded-lg px-3 py-2.5 bg-slate-50 dark:bg-white/[0.04] flex justify-between items-center"
+      >
+        <span class="text-slate-500 dark:text-white/30 text-sm">{{ dateTimePlaceholder }}</span>
+        <component :is="dateTimeIcon" class="h-4 w-4 text-slate-500 dark:text-white/30" aria-hidden="true" />
+      </div>
+      <div
+        v-else-if="element.type === 'file'"
+        class="border border-dashed border-slate-300 dark:border-white/[0.12] rounded-lg px-3 py-4 bg-slate-50 dark:bg-white/[0.04] flex items-center justify-center gap-2 text-sm text-slate-500 dark:text-white/30"
+      >
+        <Upload class="h-4 w-4" aria-hidden="true" />
+        <span>Click to upload a file</span>
       </div>
     </div>
   </div>

@@ -1,9 +1,23 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { ChevronDown } from 'lucide-vue-next'
 import type { FormElement } from '../../stores/form'
 
 defineOptions({ name: 'FormPreviewField' })
-defineProps<{ element: FormElement }>()
+const props = defineProps<{ element: FormElement }>()
+
+const HTML_INPUT_TYPE: Record<string, string> = {
+  text: 'text',
+  number: 'number',
+  email: 'email',
+  phone: 'tel',
+  url: 'url',
+  date: 'date',
+  time: 'time',
+  datetime: 'datetime-local',
+}
+
+const htmlInputType = computed(() => HTML_INPUT_TYPE[props.element.type])
 </script>
 
 <template>
@@ -48,8 +62,8 @@ defineProps<{ element: FormElement }>()
       </label>
 
       <input
-        v-if="element.type === 'text'"
-        type="text"
+        v-if="htmlInputType"
+        :type="htmlInputType"
         :placeholder="element.placeholder || ''"
         :required="element.required"
         class="w-full px-3.5 py-2.5 text-sm rounded-lg transition-colors
@@ -90,6 +104,43 @@ defineProps<{ element: FormElement }>()
           aria-hidden="true"
         />
       </div>
+
+      <div v-else-if="element.type === 'radio'" class="space-y-2">
+        <label
+          v-for="opt in element.options"
+          :key="opt"
+          class="flex items-center gap-3 cursor-pointer group"
+        >
+          <input
+            type="radio"
+            :name="element.id"
+            :value="opt"
+            :required="element.required"
+            class="h-4 w-4 shrink-0
+                   border-slate-300 dark:border-white/20
+                   bg-white dark:bg-white/[0.04]
+                   text-indigo-600
+                   focus:ring-2 focus:ring-indigo-500/40
+                   cursor-pointer"
+          />
+          <span class="text-sm text-slate-700 dark:text-white/80 group-hover:text-slate-900 dark:group-hover:text-white select-none">
+            {{ opt }}
+          </span>
+        </label>
+      </div>
+
+      <input
+        v-else-if="element.type === 'file'"
+        type="file"
+        :required="element.required"
+        class="w-full text-sm text-slate-700 dark:text-white/80
+               file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0
+               file:text-sm file:font-medium
+               file:bg-indigo-50 dark:file:bg-indigo-500/10
+               file:text-indigo-700 dark:file:text-indigo-300
+               hover:file:bg-indigo-100 dark:hover:file:bg-indigo-500/20
+               cursor-pointer"
+      />
     </div>
   </div>
 </template>

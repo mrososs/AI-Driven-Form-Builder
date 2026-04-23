@@ -3,10 +3,19 @@ import { computed } from 'vue'
 import { useEventListener } from '@vueuse/core'
 import { useFormStore } from '../../stores/form'
 import { Settings2, X, Trash2 } from 'lucide-vue-next'
+import { getElementDefinition } from './elements'
 
 const formStore = useFormStore()
 
 const selectedElement = computed(() => formStore.selectedElement)
+
+const definition = computed(() =>
+  selectedElement.value ? getElementDefinition(selectedElement.value.type) : undefined
+)
+
+const showRequired = computed(() => selectedElement.value?.type !== 'row')
+const showPlaceholder = computed(() => definition.value?.hasPlaceholder === true)
+const showOptions = computed(() => definition.value?.hasOptions === true)
 
 function closeProperties() {
   formStore.selectElement(null)
@@ -75,7 +84,7 @@ function updateOptionAt(index: number, value: string) {
         />
       </div>
 
-      <div v-if="selectedElement.type !== 'row'">
+      <div v-if="showRequired">
         <label class="flex items-center gap-3 p-3 border border-slate-200 dark:border-white/[0.07] rounded-lg cursor-pointer hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors">
           <input
             type="checkbox"
@@ -86,7 +95,7 @@ function updateOptionAt(index: number, value: string) {
         </label>
       </div>
 
-      <div v-if="selectedElement.type === 'text' || selectedElement.type === 'textarea'">
+      <div v-if="showPlaceholder">
         <label class="block text-xs font-semibold text-slate-500 dark:text-white/40 uppercase tracking-wider mb-2">Placeholder</label>
         <input
           v-model="placeholder"
@@ -95,7 +104,7 @@ function updateOptionAt(index: number, value: string) {
         />
       </div>
 
-      <div v-if="selectedElement.type === 'select' && selectedElement.options">
+      <div v-if="showOptions && selectedElement.options">
         <div class="flex items-center justify-between mb-2">
           <label class="block text-xs font-semibold text-slate-500 dark:text-white/40 uppercase tracking-wider">Options</label>
         </div>
