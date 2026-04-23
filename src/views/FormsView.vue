@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { useFormStore } from '../stores/form'
 import BuilderNavbar from '../features/builder/BuilderNavbar.vue'
+import AppDialog from '../components/shared/AppDialog.vue'
 import { Layers, FileText, Calendar, Edit, Trash2, Plus } from 'lucide-vue-next'
 
 const { t } = useI18n()
@@ -18,10 +19,10 @@ const formatDate = (timestamp: any) => {
   if (!timestamp) return ''
   // Firestore timestamps have atDate() method
   const date = typeof timestamp.toDate === 'function' ? timestamp.toDate() : new Date(timestamp)
-  return new Intl.DateTimeFormat('en-US', { 
-    month: 'short', 
-    day: 'numeric', 
-    year: 'numeric' 
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric'
   }).format(date)
 }
 
@@ -29,13 +30,35 @@ const handleEdit = (formId: string) => {
   router.push({ name: 'builder', query: { id: formId } })
 }
 
-const handleDelete = async (form: { id: string; title?: string }) => {
-  const ok = window.confirm(`Delete "${form.title || 'Untitled Form'}"? This cannot be undone.`)
-  if (!ok) return
+const deleteTarget = ref<{ id: string; title?: string } | null>(null)
+const isDeleting = ref(false)
+const deleteError = ref('')
+const isDeleteDialogOpen = computed({
+  get: () => deleteTarget.value !== null,
+  set: (value: boolean) => {
+    if (!value) {
+      deleteTarget.value = null
+      deleteError.value = ''
+    }
+  },
+})
+
+const handleDelete = (form: { id: string; title?: string }) => {
+  deleteError.value = ''
+  deleteTarget.value = form
+}
+
+const confirmDelete = async () => {
+  if (!deleteTarget.value) return
+  isDeleting.value = true
+  deleteError.value = ''
   try {
-    await formStore.deleteForm(form.id)
+    await formStore.deleteForm(deleteTarget.value.id)
+    deleteTarget.value = null
   } catch {
-    alert('Failed to delete form. Please try again.')
+    deleteError.value = 'Failed to delete form. Please try again.'
+  } finally {
+    isDeleting.value = false
   }
 }
 </script>
@@ -152,6 +175,22 @@ const handleDelete = async (form: { id: string; title?: string }) => {
         </div>
       </div>
     </main>
+
+    <AppDialog
+      v-model:open="isDeleteDialogOpen"
+      variant="danger"
+      title="Delete form?"
+      :description="`Are you sure you want to delete &quot;${deleteTarget?.title || 'Untitled Form'}&quot;? This action cannot be undone.`"
+      confirm-text="Delete"
+      cancel-text="Cancel"
+      :loading="isDeleting"
+      :close-on-backdrop="!isDeleting"
+      @confirm="confirmDelete"
+    >
+      <p v-if="deleteError" class="text-sm text-rose-600 dark:text-rose-400">
+        {{ deleteError }}
+      </p>
+    </AppDialog>
   </div>
 </template>
 
