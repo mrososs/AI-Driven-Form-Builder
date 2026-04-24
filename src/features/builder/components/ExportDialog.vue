@@ -58,7 +58,7 @@ function onDownload() {
 
 function tabClass(framework: Framework) {
   const base =
-    'flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40'
+    'flex-1 inline-flex items-center justify-center gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold rounded-lg whitespace-nowrap transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40'
   if (activeFramework.value === framework) {
     return `${base} bg-indigo-600 text-white shadow-sm`
   }
@@ -75,15 +75,15 @@ function tabClass(framework: Framework) {
     hide-icon
   >
     <template #header>
-      <div class="flex items-start gap-4 pe-6">
-        <div class="w-11 h-11 rounded-xl ring-1 bg-indigo-500/10 ring-indigo-500/20 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
+      <div class="flex items-start gap-3 sm:gap-4 pe-10">
+        <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-xl ring-1 bg-indigo-500/10 ring-indigo-500/20 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
           <Code2 class="h-5 w-5" />
         </div>
         <div class="min-w-0 pt-0.5 flex-1">
-          <h2 class="text-lg font-bold font-heading tracking-tight text-slate-900 dark:text-white">
+          <h2 class="text-base sm:text-lg font-bold font-heading tracking-tight text-slate-900 dark:text-white">
             {{ t('builder.export.title') }}
           </h2>
-          <p class="text-sm text-slate-500 dark:text-white/50 mt-1 leading-relaxed">
+          <p class="hidden sm:block text-sm text-slate-500 dark:text-white/50 mt-1 leading-relaxed">
             {{ t('builder.export.description') }}
           </p>
         </div>
@@ -113,35 +113,37 @@ function tabClass(framework: Framework) {
         </button>
       </div>
 
-      <div class="flex items-center gap-3 flex-wrap">
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
         <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-100 dark:bg-white/[0.04] border border-slate-200/60 dark:border-white/[0.06] min-w-0 flex-1">
-          <span class="text-xs uppercase tracking-wide text-slate-500 dark:text-white/40 shrink-0">
+          <span class="text-[10px] sm:text-xs uppercase tracking-wide text-slate-500 dark:text-white/40 shrink-0">
             {{ t('builder.export.filenameLabel') }}
           </span>
           <code class="text-xs font-mono text-slate-800 dark:text-white/80 truncate">
             {{ generated.filename }}
           </code>
         </div>
-        <button
-          type="button"
-          @click="onCopy"
-          class="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg text-slate-700 dark:text-white/80 bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/[0.08] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 min-w-[96px]"
-        >
-          <component :is="copied ? Check : Copy" class="h-4 w-4" :class="{ 'text-emerald-500': copied }" />
-          {{ copied ? t('builder.export.copied') : t('builder.export.copy') }}
-        </button>
-        <button
-          type="button"
-          @click="onDownload"
-          class="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-500/25 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-indigo-500 dark:focus-visible:ring-offset-[#111118]"
-        >
-          <Download class="h-4 w-4" />
-          {{ t('builder.export.download') }}
-        </button>
+        <div class="grid grid-cols-2 gap-2 sm:flex sm:items-center sm:gap-3 shrink-0">
+          <button
+            type="button"
+            @click="onCopy"
+            class="inline-flex items-center justify-center gap-2 w-full sm:w-auto px-4 py-2 text-sm font-semibold rounded-lg text-slate-700 dark:text-white/80 bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/[0.08] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 sm:min-w-[96px]"
+          >
+            <component :is="copied ? Check : Copy" class="h-4 w-4" :class="{ 'text-emerald-500': copied }" />
+            {{ copied ? t('builder.export.copied') : t('builder.export.copy') }}
+          </button>
+          <button
+            type="button"
+            @click="onDownload"
+            class="inline-flex items-center justify-center gap-2 w-full sm:w-auto px-4 py-2 text-sm font-semibold text-white rounded-lg bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-500/25 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-indigo-500 dark:focus-visible:ring-offset-[#111118]"
+          >
+            <Download class="h-4 w-4" />
+            {{ t('builder.export.download') }}
+          </button>
+        </div>
       </div>
 
       <div class="rounded-xl border border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-[#0a0a0f] overflow-hidden">
-        <pre class="code-pane m-0 p-4 text-xs font-mono text-slate-800 dark:text-white/80 overflow-auto max-h-[50vh]"
+        <pre class="code-pane m-0 p-3 sm:p-4 text-xs font-mono text-slate-800 dark:text-white/80 overflow-auto max-h-[40vh] sm:max-h-[50vh]"
           dir="ltr"
         ><code>{{ generated.code }}</code></pre>
       </div>
@@ -151,7 +153,7 @@ function tabClass(framework: Framework) {
       <button
         type="button"
         @click="close"
-        class="px-4 py-2 text-sm font-semibold rounded-lg text-slate-700 dark:text-white/70 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.05] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 dark:focus-visible:ring-white/30"
+        class="inline-flex items-center justify-center w-full sm:w-auto px-4 py-2.5 sm:py-2 text-sm font-semibold rounded-lg text-slate-700 dark:text-white/70 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.05] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 dark:focus-visible:ring-white/30"
       >
         {{ t('builder.export.close') }}
       </button>

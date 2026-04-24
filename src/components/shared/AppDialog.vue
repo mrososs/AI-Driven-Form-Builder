@@ -153,7 +153,7 @@ onUnmounted(() => {
           ref="panelRef"
           tabindex="-1"
           :class="[
-            'dialog-panel relative w-full',
+            'dialog-panel relative w-full flex flex-col max-h-[calc(100dvh-2rem)]',
             maxWidth,
             'bg-white dark:bg-[#111118]/95 dark:backdrop-blur-2xl',
             'border border-slate-200/80 dark:border-white/[0.08]',
@@ -167,18 +167,18 @@ onUnmounted(() => {
             @click="closeDialog"
             :disabled="loading"
             aria-label="Close dialog"
-            class="absolute top-4 end-4 p-1.5 rounded-lg text-slate-400 dark:text-white/40 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors duration-150 disabled:opacity-50 disabled:pointer-events-none"
+            class="absolute top-3 end-3 sm:top-4 sm:end-4 p-1.5 rounded-lg text-slate-400 dark:text-white/40 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors duration-150 disabled:opacity-50 disabled:pointer-events-none z-10"
           >
             <X class="h-4 w-4" />
           </button>
 
-          <div class="p-6">
+          <div class="flex-1 min-h-0 overflow-y-auto p-5 sm:p-6">
             <slot name="header">
-              <div class="flex items-start gap-4 pe-6">
+              <div class="flex items-start gap-3 sm:gap-4 pe-10">
                 <div
                   v-if="!hideIcon"
                   :class="[
-                    'w-11 h-11 rounded-xl ring-1 flex items-center justify-center shrink-0',
+                    'w-10 h-10 sm:w-11 sm:h-11 rounded-xl ring-1 flex items-center justify-center shrink-0',
                     variantStyles.iconWrap,
                   ]"
                 >
@@ -190,7 +190,7 @@ onUnmounted(() => {
                   <h2
                     v-if="title"
                     id="app-dialog-title"
-                    class="text-lg font-bold font-heading tracking-tight text-slate-900 dark:text-white"
+                    class="text-base sm:text-lg font-bold font-heading tracking-tight text-slate-900 dark:text-white"
                   >
                     {{ title }}
                   </h2>
@@ -215,7 +215,7 @@ onUnmounted(() => {
 
           <div
             v-if="!hideFooter"
-            class="flex items-center justify-end gap-2 px-6 py-4 bg-slate-50 dark:bg-white/[0.02] border-t border-slate-100 dark:border-white/[0.05] rounded-b-2xl"
+            class="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-2 px-5 py-4 sm:px-6 bg-slate-50 dark:bg-white/[0.02] border-t border-slate-100 dark:border-white/[0.05] rounded-b-2xl shrink-0"
           >
             <slot
               name="footer"
@@ -227,7 +227,7 @@ onUnmounted(() => {
                 type="button"
                 @click="closeDialog"
                 :disabled="loading"
-                class="px-4 py-2 text-sm font-semibold rounded-lg text-slate-700 dark:text-white/70 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.05] transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 dark:focus-visible:ring-white/30 disabled:opacity-50"
+                class="inline-flex items-center justify-center w-full sm:w-auto px-4 py-2.5 sm:py-2 text-sm font-semibold rounded-lg text-slate-700 dark:text-white/70 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.05] transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 dark:focus-visible:ring-white/30 disabled:opacity-50"
               >
                 {{ cancelText }}
               </button>
@@ -236,7 +236,7 @@ onUnmounted(() => {
                 @click="confirmDialog"
                 :disabled="loading"
                 :class="[
-                  'inline-flex items-center justify-center gap-2 px-4 py-2 min-w-[96px] text-sm font-semibold text-white rounded-lg shadow-lg transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-[#111118] disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100',
+                  'inline-flex items-center justify-center gap-2 w-full sm:w-auto px-4 py-2.5 sm:py-2 sm:min-w-[96px] text-sm font-semibold text-white rounded-lg shadow-lg transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-[#111118] disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100',
                   variantStyles.confirmBtn,
                 ]"
               >
