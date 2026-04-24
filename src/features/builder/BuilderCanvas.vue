@@ -132,6 +132,9 @@ function openExportDialog() {
           item-key="id"
           group="canvas"
           handle=".drag-handle"
+          :delay="150"
+          :delay-on-touch-only="true"
+          :touch-start-threshold="5"
           class="space-y-3 min-h-[60px]"
           ghost-class="opacity-40"
         >

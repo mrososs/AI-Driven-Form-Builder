@@ -75,6 +75,9 @@ function updateChildLabel(id: string, value: string) {
         item-key="id"
         group="canvas"
         handle=".drag-handle"
+        :delay="150"
+        :delay-on-touch-only="true"
+        :touch-start-threshold="5"
         class="flex gap-4 min-h-[80px]"
         ghost-class="opacity-40"
       >

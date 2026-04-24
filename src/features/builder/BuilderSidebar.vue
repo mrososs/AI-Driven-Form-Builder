@@ -73,6 +73,9 @@ function addElementByTap(original: ElementDefinition) {
           :group="{ name: 'canvas', pull: 'clone', put: false }"
           :clone="cloneElement"
           :sort="false"
+          :delay="150"
+          :delay-on-touch-only="true"
+          :touch-start-threshold="5"
           class="space-y-2"
         >
           <template #item="{ element }">
