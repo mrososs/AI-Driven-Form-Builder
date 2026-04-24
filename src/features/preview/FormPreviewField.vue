@@ -2,20 +2,10 @@
 import { computed } from 'vue'
 import { ChevronDown } from 'lucide-vue-next'
 import type { FormElement } from '../../stores/form'
+import { HTML_INPUT_TYPE } from '../../utils/codegen/shared'
 
 defineOptions({ name: 'FormPreviewField' })
 const props = defineProps<{ element: FormElement }>()
-
-const HTML_INPUT_TYPE: Record<string, string> = {
-  text: 'text',
-  number: 'number',
-  email: 'email',
-  phone: 'tel',
-  url: 'url',
-  date: 'date',
-  time: 'time',
-  datetime: 'datetime-local',
-}
 
 const htmlInputType = computed(() => HTML_INPUT_TYPE[props.element.type])
 </script>

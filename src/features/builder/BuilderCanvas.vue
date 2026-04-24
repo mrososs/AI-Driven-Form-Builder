@@ -2,11 +2,15 @@
 import { computed, ref } from 'vue'
 import draggable from 'vuedraggable'
 import { useFormStore } from '../../stores/form'
-import { Layers, Save, Eye, Eraser } from 'lucide-vue-next'
+import { Layers, Save, Eye, Eraser, Download } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import FormElementCard from './components/FormElementCard.vue'
 import RowElementCard from './components/RowElementCard.vue'
 import AppDialog from '../../components/shared/AppDialog.vue'
+import ExportDialog from './components/ExportDialog.vue'
+
+const { t } = useI18n()
 
 const formStore = useFormStore()
 const router = useRouter()
@@ -33,6 +37,7 @@ function goToPreview() {
 }
 
 const isClearDialogOpen = ref(false)
+const isExportDialogOpen = ref(false)
 
 function openClearDialog() {
   isClearDialogOpen.value = true
@@ -41,6 +46,11 @@ function openClearDialog() {
 function confirmClear() {
   formStore.clearElements()
   isClearDialogOpen.value = false
+}
+
+function openExportDialog() {
+  if (!formStore.hasElements) return
+  isExportDialogOpen.value = true
 }
 </script>
 
@@ -62,7 +72,7 @@ function confirmClear() {
           title="Clear all fields"
         >
           <Eraser class="h-4 w-4" />
-          Clear
+          {{ t('builder.toolbar.clear') }}
         </button>
         <button
           @click="goToPreview"
@@ -71,7 +81,16 @@ function confirmClear() {
           :title="formStore.hasElements ? 'Preview form' : 'Add elements to preview'"
         >
           <Eye class="h-4 w-4" />
-          Preview
+          {{ t('builder.toolbar.preview') }}
+        </button>
+        <button
+          @click="openExportDialog"
+          :disabled="!formStore.hasElements"
+          :class="previewButtonClass"
+          :title="formStore.hasElements ? 'Export form as component' : 'Add elements to export'"
+        >
+          <Download class="h-4 w-4" />
+          {{ t('builder.toolbar.export') }}
         </button>
         <button
           @click="handleSave"
@@ -79,7 +98,7 @@ function confirmClear() {
           :disabled="formStore.isSaving"
         >
           <Save class="h-4 w-4" :class="{ 'animate-spin': formStore.isSaving }" />
-          {{ formStore.isSaving ? 'Saving...' : 'Save' }}
+          {{ formStore.isSaving ? t('builder.toolbar.saving') : t('builder.toolbar.save') }}
         </button>
       </div>
     </header>
@@ -142,6 +161,8 @@ function confirmClear() {
       cancel-text="Cancel"
       @confirm="confirmClear"
     />
+
+    <ExportDialog v-model:open="isExportDialogOpen" />
   </main>
 </template>
 
