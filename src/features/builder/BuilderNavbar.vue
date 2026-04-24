@@ -2,11 +2,10 @@
 import { shallowRef, useTemplateRef } from 'vue'
 import { useRouter, useRoute, RouterLink } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { Sparkles, Moon, Sun, LogOut, ChevronDown, Save } from 'lucide-vue-next'
+import { Sparkles, Moon, Sun, LogOut, ChevronDown } from 'lucide-vue-next'
 import { onClickOutside } from '@vueuse/core'
 import { useAuthStore } from '../../stores/auth'
 import { useTheme } from '../../composables/useTheme'
-import SaveDialog from './components/SaveDialog.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -14,7 +13,6 @@ const { t } = useI18n()
 const authStore = useAuthStore()
 const { isDark, toggleDark } = useTheme()
 
-const isSaveDialogOpen = shallowRef(false)
 const isProfileOpen = shallowRef(false)
 const profileMenuRef = useTemplateRef<HTMLElement>('profileMenuRef')
 
@@ -71,30 +69,8 @@ async function handleLogout() {
       </RouterLink>
     </nav>
 
-    <!-- Right: Save + Theme toggle + profile -->
+    <!-- Right: Theme toggle + profile -->
     <div class="flex items-center gap-1 flex-shrink-0">
-      <!-- Save button -->
-      <button
-        @click="isSaveDialogOpen = true"
-        :aria-label="t('builder.navbar.save') || 'Save form and generate prompt'"
-        class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all duration-150 text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-white/70 dark:hover:text-white dark:hover:bg-white/[0.07]"
-      >
-        <Save class="h-4 w-4" />
-        <span class="text-sm font-medium">{{ t('builder.navbar.save') || 'Save' }}</span>
-      </button>
-
-      <!-- Mobile save button (icon only) -->
-      <button
-        @click="isSaveDialogOpen = true"
-        :aria-label="t('builder.navbar.save') || 'Save form and generate prompt'"
-        class="sm:hidden p-2 rounded-lg transition-all duration-150 text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:text-white/50 dark:hover:text-white dark:hover:bg-white/[0.07]"
-      >
-        <Save class="h-4 w-4" />
-      </button>
-
-      <!-- Divider -->
-      <div class="w-px h-5 bg-slate-200 dark:bg-white/10 mx-1"></div>
-
       <!-- Theme toggle -->
       <button
         @click="toggleDark()"
@@ -171,7 +147,4 @@ async function handleLogout() {
       </div>
     </div>
   </header>
-
-  <!-- Save Dialog -->
-  <SaveDialog :open="isSaveDialogOpen" @update:open="isSaveDialogOpen = $event" />
 </template>

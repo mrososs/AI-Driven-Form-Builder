@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Code2, Copy, Check, Download } from 'lucide-vue-next'
+import { Code2, Copy, Check, Download, Sparkles } from 'lucide-vue-next'
 import AppDialog from '../../../components/shared/AppDialog.vue'
 import { useFormStore } from '../../../stores/form'
 import { useClipboard } from '../../../composables/useClipboard'
@@ -14,12 +14,18 @@ const { t } = useI18n()
 const formStore = useFormStore()
 const { copy, copied } = useClipboard()
 
+type ViewMode = 'code' | 'prompt'
+
 const activeFramework = ref<Framework>('vue')
+const viewMode = ref<ViewMode>('code')
 
 watch(
   () => props.open,
   (isOpen) => {
-    if (isOpen) activeFramework.value = 'vue'
+    if (isOpen) {
+      activeFramework.value = 'vue'
+      viewMode.value = 'code'
+    }
   }
 )
 
@@ -33,14 +39,20 @@ const generated = computed(() =>
   generateComponent(formStore.elements, formStore.title, activeFramework.value)
 )
 
+const prompt = computed(() => formStore.generatePrompt(activeFramework.value))
+
 const isEmpty = computed(() => formStore.elements.length === 0)
+
+const activeContent = computed(() =>
+  viewMode.value === 'prompt' ? prompt.value : generated.value.code
+)
 
 function close() {
   emit('update:open', false)
 }
 
 function onCopy() {
-  copy(generated.value.code)
+  copy(activeContent.value)
 }
 
 function onDownload() {
@@ -56,13 +68,22 @@ function onDownload() {
   URL.revokeObjectURL(url)
 }
 
-function tabClass(framework: Framework) {
+function frameworkTabClass(framework: Framework) {
   const base =
     'flex-1 inline-flex items-center justify-center gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold rounded-lg whitespace-nowrap transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40'
   if (activeFramework.value === framework) {
     return `${base} bg-indigo-600 text-white shadow-sm`
   }
   return `${base} text-slate-600 dark:text-white/60 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.05]`
+}
+
+function viewTabClass(mode: ViewMode) {
+  const base =
+    'flex-1 inline-flex items-center justify-center gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold rounded-lg whitespace-nowrap transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40'
+  if (viewMode.value === mode) {
+    return `${base} bg-white dark:bg-white/[0.08] text-slate-900 dark:text-white shadow-sm`
+  }
+  return `${base} text-slate-600 dark:text-white/60 hover:text-slate-900 dark:hover:text-white`
 }
 </script>
 
@@ -95,6 +116,7 @@ function tabClass(framework: Framework) {
     </div>
 
     <div v-else class="space-y-4">
+      <!-- Framework selector -->
       <div
         role="tablist"
         :aria-label="t('builder.export.frameworkLabel')"
@@ -106,15 +128,47 @@ function tabClass(framework: Framework) {
           type="button"
           role="tab"
           :aria-selected="activeFramework === fw.id"
-          :class="tabClass(fw.id)"
+          :class="frameworkTabClass(fw.id)"
           @click="activeFramework = fw.id"
         >
           {{ t(`builder.export.${fw.label}`) }}
         </button>
       </div>
 
+      <!-- View mode toggle (Code / AI Prompt) -->
+      <div
+        role="tablist"
+        :aria-label="t('builder.export.viewLabel')"
+        class="flex items-center gap-1 p-1 rounded-xl bg-slate-100 dark:bg-white/[0.04] border border-slate-200/60 dark:border-white/[0.06]"
+      >
+        <button
+          type="button"
+          role="tab"
+          :aria-selected="viewMode === 'code'"
+          :class="viewTabClass('code')"
+          @click="viewMode = 'code'"
+        >
+          <Code2 class="h-4 w-4" />
+          {{ t('builder.export.codeTab') }}
+        </button>
+        <button
+          type="button"
+          role="tab"
+          :aria-selected="viewMode === 'prompt'"
+          :class="viewTabClass('prompt')"
+          @click="viewMode = 'prompt'"
+        >
+          <Sparkles class="h-4 w-4" />
+          {{ t('builder.export.promptTab') }}
+        </button>
+      </div>
+
+      <!-- Action row -->
       <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
-        <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-100 dark:bg-white/[0.04] border border-slate-200/60 dark:border-white/[0.06] min-w-0 flex-1">
+        <div
+          v-if="viewMode === 'code'"
+          class="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-100 dark:bg-white/[0.04] border border-slate-200/60 dark:border-white/[0.06] min-w-0 flex-1"
+        >
           <span class="text-[10px] sm:text-xs uppercase tracking-wide text-slate-500 dark:text-white/40 shrink-0">
             {{ t('builder.export.filenameLabel') }}
           </span>
@@ -122,16 +176,28 @@ function tabClass(framework: Framework) {
             {{ generated.filename }}
           </code>
         </div>
-        <div class="grid grid-cols-2 gap-2 sm:flex sm:items-center sm:gap-3 shrink-0">
+        <p
+          v-else
+          class="flex items-center gap-2 px-3 py-2 rounded-lg bg-indigo-50 dark:bg-indigo-500/[0.08] border border-indigo-200/60 dark:border-indigo-400/20 text-xs sm:text-sm text-indigo-700 dark:text-indigo-300 min-w-0 flex-1"
+        >
+          <Sparkles class="h-3.5 w-3.5 shrink-0" />
+          <span class="truncate">{{ t('builder.export.promptHint') }}</span>
+        </p>
+
+        <div class="grid gap-2 sm:flex sm:items-center sm:gap-3 shrink-0" :class="viewMode === 'code' ? 'grid-cols-2' : 'grid-cols-1'">
           <button
             type="button"
             @click="onCopy"
             class="inline-flex items-center justify-center gap-2 w-full sm:w-auto px-4 py-2 text-sm font-semibold rounded-lg text-slate-700 dark:text-white/80 bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/[0.08] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 sm:min-w-[96px]"
           >
             <component :is="copied ? Check : Copy" class="h-4 w-4" :class="{ 'text-emerald-500': copied }" />
-            {{ copied ? t('builder.export.copied') : t('builder.export.copy') }}
+            <span v-if="copied">{{ t('builder.export.copied') }}</span>
+            <span v-else>
+              {{ viewMode === 'prompt' ? t('builder.export.copyPrompt') : t('builder.export.copy') }}
+            </span>
           </button>
           <button
+            v-if="viewMode === 'code'"
             type="button"
             @click="onDownload"
             class="inline-flex items-center justify-center gap-2 w-full sm:w-auto px-4 py-2 text-sm font-semibold text-white rounded-lg bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-500/25 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-indigo-500 dark:focus-visible:ring-offset-[#111118]"
@@ -142,10 +208,13 @@ function tabClass(framework: Framework) {
         </div>
       </div>
 
+      <!-- Content pane -->
       <div class="rounded-xl border border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-[#0a0a0f] overflow-hidden">
-        <pre class="code-pane m-0 p-3 sm:p-4 text-xs font-mono text-slate-800 dark:text-white/80 overflow-auto max-h-[40vh] sm:max-h-[50vh]"
+        <pre
+          class="code-pane m-0 p-3 sm:p-4 text-xs font-mono text-slate-800 dark:text-white/80 overflow-auto max-h-[40vh] sm:max-h-[50vh]"
+          :class="{ 'whitespace-pre-wrap break-words': viewMode === 'prompt' }"
           dir="ltr"
-        ><code>{{ generated.code }}</code></pre>
+        ><code>{{ activeContent }}</code></pre>
       </div>
     </div>
 
