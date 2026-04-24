@@ -4,8 +4,10 @@ import { useEventListener } from '@vueuse/core'
 import { useFormStore } from '../../stores/form'
 import { Settings2, X, Trash2 } from 'lucide-vue-next'
 import { getElementDefinition } from './elements'
+import { useBuilderUI } from '../../composables/useBuilderUI'
 
 const formStore = useFormStore()
+const { isPropertiesOpen, isMobile, closeSheets } = useBuilderUI()
 
 const selectedElement = computed(() => formStore.selectedElement)
 
@@ -17,8 +19,14 @@ const showRequired = computed(() => selectedElement.value?.type !== 'row')
 const showPlaceholder = computed(() => definition.value?.hasPlaceholder === true)
 const showOptions = computed(() => definition.value?.hasOptions === true)
 
+// Desktop: visible whenever something is selected. Mobile: gated by the sheet toggle.
+const isVisible = computed(() =>
+  isMobile.value ? isPropertiesOpen.value : !!selectedElement.value
+)
+
 function closeProperties() {
   formStore.selectElement(null)
+  if (isMobile.value) closeSheets()
 }
 
 useEventListener(window, 'keydown', (e: KeyboardEvent) => {
@@ -60,21 +68,47 @@ function updateOptionAt(index: number, value: string) {
 </script>
 
 <template>
-  <aside
-    v-show="selectedElement"
-    class="w-80 bg-white dark:bg-[#111118] border-l border-slate-200 dark:border-white/[0.07] p-6 flex flex-col absolute inset-y-0 right-0 z-20 shadow-xl dark:shadow-black/50 lg:static lg:shadow-none transition-all duration-300"
+  <!-- Mobile backdrop -->
+  <Transition
+    enter-active-class="transition duration-200 ease-out"
+    enter-from-class="opacity-0"
+    enter-to-class="opacity-100"
+    leave-active-class="transition duration-150 ease-in"
+    leave-from-class="opacity-100"
+    leave-to-class="opacity-0"
   >
-    <div class="flex items-center justify-between mb-8">
+    <div
+      v-if="isPropertiesOpen"
+      @click="closeSheets"
+      class="fixed inset-0 bg-slate-900/40 dark:bg-black/60 backdrop-blur-sm z-30 md:hidden"
+      aria-hidden="true"
+    />
+  </Transition>
+
+  <aside
+    v-show="isVisible"
+    :class="[
+      'bg-white dark:bg-[#111118] flex flex-col',
+      'fixed inset-x-0 bottom-0 z-40 max-h-[85vh] rounded-t-2xl border-t border-slate-200 dark:border-white/[0.07] shadow-2xl shadow-black/20 dark:shadow-black/60 p-5',
+      'md:static md:w-80 md:max-h-none md:rounded-none md:border-t-0 md:border-l md:border-slate-200 md:dark:border-white/[0.07] md:shadow-xl md:dark:shadow-black/50 md:p-6 lg:shadow-none',
+    ]"
+    aria-label="Element properties"
+  >
+    <div class="flex items-center justify-between mb-6 md:mb-8">
       <div class="flex items-center gap-2">
         <Settings2 class="h-5 w-5 text-primary-600 dark:text-indigo-400" aria-hidden="true" />
         <h2 class="font-bold text-slate-800 dark:text-white text-base">Properties</h2>
       </div>
-      <button @click="closeProperties" class="p-1.5 text-slate-500 dark:text-white/40 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.07] rounded-lg">
+      <button
+        @click="closeProperties"
+        class="p-1.5 text-slate-500 dark:text-white/40 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.07] rounded-lg"
+        aria-label="Close properties"
+      >
         <X class="h-5 w-5" />
       </button>
     </div>
 
-    <div v-if="selectedElement" class="flex-1 overflow-y-auto space-y-6">
+    <div v-if="selectedElement" class="flex-1 overflow-y-auto space-y-6 pb-safe">
       <div>
         <label class="block text-xs font-semibold text-slate-500 dark:text-white/40 uppercase tracking-wider mb-2">Label</label>
         <input
@@ -130,3 +164,9 @@ function updateOptionAt(index: number, value: string) {
     </div>
   </aside>
 </template>
+
+<style scoped>
+.pb-safe {
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+}
+</style>

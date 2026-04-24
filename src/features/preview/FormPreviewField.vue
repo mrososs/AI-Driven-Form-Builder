@@ -12,8 +12,10 @@ const htmlInputType = computed(() => HTML_INPUT_TYPE[props.element.type])
 
 <template>
   <div>
-    <!-- Row: side-by-side columns -->
-    <div v-if="element.type === 'row'" class="flex gap-4">
+    <!-- Row: stack on narrow containers, side-by-side once the container has room.
+         Uses container queries so the row stacks inside the phone mockup too, not
+         just when the viewport itself is narrow. -->
+    <div v-if="element.type === 'row'" class="flex flex-col gap-3 @sm:flex-row @sm:gap-4">
       <div v-for="child in element.children" :key="child.id" class="flex-1 min-w-0">
         <FormPreviewField :element="child" />
       </div>

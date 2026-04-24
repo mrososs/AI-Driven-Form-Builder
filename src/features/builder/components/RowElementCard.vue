@@ -34,20 +34,23 @@ function updateChildLabel(id: string, value: string) {
 </script>
 
 <template>
-  <div class="group relative bg-white dark:bg-[#111118] rounded-xl border border-slate-200 dark:border-white/[0.07] p-6 hover:border-primary-300 dark:hover:border-indigo-500/40 hover:shadow-md dark:hover:shadow-black/30 transition-all duration-200">
-    <div class="absolute -left-3 top-1/2 -translate-y-1/2 drag-handle cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity bg-white dark:bg-[#111118] border border-slate-200 dark:border-white/[0.07] rounded-md p-1 shadow-sm">
+  <div class="group relative bg-white dark:bg-[#111118] rounded-xl border border-slate-200 dark:border-white/[0.07] p-4 sm:p-6 hover:border-primary-300 dark:hover:border-indigo-500/40 hover:shadow-md dark:hover:shadow-black/30 transition-all duration-200">
+    <div class="hidden md:block absolute -left-3 top-1/2 -translate-y-1/2 drag-handle cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity bg-white dark:bg-[#111118] border border-slate-200 dark:border-white/[0.07] rounded-md p-1 shadow-sm">
       <GripVertical class="h-4 w-4 text-slate-500 dark:text-white/40" aria-hidden="true" />
     </div>
 
-    <div class="flex justify-between items-start mb-3">
-      <div class="flex-1 mr-4">
+    <div class="flex justify-between items-start mb-3 gap-2">
+      <div class="flex items-center gap-2 flex-1 min-w-0">
+        <span class="md:hidden drag-handle cursor-grab active:cursor-grabbing p-1 -ml-1 text-slate-400 dark:text-white/30 shrink-0" aria-label="Drag handle">
+          <GripVertical class="h-4 w-4" aria-hidden="true" />
+        </span>
         <input
           v-model="rowLabel"
-          class="font-semibold text-slate-800 dark:text-white w-full border-none focus:outline-none focus:ring-0 p-0 bg-transparent text-sm"
+          class="font-semibold text-slate-800 dark:text-white w-full min-w-0 border-none focus:outline-none focus:ring-0 p-0 bg-transparent text-sm"
           aria-label="Label for row layout"
         />
       </div>
-      <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+      <div class="flex items-center gap-1 shrink-0 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
         <button
           @click.stop="formStore.selectElement(element.id)"
           class="p-1.5 text-slate-500 dark:text-white/40 hover:text-primary-600 dark:hover:text-indigo-400 hover:bg-primary-50 dark:hover:bg-indigo-500/10 rounded-lg transition-colors"
@@ -76,19 +79,24 @@ function updateChildLabel(id: string, value: string) {
         ghost-class="opacity-40"
       >
         <template #item="{ element: colElement }">
-          <div class="flex-1 group/col relative bg-white dark:bg-[#16161e] rounded-lg border border-slate-200 dark:border-white/[0.07] p-4 hover:border-primary-300 dark:hover:border-indigo-500/40 shadow-sm transition-all duration-200">
-            <div class="absolute -left-2 top-1/2 -translate-y-1/2 drag-handle cursor-grab active:cursor-grabbing opacity-0 group-hover/col:opacity-100 transition-opacity bg-white dark:bg-[#16161e] border border-slate-200 dark:border-white/[0.07] rounded p-0.5 shadow-sm z-10">
+          <div class="flex-1 min-w-0 group/col relative bg-white dark:bg-[#16161e] rounded-lg border border-slate-200 dark:border-white/[0.07] p-3 sm:p-4 hover:border-primary-300 dark:hover:border-indigo-500/40 shadow-sm transition-all duration-200">
+            <div class="hidden md:block absolute -left-2 top-1/2 -translate-y-1/2 drag-handle cursor-grab active:cursor-grabbing opacity-0 group-hover/col:opacity-100 transition-opacity bg-white dark:bg-[#16161e] border border-slate-200 dark:border-white/[0.07] rounded p-0.5 shadow-sm z-10">
               <GripVertical class="h-3 w-3 text-slate-500 dark:text-white/40" aria-hidden="true" />
             </div>
 
-            <div class="flex justify-between items-start mb-2">
-              <input
-                :value="colElement.label"
-                @input="updateChildLabel(colElement.id, ($event.target as HTMLInputElement).value)"
-                class="font-semibold text-slate-800 dark:text-white w-full border-none focus:outline-none focus:ring-0 p-0 bg-transparent text-sm flex-1 mr-2"
-                :aria-label="`Label for ${colElement.type} field`"
-              />
-              <div class="flex items-center gap-0.5 opacity-0 group-hover/col:opacity-100 transition-opacity">
+            <div class="flex justify-between items-start mb-2 gap-1">
+              <div class="flex items-center gap-1 flex-1 min-w-0">
+                <span class="md:hidden drag-handle cursor-grab active:cursor-grabbing p-0.5 -ml-0.5 text-slate-400 dark:text-white/30 shrink-0" aria-label="Drag handle">
+                  <GripVertical class="h-3 w-3" aria-hidden="true" />
+                </span>
+                <input
+                  :value="colElement.label"
+                  @input="updateChildLabel(colElement.id, ($event.target as HTMLInputElement).value)"
+                  class="font-semibold text-slate-800 dark:text-white w-full min-w-0 border-none focus:outline-none focus:ring-0 p-0 bg-transparent text-sm"
+                  :aria-label="`Label for ${colElement.type} field`"
+                />
+              </div>
+              <div class="flex items-center gap-0.5 shrink-0 opacity-100 md:opacity-0 md:group-hover/col:opacity-100 transition-opacity">
                 <button
                   @click.stop="formStore.selectElement(colElement.id)"
                   class="p-1 text-slate-500 dark:text-white/40 hover:text-primary-600 dark:hover:text-indigo-400 rounded"

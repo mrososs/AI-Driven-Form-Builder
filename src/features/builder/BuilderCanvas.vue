@@ -57,57 +57,61 @@ function openExportDialog() {
 <template>
   <main class="flex-1 flex flex-col min-w-0">
     <!-- Top Bar -->
-    <header class="h-16 bg-white dark:bg-[#111118] border-b border-slate-200 dark:border-white/[0.07] px-8 flex items-center justify-between gap-4 shrink-0">
+    <header class="h-16 bg-white dark:bg-[#111118] border-b border-slate-200 dark:border-white/[0.07] px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-2 sm:gap-4 shrink-0">
       <input
         v-model="formStore.title"
-        class="text-lg font-bold text-slate-900 dark:text-white bg-transparent border-none focus:outline-none focus:ring-0 min-w-0 w-56 truncate placeholder:text-slate-500 dark:placeholder:text-white/30"
+        class="text-base sm:text-lg font-bold text-slate-900 dark:text-white bg-transparent border-none focus:outline-none focus:ring-0 min-w-0 flex-1 sm:flex-initial sm:w-56 truncate placeholder:text-slate-500 dark:placeholder:text-white/30"
         aria-label="Form title"
         placeholder="Untitled Form"
       />
-      <div class="flex items-center gap-2 shrink-0">
+      <div class="flex items-center gap-1 sm:gap-2 shrink-0">
         <button
           v-if="formStore.hasElements"
           @click="openClearDialog"
-          class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 dark:text-white/60 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-colors"
-          title="Clear all fields"
+          class="flex items-center gap-2 px-2 sm:px-4 py-2 text-sm font-medium text-slate-600 dark:text-white/60 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-colors"
+          :title="t('builder.toolbar.clear')"
+          :aria-label="t('builder.toolbar.clear')"
         >
           <Eraser class="h-4 w-4" />
-          {{ t('builder.toolbar.clear') }}
+          <span class="hidden md:inline">{{ t('builder.toolbar.clear') }}</span>
         </button>
         <button
           @click="goToPreview"
           :disabled="!formStore.hasElements"
           :class="previewButtonClass"
-          :title="formStore.hasElements ? 'Preview form' : 'Add elements to preview'"
+          :title="formStore.hasElements ? t('builder.toolbar.preview') : 'Add elements to preview'"
+          :aria-label="t('builder.toolbar.preview')"
         >
           <Eye class="h-4 w-4" />
-          {{ t('builder.toolbar.preview') }}
+          <span class="hidden md:inline">{{ t('builder.toolbar.preview') }}</span>
         </button>
         <button
           @click="openExportDialog"
           :disabled="!formStore.hasElements"
           :class="previewButtonClass"
-          :title="formStore.hasElements ? 'Export form as component' : 'Add elements to export'"
+          :title="formStore.hasElements ? t('builder.toolbar.export') : 'Add elements to export'"
+          :aria-label="t('builder.toolbar.export')"
         >
           <Download class="h-4 w-4" />
-          {{ t('builder.toolbar.export') }}
+          <span class="hidden md:inline">{{ t('builder.toolbar.export') }}</span>
         </button>
         <button
           @click="handleSave"
-          class="btn-primary flex items-center gap-2 text-sm"
+          class="btn-primary flex items-center gap-2 text-sm px-3 sm:px-4"
           :disabled="formStore.isSaving"
+          :aria-label="t('builder.toolbar.save')"
         >
           <Save class="h-4 w-4" :class="{ 'animate-spin': formStore.isSaving }" />
-          {{ formStore.isSaving ? t('builder.toolbar.saving') : t('builder.toolbar.save') }}
+          <span class="hidden sm:inline">{{ formStore.isSaving ? t('builder.toolbar.saving') : t('builder.toolbar.save') }}</span>
         </button>
       </div>
     </header>
 
     <!-- Canvas Area -->
-    <div class="flex-1 overflow-y-auto p-8 lg:p-12 flex justify-center bg-slate-50 dark:bg-[#0d0d14]">
+    <div class="flex-1 overflow-y-auto p-4 sm:p-8 lg:p-12 flex justify-center bg-slate-50 dark:bg-[#0d0d14]">
       <div class="w-full max-w-2xl space-y-4">
         <!-- Form Header Card -->
-        <div class="bg-white dark:bg-[#111118] rounded-2xl shadow-sm dark:shadow-black/30 border border-slate-200 dark:border-white/[0.07] p-8">
+        <div class="bg-white dark:bg-[#111118] rounded-2xl shadow-sm dark:shadow-black/30 border border-slate-200 dark:border-white/[0.07] p-5 sm:p-8">
           <input
             v-model="formStore.title"
             class="text-3xl font-bold text-slate-900 dark:text-white w-full border-none focus:outline-none focus:ring-0 p-0 mb-2 placeholder:text-slate-300 dark:placeholder:text-white/20 bg-transparent"

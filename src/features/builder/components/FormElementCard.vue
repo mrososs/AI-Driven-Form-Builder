@@ -50,20 +50,23 @@ const dateTimePlaceholder = computed(() => {
 </script>
 
 <template>
-  <div class="group relative bg-white dark:bg-[#111118] rounded-xl border border-slate-200 dark:border-white/[0.07] p-6 hover:border-primary-300 dark:hover:border-indigo-500/40 hover:shadow-md dark:hover:shadow-black/30 transition-all duration-200">
-    <div class="absolute -left-3 top-1/2 -translate-y-1/2 drag-handle cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity bg-white dark:bg-[#111118] border border-slate-200 dark:border-white/[0.07] rounded-md p-1 shadow-sm">
+  <div class="group relative bg-white dark:bg-[#111118] rounded-xl border border-slate-200 dark:border-white/[0.07] p-4 sm:p-6 hover:border-primary-300 dark:hover:border-indigo-500/40 hover:shadow-md dark:hover:shadow-black/30 transition-all duration-200">
+    <div class="hidden md:block absolute -left-3 top-1/2 -translate-y-1/2 drag-handle cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity bg-white dark:bg-[#111118] border border-slate-200 dark:border-white/[0.07] rounded-md p-1 shadow-sm">
       <GripVertical class="h-4 w-4 text-slate-500 dark:text-white/40" aria-hidden="true" />
     </div>
 
-    <div class="flex justify-between items-start mb-3">
-      <div class="flex-1 mr-4">
+    <div class="flex justify-between items-start mb-3 gap-2">
+      <div class="flex items-center gap-2 flex-1 min-w-0">
+        <span class="md:hidden drag-handle cursor-grab active:cursor-grabbing p-1 -ml-1 text-slate-400 dark:text-white/30 shrink-0" aria-label="Drag handle">
+          <GripVertical class="h-4 w-4" aria-hidden="true" />
+        </span>
         <input
           v-model="label"
-          class="font-semibold text-slate-800 dark:text-white w-full border-none focus:outline-none focus:ring-0 p-0 bg-transparent text-sm"
+          class="font-semibold text-slate-800 dark:text-white w-full min-w-0 border-none focus:outline-none focus:ring-0 p-0 bg-transparent text-sm"
           :aria-label="`Label for ${element.type} field`"
         />
       </div>
-      <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+      <div class="flex items-center gap-1 shrink-0 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
         <button
           @click.stop="formStore.selectElement(element.id)"
           class="p-1.5 text-slate-500 dark:text-white/40 hover:text-primary-600 dark:hover:text-indigo-400 hover:bg-primary-50 dark:hover:bg-indigo-500/10 rounded-lg transition-colors"

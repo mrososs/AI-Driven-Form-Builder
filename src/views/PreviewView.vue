@@ -39,19 +39,20 @@ async function handleSave() {
 
     <!-- Header -->
     <header
-      class="h-14 px-5 flex items-center justify-between shrink-0 z-10
+      class="h-14 px-3 sm:px-5 flex items-center justify-between gap-2 shrink-0 z-10
              bg-white dark:bg-[#111118]
              border-b border-slate-200 dark:border-white/[0.06]"
     >
       <button
         @click="router.push('/builder')"
-        class="flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-lg transition-colors
+        class="flex items-center gap-2 px-2 sm:px-3 py-1.5 text-sm font-medium rounded-lg transition-colors shrink-0
                text-slate-600 dark:text-white/50
                hover:text-slate-900 dark:hover:text-white
                hover:bg-slate-100 dark:hover:bg-white/[0.05]"
+        aria-label="Back to Builder"
       >
         <ArrowLeft class="h-4 w-4" />
-        Back to Builder
+        <span class="hidden sm:inline">Back to Builder</span>
       </button>
 
       <!-- View Mode Toggle -->
@@ -73,16 +74,17 @@ async function handleSave() {
       <button
         @click="handleSave"
         :disabled="formStore.isSaving"
-        class="flex items-center gap-2 px-4 py-1.5 text-sm font-medium bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 disabled:opacity-50 text-white rounded-lg transition-colors"
+        class="flex items-center gap-2 px-3 sm:px-4 py-1.5 text-sm font-medium bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 disabled:opacity-50 text-white rounded-lg transition-colors shrink-0"
+        :aria-label="formStore.isSaving ? 'Saving' : 'Save Form'"
       >
         <Save class="h-3.5 w-3.5" :class="{ 'animate-spin': formStore.isSaving }" />
-        {{ formStore.isSaving ? 'Saving…' : 'Save Form' }}
+        <span class="hidden sm:inline">{{ formStore.isSaving ? 'Saving…' : 'Save Form' }}</span>
       </button>
     </header>
 
     <!-- Preview Stage -->
     <div class="preview-stage flex-1 overflow-y-auto">
-      <div class="min-h-full flex items-center justify-center py-12 px-6">
+      <div class="min-h-full flex items-center justify-center py-6 px-3 sm:py-12 sm:px-6">
 
         <Transition name="preview-fade" mode="out-in">
 
@@ -110,7 +112,7 @@ async function handleSave() {
               </div>
 
               <!-- Fields -->
-              <form class="desktop-form-body" @submit.prevent>
+              <form class="desktop-form-body @container" @submit.prevent>
                 <template v-for="element in formStore.elements" :key="element.id">
                   <FormPreviewField :element="element" />
                 </template>
@@ -161,7 +163,7 @@ async function handleSave() {
                   </p>
                 </div>
 
-                <form class="phone-form-body flex-1 overflow-y-auto px-5 py-5 space-y-5" @submit.prevent>
+                <form class="phone-form-body @container flex-1 overflow-y-auto px-5 py-5 space-y-5" @submit.prevent>
                   <template v-for="element in formStore.elements" :key="element.id">
                     <FormPreviewField :element="element" />
                   </template>
@@ -278,20 +280,21 @@ async function handleSave() {
 
 .desktop-form-header {
   background: #4f46e5;
-  padding: 28px 32px 24px;
+  padding: clamp(20px, 5vw, 28px) clamp(18px, 6vw, 32px) clamp(18px, 4vw, 24px);
 }
 
 .desktop-form-body {
-  padding: 28px 32px 32px;
+  padding: clamp(20px, 5vw, 28px) clamp(18px, 6vw, 32px) clamp(20px, 5vw, 32px);
   background: #ffffff;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 18px;
 }
 
 /* ── Phone Frame (hardware always dark) ── */
 .phone-frame {
   width: 375px;
+  max-width: 100%;
   flex-shrink: 0;
   background: #12121e;
   border-radius: 50px;
@@ -311,6 +314,18 @@ async function handleSave() {
   display: flex;
   flex-direction: column;
   position: relative;
+}
+
+/* Shrink the phone mockup when the viewport itself is phone-sized. */
+@media (max-width: 420px) {
+  .phone-frame {
+    padding: 6px;
+    border-radius: 36px;
+  }
+  .phone-screen {
+    height: min(720px, calc(100dvh - 160px));
+    border-radius: 30px;
+  }
 }
 
 .phone-status-bar {
