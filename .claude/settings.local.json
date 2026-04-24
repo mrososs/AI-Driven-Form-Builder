@@ -23,7 +23,8 @@
       "Bash(cp /tmp/design_bundle/ai-form-builder/project/splash-variants.jsx /tmp/splash-variants.jsx)",
       "Bash(cp /tmp/design_bundle/ai-form-builder/project/landing-preview.jsx /tmp/landing-preview.jsx)",
       "Bash(cp /tmp/design_bundle/ai-form-builder/project/tweaks-panel.jsx /tmp/tweaks-panel.jsx)",
-      "Read(//d/tmp/**)"
+      "Read(//d/tmp/**)",
+      "Bash(npx vue-tsc *)"
     ]
   }
 }
