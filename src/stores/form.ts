@@ -1,5 +1,6 @@
 import { ref, shallowRef, computed } from 'vue'
 import { defineStore } from 'pinia'
+import { useI18n } from 'vue-i18n'
 import { db } from '../firebase'
 import {
   collection,
@@ -16,6 +17,8 @@ import {
   type Timestamp,
 } from 'firebase/firestore'
 import { useAuthStore } from './auth'
+import { generateFrameworkAwarePrompt } from '../utils/promptGenerator'
+import type { Framework } from '../utils/codegen/shared'
 
 export interface FormElement {
   id: string
@@ -257,6 +260,17 @@ export const useFormStore = defineStore('form', () => {
     }
   }
 
+  function generatePrompt(framework: Framework): string {
+    const { locale } = useI18n()
+    return generateFrameworkAwarePrompt(
+      elements.value,
+      title.value,
+      description.value,
+      framework,
+      locale.value
+    )
+  }
+
   return {
     elements,
     title,
@@ -285,5 +299,6 @@ export const useFormStore = defineStore('form', () => {
     fetchUserForms,
     loadFormById,
     deleteForm,
+    generatePrompt,
   }
 })
