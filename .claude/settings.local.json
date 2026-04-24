@@ -13,7 +13,17 @@
       "Bash(git commit *)",
       "mcp__plugin_chrome-devtools-mcp_chrome-devtools__new_page",
       "mcp__plugin_chrome-devtools-mcp_chrome-devtools__emulate",
-      "mcp__plugin_chrome-devtools-mcp_chrome-devtools__resize_page"
+      "mcp__plugin_chrome-devtools-mcp_chrome-devtools__resize_page",
+      "WebFetch(domain:api.anthropic.com)",
+      "Bash(mkdir -p \"/tmp/design_bundle\")",
+      "Read(//tmp/**)",
+      "Bash(cp \"C:/Users/OMHAMED-OSAMA/.claude/projects/D--Study-SaaS-form-builder-AI-Driven-Form-Builder/d5b1eedb-17b8-4f77-84ef-76d416dc6088/tool-results/webfetch-1777024822846-roaqyk.bin\" ./bundle.bin)",
+      "Bash(tar -xzf bundle.bin)",
+      "Bash(cp /tmp/design_bundle/ai-form-builder/project/app.jsx /tmp/app.jsx)",
+      "Bash(cp /tmp/design_bundle/ai-form-builder/project/splash-variants.jsx /tmp/splash-variants.jsx)",
+      "Bash(cp /tmp/design_bundle/ai-form-builder/project/landing-preview.jsx /tmp/landing-preview.jsx)",
+      "Bash(cp /tmp/design_bundle/ai-form-builder/project/tweaks-panel.jsx /tmp/tweaks-panel.jsx)",
+      "Read(//d/tmp/**)"
     ]
   }
 }
