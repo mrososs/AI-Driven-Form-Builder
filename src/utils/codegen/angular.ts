@@ -1,13 +1,16 @@
 import type { FormElement } from '../../stores/form'
 import {
-  type CodegenNode,
-  type Field,
-  type GeneratedComponent,
   buildCodegenTree,
+  buildNameLookup,
+  buildVisibilityExpr,
   componentNameFromTitle,
   escapeAttr,
   flattenFields,
+  serializeOptionsMap,
   slugify,
+  type CodegenNode,
+  type Field,
+  type GeneratedComponent,
 } from './shared'
 
 const INPUT_CLASS =
@@ -26,7 +29,15 @@ function renderLabel(field: Field): string {
   return `<label class="${LABEL_CLASS}">${escapeAttr(field.label)}${requiredMark(field)}</label>`
 }
 
-function renderField(field: Field): string {
+function hasDynamicOptions(field: Field, namesById: Record<string, string>): boolean {
+  return !!(field.optionsSource && namesById[field.optionsSource.sourceId])
+}
+
+function dynamicOptionsGetter(field: Field): string {
+  return `${field.name}Options`
+}
+
+function renderField(field: Field, namesById: Record<string, string>): string {
   const { name, placeholder, htmlInputType } = field
   const phAttr = placeholder ? ` placeholder="${escapeAttr(placeholder)}"` : ''
 
@@ -66,7 +77,12 @@ function renderField(field: Field): string {
   }
 
   if (field.type === 'select') {
-    const opts = field.options.length
+    const dynamic = hasDynamicOptions(field, namesById)
+    const opts = dynamic
+      ? `    @for (o of ${dynamicOptionsGetter(field)}; track o) {
+      <option [value]="o">{{ o }}</option>
+    }`
+      : field.options.length
       ? field.options
           .map(o => `    <option value="${escapeAttr(o)}">${escapeAttr(o)}</option>`)
           .join('\n')
@@ -81,7 +97,20 @@ ${opts}
   }
 
   if (field.type === 'radio') {
-    const opts = field.options.length
+    const dynamic = hasDynamicOptions(field, namesById)
+    const opts = dynamic
+      ? `    @for (o of ${dynamicOptionsGetter(field)}; track o) {
+      <label class="flex items-center gap-3 cursor-pointer">
+        <input
+          type="radio"
+          formControlName="${name}"
+          [value]="o"
+          class="h-4 w-4 border-slate-300 dark:border-white/20 bg-white dark:bg-white/[0.04] text-indigo-600 focus:ring-2 focus:ring-indigo-500/40 cursor-pointer"
+        />
+        <span class="text-sm text-slate-700 dark:text-white/80 select-none">{{ o }}</span>
+      </label>
+    }`
+      : field.options.length
       ? field.options
           .map(
             o => `    <label class="flex items-center gap-3 cursor-pointer">
@@ -118,21 +147,41 @@ ${opts}
   return `<!-- Unsupported field type: ${field.type} -->`
 }
 
+function wrapVisibility(
+  block: string,
+  field: Field,
+  namesById: Record<string, string>
+): string {
+  if (!field.visibility) return block
+  const expr = buildVisibilityExpr(field.visibility, namesById, 'angular')
+  if (!expr) return block
+  const inner = block
+    .split('\n')
+    .map(l => (l.length === 0 ? l : '  ' + l))
+    .join('\n')
+  return `@if (${expr}) {\n${inner}\n}`
+}
+
 function capitalize(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1)
 }
 
-function renderNode(node: CodegenNode, depth: number): string {
+function renderNode(
+  node: CodegenNode,
+  depth: number,
+  namesById: Record<string, string>
+): string {
   const pad = '      '.repeat(1) + '  '.repeat(depth)
   if (node.kind === 'row') {
     const children = node.children
-      .map(c => renderNode(c, depth + 1))
+      .map(c => renderNode(c, depth + 1, namesById))
       .join('\n')
     return `${pad}<div class="flex gap-4">
 ${children}
 ${pad}</div>`
   }
-  return indentBlock(renderField(node.field), pad)
+  const wrapped = wrapVisibility(renderField(node.field, namesById), node.field, namesById)
+  return indentBlock(wrapped, pad)
 }
 
 function indentBlock(block: string, pad: string): string {
@@ -154,12 +203,40 @@ function formControlLine(field: Field): string {
   return `    ${field.name}: [${initial}, [${validators.join(', ')}]],`
 }
 
+function buildDynamicOptionsMembers(
+  fields: Field[],
+  namesById: Record<string, string>
+): string {
+  const lines: string[] = []
+  for (const f of fields) {
+    if (!f.optionsSource) continue
+    const parentName = namesById[f.optionsSource.sourceId]
+    if (!parentName) continue
+    const mapProp = `optionsMap_${f.name}`
+    const fbProp = `optionsFallback_${f.name}`
+    lines.push(
+      `  readonly ${mapProp}: Record<string, string[]> = ${serializeOptionsMap(f.optionsSource.map)}`
+    )
+    lines.push(
+      `  readonly ${fbProp}: string[] = ${JSON.stringify(f.optionsSource.fallback ?? [])}`
+    )
+    lines.push(
+      `  get ${f.name}Options(): string[] {
+    const v = this.form.get('${parentName}')?.value
+    return this.${mapProp}[v] ?? this.${fbProp}
+  }`
+    )
+  }
+  return lines.length ? '\n' + lines.join('\n') + '\n' : ''
+}
+
 export function generateAngularComponent(
   elements: FormElement[],
   title: string
 ): GeneratedComponent {
   const tree = buildCodegenTree(elements)
   const fields = flattenFields(tree)
+  const namesById = buildNameLookup(tree)
   const classBase = componentNameFromTitle(title)
   const className = classBase.endsWith('Component') ? classBase : classBase + 'Component'
   const selectorBase = slugify(classBase) || 'exported-form'
@@ -170,7 +247,7 @@ export function generateAngularComponent(
     ? fields.map(formControlLine).join('\n')
     : '    // TODO: add controls'
 
-  const markup = tree.map(n => renderNode(n, 0)).join('\n')
+  const markup = tree.map(n => renderNode(n, 0, namesById)).join('\n')
   const titleText = title || 'Form'
 
   const fileHandlers = fields
@@ -184,6 +261,8 @@ export function generateAngularComponent(
   }`
     )
     .join('')
+
+  const dynamicOptionsMembers = buildDynamicOptionsMembers(fields, namesById)
 
   const interfaceLines = fields.length
     ? fields
@@ -224,7 +303,7 @@ export class ${className} {
   readonly form: FormGroup = this.fb.group({
 ${controls}
   })
-
+${dynamicOptionsMembers}
   onSubmit(): void {
     if (this.form.invalid) return
     const values = this.form.value as ${classBase}Values

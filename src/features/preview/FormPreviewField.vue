@@ -3,15 +3,35 @@ import { computed } from 'vue'
 import { ChevronDown } from 'lucide-vue-next'
 import type { FormElement } from '../../stores/form'
 import { HTML_INPUT_TYPE } from '../../utils/codegen/shared'
+import { usePreviewValues } from '../../composables/usePreviewValues'
+import { isVisible, resolveOptions } from '../../features/builder/dependencies'
 
 defineOptions({ name: 'FormPreviewField' })
 const props = defineProps<{ element: FormElement }>()
 
 const htmlInputType = computed(() => HTML_INPUT_TYPE[props.element.type])
+
+const preview = usePreviewValues()
+
+const visible = computed(() => (preview ? isVisible(props.element, preview.values) : true))
+
+const resolvedOptions = computed(() =>
+  preview ? resolveOptions(props.element, preview.values) : props.element.options ?? []
+)
+
+const textValue = computed({
+  get: () => (preview ? String(preview.getValue(props.element.id) ?? '') : ''),
+  set: (v) => preview?.setValue(props.element.id, v),
+})
+
+const checkboxValue = computed({
+  get: () => (preview ? Boolean(preview.getValue(props.element.id)) : false),
+  set: (v) => preview?.setValue(props.element.id, v),
+})
 </script>
 
 <template>
-  <div>
+  <div v-if="visible">
     <!-- Row: stack on narrow containers, side-by-side once the container has room.
          Uses container queries so the row stacks inside the phone mockup too, not
          just when the viewport itself is narrow. -->
@@ -28,6 +48,7 @@ const htmlInputType = computed(() => HTML_INPUT_TYPE[props.element.type])
     >
       <input
         type="checkbox"
+        v-model="checkboxValue"
         :required="element.required"
         class="mt-0.5 h-4 w-4 shrink-0 rounded
                border-slate-300 dark:border-white/20
@@ -56,6 +77,7 @@ const htmlInputType = computed(() => HTML_INPUT_TYPE[props.element.type])
       <input
         v-if="htmlInputType"
         :type="htmlInputType"
+        v-model="textValue"
         :placeholder="element.placeholder || ''"
         :required="element.required"
         class="w-full px-3.5 py-2.5 text-sm rounded-lg transition-colors
@@ -68,6 +90,7 @@ const htmlInputType = computed(() => HTML_INPUT_TYPE[props.element.type])
 
       <textarea
         v-else-if="element.type === 'textarea'"
+        v-model="textValue"
         :placeholder="element.placeholder || ''"
         :required="element.required"
         rows="3"
@@ -81,6 +104,7 @@ const htmlInputType = computed(() => HTML_INPUT_TYPE[props.element.type])
 
       <div v-else-if="element.type === 'select'" class="relative">
         <select
+          v-model="textValue"
           :required="element.required"
           class="preview-select w-full px-3.5 py-2.5 pr-10 text-sm rounded-lg transition-colors cursor-pointer
                  text-slate-800 dark:text-white
@@ -88,8 +112,8 @@ const htmlInputType = computed(() => HTML_INPUT_TYPE[props.element.type])
                  border border-slate-200 dark:border-white/10
                  focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 dark:focus:border-indigo-400"
         >
-          <option value="" disabled selected>Select an option</option>
-          <option v-for="opt in element.options" :key="opt" :value="opt">{{ opt }}</option>
+          <option value="" disabled>Select an option</option>
+          <option v-for="opt in resolvedOptions" :key="opt" :value="opt">{{ opt }}</option>
         </select>
         <ChevronDown
           class="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 pointer-events-none text-slate-400 dark:text-white/50"
@@ -99,7 +123,7 @@ const htmlInputType = computed(() => HTML_INPUT_TYPE[props.element.type])
 
       <div v-else-if="element.type === 'radio'" class="space-y-2">
         <label
-          v-for="opt in element.options"
+          v-for="opt in resolvedOptions"
           :key="opt"
           class="flex items-center gap-3 cursor-pointer group"
         >
@@ -107,6 +131,7 @@ const htmlInputType = computed(() => HTML_INPUT_TYPE[props.element.type])
             type="radio"
             :name="element.id"
             :value="opt"
+            v-model="textValue"
             :required="element.required"
             class="h-4 w-4 shrink-0
                    border-slate-300 dark:border-white/20

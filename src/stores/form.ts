@@ -20,6 +20,25 @@ import { useAuthStore } from './auth'
 import { generateFrameworkAwarePrompt } from '../utils/promptGenerator'
 import type { Framework } from '../utils/codegen/shared'
 
+export type DependencyOperator =
+  | 'equals'
+  | 'notEquals'
+  | 'in'
+  | 'empty'
+  | 'notEmpty'
+
+export interface VisibilityRule {
+  sourceId: string
+  operator: DependencyOperator
+  value?: string | string[]
+}
+
+export interface OptionsMap {
+  sourceId: string
+  map: Record<string, string[]>
+  fallback?: string[]
+}
+
 export interface FormElement {
   id: string
   type: string
@@ -28,6 +47,8 @@ export interface FormElement {
   required: boolean
   options?: string[]
   children?: FormElement[]
+  visibility?: VisibilityRule
+  optionsSource?: OptionsMap
 }
 
 export interface SavedForm {
@@ -78,6 +99,32 @@ function removeFromList(list: FormElement[], id: string): boolean {
   return false
 }
 
+function collectIds(list: FormElement[], into: Set<string>): void {
+  for (const el of list) {
+    into.add(el.id)
+    if (el.children) collectIds(el.children, into)
+  }
+}
+
+function pruneDanglingRefs(list: FormElement[], removedIds: Set<string>): void {
+  for (const el of list) {
+    if (el.visibility && removedIds.has(el.visibility.sourceId)) {
+      delete el.visibility
+    }
+    if (el.optionsSource && removedIds.has(el.optionsSource.sourceId)) {
+      delete el.optionsSource
+    }
+    if (el.children) pruneDanglingRefs(el.children, removedIds)
+  }
+}
+
+const OPTIONS_SOURCE_TYPES = new Set(['select', 'radio'])
+// Element types that produce a user-observable value suitable as a visibility trigger.
+const VISIBILITY_SOURCE_TYPES = new Set([
+  'text', 'textarea', 'number', 'email', 'phone', 'url',
+  'select', 'radio', 'checkbox', 'date', 'time', 'datetime',
+])
+
 const DEFAULT_TITLE = 'Untitled Form'
 const DEFAULT_DESCRIPTION = 'A brief description of your form'
 
@@ -113,7 +160,14 @@ export const useFormStore = defineStore('form', () => {
   }
 
   function removeElement(id: string) {
+    const target = findElement(id)
+    const removed = new Set<string>()
+    if (target) {
+      removed.add(target.id)
+      if (target.children) collectIds(target.children, removed)
+    }
     removeFromList(elements.value, id)
+    if (removed.size > 0) pruneDanglingRefs(elements.value, removed)
     if (selectedElementId.value === id) {
       selectedElementId.value = null
     }
@@ -148,6 +202,61 @@ export const useFormStore = defineStore('form', () => {
   function updateOption(id: string, index: number, value: string) {
     const el = findElement(id)
     if (el?.options) el.options[index] = value
+  }
+
+  function listEligibleSources(
+    currentId: string,
+    opts: { forOptionsMap?: boolean } = {}
+  ): FormElement[] {
+    const target = findElement(currentId)
+    const exclude = new Set<string>([currentId])
+    if (target?.children) collectIds(target.children, exclude)
+    const allowedTypes = opts.forOptionsMap
+      ? OPTIONS_SOURCE_TYPES
+      : VISIBILITY_SOURCE_TYPES
+    const out: FormElement[] = []
+    function walk(list: FormElement[]) {
+      for (const el of list) {
+        if (!exclude.has(el.id) && allowedTypes.has(el.type)) out.push(el)
+        if (el.children) walk(el.children)
+      }
+    }
+    walk(elements.value)
+    return out
+  }
+
+  function setVisibility(id: string, rule: VisibilityRule | undefined) {
+    const el = findElement(id)
+    if (!el) return
+    if (rule) el.visibility = rule
+    else delete el.visibility
+  }
+
+  function setOptionsSource(id: string, source: OptionsMap | undefined) {
+    const el = findElement(id)
+    if (!el) return
+    if (source) el.optionsSource = source
+    else delete el.optionsSource
+  }
+
+  function updateOptionsMapEntry(
+    id: string,
+    parentValue: string,
+    childOptions: string[]
+  ) {
+    const el = findElement(id)
+    if (!el?.optionsSource) return
+    el.optionsSource.map = {
+      ...el.optionsSource.map,
+      [parentValue]: childOptions,
+    }
+  }
+
+  function setOptionsFallback(id: string, fallback: string[] | undefined) {
+    const el = findElement(id)
+    if (!el?.optionsSource) return
+    if (fallback && fallback.length > 0) el.optionsSource.fallback = fallback
+    else delete el.optionsSource.fallback
   }
 
   function saveDraft() {
@@ -292,6 +401,11 @@ export const useFormStore = defineStore('form', () => {
     addOption,
     removeOption,
     updateOption,
+    listEligibleSources,
+    setVisibility,
+    setOptionsSource,
+    updateOptionsMapEntry,
+    setOptionsFallback,
     saveDraft,
     clearDraft,
     clearElements,

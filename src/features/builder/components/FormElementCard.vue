@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import {
   GripVertical,
   Settings2,
@@ -9,13 +10,25 @@ import {
   Clock,
   CalendarClock,
   Upload,
+  Link2,
 } from 'lucide-vue-next'
 import type { FormElement } from '../../../stores/form'
 import { useFormStore } from '../../../stores/form'
 
+const { t } = useI18n()
 const props = defineProps<{ element: FormElement }>()
 
 const formStore = useFormStore()
+
+const parentSourceId = computed(
+  () => props.element.optionsSource?.sourceId ?? props.element.visibility?.sourceId
+)
+
+const parentLabel = computed(() => {
+  const id = parentSourceId.value
+  if (!id) return ''
+  return formStore.findElement(id)?.label ?? ''
+})
 
 const label = computed({
   get: () => props.element.label,
@@ -83,6 +96,14 @@ const dateTimePlaceholder = computed(() => {
           <Trash2 class="h-3.5 w-3.5" />
         </button>
       </div>
+    </div>
+
+    <div
+      v-if="parentLabel"
+      class="mb-2 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-medium bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300"
+    >
+      <Link2 class="h-3 w-3" aria-hidden="true" />
+      <span>{{ t('builder.properties.canvasChip', { label: parentLabel }) }}</span>
     </div>
 
     <div class="mt-1">

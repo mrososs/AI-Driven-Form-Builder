@@ -1,14 +1,20 @@
 import type { FormElement } from '../../stores/form'
 import {
-  type CodegenNode,
-  type Field,
-  type GeneratedComponent,
   buildCodegenTree,
+  buildNameLookup,
+  buildVisibilityExpr,
   componentNameFromTitle,
   defaultValueLiteral,
   escapeAttr,
   flattenFields,
+  formAccess,
+  optionsFallbackConstName,
+  optionsMapConstName,
+  serializeOptionsMap,
   tsTypeFor,
+  type CodegenNode,
+  type Field,
+  type GeneratedComponent,
 } from './shared'
 
 const INPUT_CLASS =
@@ -27,7 +33,17 @@ function renderLabel(field: Field): string {
   return `<label className="${LABEL_CLASS}">${escapeAttr(field.label)}${requiredMark(field)}</label>`
 }
 
-function renderField(field: Field): string {
+function dynamicOptionsExpr(field: Field, namesById: Record<string, string>): string | null {
+  if (!field.optionsSource) return null
+  const parentName = namesById[field.optionsSource.sourceId]
+  if (!parentName) return null
+  const access = formAccess(parentName, 'react')
+  const mapName = optionsMapConstName(field.name)
+  const fbName = optionsFallbackConstName(field.name)
+  return `(${mapName}[${access}] ?? ${fbName})`
+}
+
+function renderField(field: Field, namesById: Record<string, string>): string {
   const { name, placeholder, required, htmlInputType } = field
   const reqAttr = required ? ' required' : ''
   const phAttr = placeholder ? ` placeholder="${escapeAttr(placeholder)}"` : ''
@@ -71,7 +87,12 @@ function renderField(field: Field): string {
   }
 
   if (field.type === 'select') {
-    const opts = field.options.length
+    const dynamic = dynamicOptionsExpr(field, namesById)
+    const opts = dynamic
+      ? `    {${dynamic}.map(o => (
+      <option key={o} value={o}>{o}</option>
+    ))}`
+      : field.options.length
       ? field.options
           .map(
             o => `    <option key="${escapeAttr(o)}" value="${escapeAttr(o)}">${escapeAttr(o)}</option>`
@@ -92,7 +113,22 @@ ${opts}
   }
 
   if (field.type === 'radio') {
-    const opts = field.options.length
+    const dynamic = dynamicOptionsExpr(field, namesById)
+    const opts = dynamic
+      ? `    {${dynamic}.map(o => (
+      <label key={o} className="flex items-center gap-3 cursor-pointer">
+        <input
+          type="radio"
+          name="${name}"
+          value={o}
+          checked={form.${name} === o}
+          onChange={() => setForm(prev => ({ ...prev, ${name}: o }))}${reqAttr}
+          className="h-4 w-4 border-slate-300 dark:border-white/20 bg-white dark:bg-white/[0.04] text-indigo-600 focus:ring-2 focus:ring-indigo-500/40 cursor-pointer"
+        />
+        <span className="text-sm text-slate-700 dark:text-white/80 select-none">{o}</span>
+      </label>
+    ))}`
+      : field.options.length
       ? field.options
           .map(
             o => `    <label key="${escapeAttr(o)}" className="flex items-center gap-3 cursor-pointer">
@@ -131,17 +167,35 @@ ${opts}
   return `{/* Unsupported field type: ${field.type} */}`
 }
 
-function renderNode(node: CodegenNode, depth: number): string {
+function wrapVisibility(
+  block: string,
+  field: Field,
+  namesById: Record<string, string>
+): string {
+  if (!field.visibility) return block
+  const expr = buildVisibilityExpr(field.visibility, namesById, 'react')
+  if (!expr) return block
+  return `{(${expr}) && (
+  ${block.split('\n').join('\n  ')}
+)}`
+}
+
+function renderNode(
+  node: CodegenNode,
+  depth: number,
+  namesById: Record<string, string>
+): string {
   const pad = '      '.repeat(1) + '  '.repeat(depth)
   if (node.kind === 'row') {
     const children = node.children
-      .map(c => renderNode(c, depth + 1))
+      .map(c => renderNode(c, depth + 1, namesById))
       .join('\n')
     return `${pad}<div className="flex gap-4">
 ${children}
 ${pad}</div>`
   }
-  return indentBlock(renderField(node.field), pad)
+  const wrapped = wrapVisibility(renderField(node.field, namesById), node.field, namesById)
+  return indentBlock(wrapped, pad)
 }
 
 function indentBlock(block: string, pad: string): string {
@@ -151,12 +205,30 @@ function indentBlock(block: string, pad: string): string {
     .join('\n')
 }
 
+function buildOptionsConstants(fields: Field[], namesById: Record<string, string>): string {
+  const lines: string[] = []
+  for (const f of fields) {
+    if (!f.optionsSource) continue
+    if (!namesById[f.optionsSource.sourceId]) continue
+    const mapConst = optionsMapConstName(f.name)
+    const fbConst = optionsFallbackConstName(f.name)
+    lines.push(
+      `const ${mapConst}: Record<string, string[]> = ${serializeOptionsMap(f.optionsSource.map)}`
+    )
+    lines.push(
+      `const ${fbConst}: string[] = ${JSON.stringify(f.optionsSource.fallback ?? [])}`
+    )
+  }
+  return lines.length ? lines.join('\n') + '\n\n' : ''
+}
+
 export function generateReactComponent(
   elements: FormElement[],
   title: string
 ): GeneratedComponent {
   const tree = buildCodegenTree(elements)
   const fields = flattenFields(tree)
+  const namesById = buildNameLookup(tree)
   const componentName = componentNameFromTitle(title)
 
   const interfaceLines = fields.length
@@ -167,7 +239,8 @@ export function generateReactComponent(
     ? fields.map(f => `  ${f.name}: ${defaultValueLiteral(f)},`).join('\n')
     : '  // empty form'
 
-  const markup = tree.map(n => renderNode(n, 0)).join('\n')
+  const optionsConstants = buildOptionsConstants(fields, namesById)
+  const markup = tree.map(n => renderNode(n, 0, namesById)).join('\n')
   const titleText = title || 'Form'
 
   const code = `import { useState, type FormEvent } from 'react'
@@ -176,7 +249,7 @@ interface FormValues {
 ${interfaceLines}
 }
 
-const initialValues: FormValues = {
+${optionsConstants}const initialValues: FormValues = {
 ${initialLines}
 }
 

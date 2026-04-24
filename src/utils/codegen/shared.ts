@@ -1,4 +1,4 @@
-import type { FormElement } from '../../stores/form'
+import type { FormElement, OptionsMap, VisibilityRule } from '../../stores/form'
 
 export type Framework = 'vue' | 'react' | 'angular'
 
@@ -28,6 +28,8 @@ export interface Field {
   options: string[]
   name: string
   htmlInputType: string | null
+  visibility?: VisibilityRule
+  optionsSource?: OptionsMap
 }
 
 export type CodegenNode =
@@ -148,6 +150,8 @@ export function buildCodegenTree(elements: FormElement[]): CodegenNode[] {
         options: el.options ?? [],
         name: allocator.claim(toCamelCase(el.label), fieldIndex),
         htmlInputType: HTML_INPUT_TYPE[el.type] ?? null,
+        visibility: el.visibility,
+        optionsSource: el.optionsSource,
       }
       return { kind: 'field' as const, field }
     })
@@ -166,6 +170,67 @@ export function flattenFields(tree: CodegenNode[]): Field[] {
   }
   visit(tree)
   return out
+}
+
+export function buildNameLookup(tree: CodegenNode[]): Record<string, string> {
+  const out: Record<string, string> = {}
+  function visit(nodes: CodegenNode[]) {
+    for (const n of nodes) {
+      if (n.kind === 'row') visit(n.children)
+      else out[n.field.id] = n.field.name
+    }
+  }
+  visit(tree)
+  return out
+}
+
+export type FormDialect = 'vue' | 'react' | 'angular'
+
+export function formAccess(name: string, dialect: FormDialect): string {
+  if (dialect === 'angular') return `form.get('${name}')?.value`
+  return `form.${name}`
+}
+
+export function buildVisibilityExpr(
+  rule: VisibilityRule,
+  namesById: Record<string, string>,
+  dialect: FormDialect
+): string | null {
+  const name = namesById[rule.sourceId]
+  if (!name) return null
+  const access = formAccess(name, dialect)
+  switch (rule.operator) {
+    case 'empty':
+      return `!${access}`
+    case 'notEmpty':
+      return `!!${access}`
+    case 'equals':
+      return `${access} === ${JSON.stringify(String(rule.value ?? ''))}`
+    case 'notEquals':
+      return `${access} !== ${JSON.stringify(String(rule.value ?? ''))}`
+    case 'in': {
+      const arr = Array.isArray(rule.value) ? rule.value.map(String) : []
+      return `${JSON.stringify(arr)}.includes(${access})`
+    }
+    default:
+      return null
+  }
+}
+
+export function optionsMapConstName(fieldName: string): string {
+  return `OPTIONS_MAP_${fieldName}`
+}
+
+export function optionsFallbackConstName(fieldName: string): string {
+  return `OPTIONS_FALLBACK_${fieldName}`
+}
+
+export function serializeOptionsMap(map: Record<string, string[]>): string {
+  const entries = Object.entries(map).map(
+    ([k, v]) => `  ${JSON.stringify(k)}: ${JSON.stringify(v)}`
+  )
+  if (entries.length === 0) return '{}'
+  return `{\n${entries.join(',\n')},\n}`
 }
 
 export function defaultValueLiteral(field: Field): string {

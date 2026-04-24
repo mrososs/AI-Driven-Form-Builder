@@ -1,14 +1,20 @@
 import type { FormElement } from '../../stores/form'
 import {
-  type CodegenNode,
-  type Field,
-  type GeneratedComponent,
   buildCodegenTree,
+  buildNameLookup,
+  buildVisibilityExpr,
   componentNameFromTitle,
   defaultValueLiteral,
   escapeAttr,
   flattenFields,
+  formAccess,
+  optionsFallbackConstName,
+  optionsMapConstName,
+  serializeOptionsMap,
   tsTypeFor,
+  type CodegenNode,
+  type Field,
+  type GeneratedComponent,
 } from './shared'
 
 const INPUT_CLASS =
@@ -27,13 +33,30 @@ function renderLabel(field: Field): string {
   return `<label class="${LABEL_CLASS}">${escapeAttr(field.label)}${requiredMark(field)}</label>`
 }
 
-function renderField(field: Field): string {
+function visibilityAttr(field: Field, namesById: Record<string, string>): string {
+  if (!field.visibility) return ''
+  const expr = buildVisibilityExpr(field.visibility, namesById, 'vue')
+  return expr ? ` v-if="${expr}"` : ''
+}
+
+function optionsIteration(field: Field, namesById: Record<string, string>): { expr: string | null } {
+  if (!field.optionsSource) return { expr: null }
+  const parentName = namesById[field.optionsSource.sourceId]
+  if (!parentName) return { expr: null }
+  const access = formAccess(parentName, 'vue')
+  const mapName = optionsMapConstName(field.name)
+  const fbName = optionsFallbackConstName(field.name)
+  return { expr: `(${mapName}[${access}] ?? ${fbName})` }
+}
+
+function renderField(field: Field, namesById: Record<string, string>): string {
   const { name, placeholder, required, htmlInputType } = field
   const reqAttr = required ? ' required' : ''
   const phAttr = placeholder ? ` placeholder="${escapeAttr(placeholder)}"` : ''
+  const vIf = visibilityAttr(field, namesById)
 
   if (field.type === 'checkbox') {
-    return `<label class="flex items-start gap-3 cursor-pointer group">
+    return `<label${vIf} class="flex items-start gap-3 cursor-pointer group">
   <input
     type="checkbox"
     v-model="form.${name}"${reqAttr}
@@ -46,7 +69,7 @@ function renderField(field: Field): string {
   }
 
   if (htmlInputType) {
-    return `<div class="space-y-2">
+    return `<div${vIf} class="space-y-2">
   ${renderLabel(field)}
   <input
     type="${htmlInputType}"
@@ -57,7 +80,7 @@ function renderField(field: Field): string {
   }
 
   if (field.type === 'textarea') {
-    return `<div class="space-y-2">
+    return `<div${vIf} class="space-y-2">
   ${renderLabel(field)}
   <textarea
     v-model="form.${name}"${phAttr}${reqAttr}
@@ -68,12 +91,15 @@ function renderField(field: Field): string {
   }
 
   if (field.type === 'select') {
-    const opts = field.options.length
+    const dynamic = optionsIteration(field, namesById)
+    const opts = dynamic.expr
+      ? `    <option v-for="o in ${dynamic.expr}" :key="o" :value="o">{{ o }}</option>`
+      : field.options.length
       ? field.options
           .map(o => `    <option value="${escapeAttr(o)}">${escapeAttr(o)}</option>`)
           .join('\n')
       : '    <!-- TODO: add options -->'
-    return `<div class="space-y-2">
+    return `<div${vIf} class="space-y-2">
   ${renderLabel(field)}
   <select v-model="form.${name}"${reqAttr} class="${INPUT_CLASS}">
     <option value="" disabled>Select an option</option>
@@ -83,7 +109,19 @@ ${opts}
   }
 
   if (field.type === 'radio') {
-    const opts = field.options.length
+    const dynamic = optionsIteration(field, namesById)
+    const opts = dynamic.expr
+      ? `    <label v-for="o in ${dynamic.expr}" :key="o" class="flex items-center gap-3 cursor-pointer">
+      <input
+        type="radio"
+        name="${name}"
+        :value="o"
+        v-model="form.${name}"${reqAttr}
+        class="h-4 w-4 border-slate-300 dark:border-white/20 bg-white dark:bg-white/[0.04] text-indigo-600 focus:ring-2 focus:ring-indigo-500/40 cursor-pointer"
+      />
+      <span class="text-sm text-slate-700 dark:text-white/80 select-none">{{ o }}</span>
+    </label>`
+      : field.options.length
       ? field.options
           .map(
             o => `    <label class="flex items-center gap-3 cursor-pointer">
@@ -99,7 +137,7 @@ ${opts}
           )
           .join('\n')
       : '    <!-- TODO: add options -->'
-    return `<div class="space-y-2">
+    return `<div${vIf} class="space-y-2">
   ${renderLabel(field)}
   <div class="space-y-2">
 ${opts}
@@ -108,7 +146,7 @@ ${opts}
   }
 
   if (field.type === 'file') {
-    return `<div class="space-y-2">
+    return `<div${vIf} class="space-y-2">
   ${renderLabel(field)}
   <input
     type="file"
@@ -121,17 +159,21 @@ ${opts}
   return `<!-- Unsupported field type: ${field.type} -->`
 }
 
-function renderNode(node: CodegenNode, depth: number): string {
+function renderNode(
+  node: CodegenNode,
+  depth: number,
+  namesById: Record<string, string>
+): string {
   const pad = '      '.repeat(1) + '  '.repeat(depth)
   if (node.kind === 'row') {
     const children = node.children
-      .map(c => renderNode(c, depth + 1))
+      .map(c => renderNode(c, depth + 1, namesById))
       .join('\n')
     return `${pad}<div class="flex gap-4">
 ${children}
 ${pad}</div>`
   }
-  return node.field ? indentBlock(renderField(node.field), pad) : ''
+  return node.field ? indentBlock(renderField(node.field, namesById), pad) : ''
 }
 
 function indentBlock(block: string, pad: string): string {
@@ -141,12 +183,30 @@ function indentBlock(block: string, pad: string): string {
     .join('\n')
 }
 
+function buildOptionsConstants(fields: Field[], namesById: Record<string, string>): string {
+  const lines: string[] = []
+  for (const f of fields) {
+    if (!f.optionsSource) continue
+    if (!namesById[f.optionsSource.sourceId]) continue
+    const mapConst = optionsMapConstName(f.name)
+    const fbConst = optionsFallbackConstName(f.name)
+    lines.push(
+      `const ${mapConst}: Record<string, string[]> = ${serializeOptionsMap(f.optionsSource.map)}`
+    )
+    lines.push(
+      `const ${fbConst}: string[] = ${JSON.stringify(f.optionsSource.fallback ?? [])}`
+    )
+  }
+  return lines.length ? lines.join('\n') + '\n\n' : ''
+}
+
 export function generateVueComponent(
   elements: FormElement[],
   title: string
 ): GeneratedComponent {
   const tree = buildCodegenTree(elements)
   const fields = flattenFields(tree)
+  const namesById = buildNameLookup(tree)
   const componentName = componentNameFromTitle(title)
 
   const interfaceLines = fields.length
@@ -157,7 +217,8 @@ export function generateVueComponent(
     ? fields.map(f => `  ${f.name}: ${defaultValueLiteral(f)},`).join('\n')
     : '  // empty form'
 
-  const markup = tree.map(n => renderNode(n, 0)).join('\n')
+  const optionsConstants = buildOptionsConstants(fields, namesById)
+  const markup = tree.map(n => renderNode(n, 0, namesById)).join('\n')
   const titleText = title || 'Form'
 
   const code = `<script setup lang="ts">
@@ -167,7 +228,7 @@ interface FormValues {
 ${interfaceLines}
 }
 
-const form = reactive<FormValues>({
+${optionsConstants}const form = reactive<FormValues>({
 ${initialLines}
 })
 

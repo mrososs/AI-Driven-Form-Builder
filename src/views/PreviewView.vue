@@ -4,6 +4,9 @@ import { useRouter } from 'vue-router'
 import { ArrowLeft, Save, Monitor, Smartphone, Wifi, Battery } from 'lucide-vue-next'
 import { useFormStore } from '../stores/form'
 import FormPreviewField from '../features/preview/FormPreviewField.vue'
+import { providePreviewValues } from '../composables/usePreviewValues'
+
+providePreviewValues()
 
 type ViewMode = 'desktop' | 'mobile'
 
