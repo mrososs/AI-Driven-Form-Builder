@@ -17,6 +17,16 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/docs',
+      name: 'docs',
+      component: () => import('../views/DocsView.vue'),
+    },
+    {
+      path: '/examples',
+      name: 'examples',
+      component: () => import('../views/ExamplesView.vue'),
+    },
+    {
       path: '/forms',
       name: 'forms',
       component: () => import('../views/FormsView.vue'),
