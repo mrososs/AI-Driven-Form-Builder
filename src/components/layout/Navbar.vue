@@ -71,12 +71,6 @@ async function handleLogout() {
           >
             {{ t("nav.docs") }}
           </RouterLink>
-          <a
-            href="#"
-            class="px-3.5 py-2 text-sm font-medium rounded-lg transition-all text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-white/65 dark:hover:text-white dark:hover:bg-white/[0.07]"
-          >
-            {{ t("nav.api") }}
-          </a>
           <RouterLink
             to="/examples"
             class="px-3.5 py-2 text-sm font-medium rounded-lg transition-all text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-white/65 dark:hover:text-white dark:hover:bg-white/[0.07]"
@@ -84,12 +78,6 @@ async function handleLogout() {
           >
             {{ t("nav.examples") }}
           </RouterLink>
-          <a
-            href="#"
-            class="px-3.5 py-2 text-sm font-medium rounded-lg transition-all text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-white/65 dark:hover:text-white dark:hover:bg-white/[0.07]"
-          >
-            {{ t("nav.blog") }}
-          </a>
         </nav>
 
         <!-- Actions -->
@@ -213,23 +201,11 @@ async function handleLogout() {
             class="text-base font-semibold text-slate-700 dark:text-white/80 hover:text-indigo-600 dark:hover:text-indigo-400"
             >{{ t("nav.docs") }}</RouterLink
           >
-          <a
-            href="#"
-            @click="isMenuOpen = false"
-            class="text-base font-semibold text-slate-700 dark:text-white/80 hover:text-indigo-600 dark:hover:text-indigo-400"
-            >{{ t("nav.api") }}</a
-          >
           <RouterLink
             to="/examples"
             @click="isMenuOpen = false"
             class="text-base font-semibold text-slate-700 dark:text-white/80 hover:text-indigo-600 dark:hover:text-indigo-400"
             >{{ t("nav.examples") }}</RouterLink
-          >
-          <a
-            href="#"
-            @click="isMenuOpen = false"
-            class="text-base font-semibold text-slate-700 dark:text-white/80 hover:text-indigo-600 dark:hover:text-indigo-400"
-            >{{ t("nav.blog") }}</a
           >
 
           <div class="h-px bg-slate-200 dark:bg-white/10 my-2 w-full"></div>
