@@ -48,6 +48,97 @@ const messages = {
         description: 'Use web standards to stream real-time validation feedback. Keep interactions fast, responsive, and type-safe for your users.'
       }
     },
+    audience: {
+      eyebrow: "Who it's for",
+      title: 'Built for developers who ship',
+      subtitle: 'Not a no-code tool for business owners. A power tool for the engineers, leads, and AI-driven teams who turn forms into product.',
+      developers: {
+        role: 'Frontend Developers',
+        stack: 'Angular · React · Vue',
+        desc: 'Tired of the validation, error-handling, and state-management treadmill on every project.',
+      },
+      leads: {
+        role: 'Technical Team Leads',
+        stack: 'Architecture · Standards',
+        desc: 'Standardize form architecture across the team — one source of truth, consistent quality.',
+      },
+      freelancers: {
+        role: 'Freelancers',
+        stack: 'Ship fast · Stay sharp',
+        desc: 'Deliver client work in hours, not days. Quality output every time, no rework.',
+      },
+      agentUsers: {
+        role: 'AI Agent Users',
+        stack: 'Cursor · Claude · MCP',
+        desc: 'When agents generate UI that looks right but breaks. Stop fighting hallucinated logic.',
+      },
+    },
+    value: {
+      eyebrow: 'Why FormAI',
+      title: 'We bridge the design-to-logic gap',
+      subtitle: 'AI builds the look. FormAI guarantees the logic.',
+      prompt: {
+        chip: 'Prompt engineering',
+        title: 'AI-ready prompts, not vague vibes',
+        desc: 'The reason agents get forms wrong is loose prompts. FormAI generates a strict blueprint — schema, state, UI library — so the agent executes with exactness, not guesswork.',
+        bullet1: 'Precise schemas — Zod or Yup',
+        bullet2: 'Specific state — Signals, Pinia, Redux',
+        bullet3: 'UI library specs — PrimeNG, Tailwind v4, Material',
+        blueprintLabel: 'Generated blueprint',
+        kSchema: 'Schema',
+        kState: 'State',
+        kUI: 'UI library',
+        kFields: 'Fields',
+        kValidation: 'Validation',
+        vSchema: 'Zod · strict mode',
+        vState: 'Vue 3 · Pinia',
+        vUI: 'Tailwind v4',
+        vFields: 'email · plan · seats',
+        vValidation: 'email.required · plan.in([…])',
+        result: 'Agent executes the blueprint with 100% accuracy.',
+      },
+      export: {
+        chip: 'Cross-framework',
+        title: 'One field, three frameworks',
+        desc: 'Drag a component once. Export it as the same field in Angular with Signals, Vue 3 SFC, or a React functional component. Pick the stack your team already uses — or all three.',
+        source: 'FormAI schema',
+        angular: 'Angular · Signals',
+        vue: 'Vue 3 · Script Setup',
+        react: 'React · Functional',
+        forkLabel: 'Single source · multiple targets',
+      },
+      lowCode: {
+        chip: 'Developer-centric',
+        title: 'Drag & drop without the CSS landfill',
+        desc: 'This isn\'t a no-code tool that spits out unreadable markup. Every field exports as clean, idiomatic code you would be proud to commit.',
+        bullet1: 'Conditional logic, end to end',
+        bullet2: 'Multi-step validation rules',
+        bullet3: 'No magic, no lock-in',
+      },
+    },
+    power: {
+      eyebrow: 'Power features',
+      title: 'Built on what comes next',
+      subtitle: 'We adopt tomorrow\'s stack today, so the code your forms generate ships modern.',
+      signals: {
+        badge: 'For Angular v18+',
+        title: 'Zoneless + Signals, by default',
+        desc: 'First-class Angular Signals support and zoneless change detection — the natural choice for any team running modern Angular. No zone.js. No migration tax. Reactivity that just works.',
+        point1: 'Reactive primitives, not RxJS bloat',
+        point2: 'Zoneless-ready out of the box',
+        point3: 'Standalone components, modern templates',
+      },
+      tailwind: {
+        badge: 'CSS · v4',
+        title: 'Tailwind v4 native',
+        desc: 'Cutting-edge styling baked in. Lightweight, modern utilities — no legacy framework drag, no migration debt.',
+      },
+      mcp: {
+        badge: 'Beta',
+        title: 'Dedicated MCP server',
+        desc: 'Plug FormAI into your IDE. Let agents see your form designs and write the logic in real time, in your editor.',
+      },
+    },
     builder: {
       nav: {
         builder: 'Builder',
@@ -129,6 +220,201 @@ const messages = {
           addOption: '+ Add Option',
         },
         canvasChip: 'Depends on {label}',
+      },
+    },
+    docs: {
+      hero: {
+        eyebrow: 'Documentation',
+        titleP1: 'Everything you need to ship',
+        titleGradient: 'forms with intelligence.',
+        subtitle: 'A walkthrough of the FormAI builder — palette, properties, preview, export, and the AI prompt that turns your schema into framework-ready code.',
+      },
+      toc: {
+        title: 'On this page',
+        overview: 'Overview',
+        gettingStarted: 'Getting started',
+        elements: 'Elements',
+        properties: 'Properties',
+        preview: 'Preview',
+        export: 'Export',
+        aiPrompt: 'AI Prompt',
+      },
+      overview: {
+        eyebrow: 'Overview',
+        title: 'What is the FormAI builder?',
+        desc: 'A three-panel canvas designed for engineers: a draggable palette on the left, a live form canvas in the center, and a deep properties panel on the right. Build, validate, preview, and export — all without losing the structure of your schema.',
+        cards: {
+          drag: {
+            title: 'Drag, drop, done',
+            desc: 'Snap fields into place with a palette of typed primitives — text, choice, date, file, and layout rows.',
+          },
+          logic: {
+            title: 'Conditional logic',
+            desc: 'Show, hide, or branch fields based on the value of any other field. No JS required.',
+          },
+          export: {
+            title: 'Framework-ready export',
+            desc: 'Get a clean Vue 3, React, or Angular component you would actually commit — Tailwind styles included.',
+          },
+        },
+      },
+      start: {
+        eyebrow: 'Getting started',
+        title: 'Build your first form in four steps',
+        desc: 'Open the builder, drop a few elements, configure them, then preview or export. The whole loop should take under a minute.',
+        step1: {
+          title: 'Open the builder',
+          desc: 'Sign in and head to the builder. Your draft auto-saves locally as you work — no commit needed.',
+        },
+        step2: {
+          title: 'Add elements from the palette',
+          desc: 'Drag fields from the left sidebar onto the canvas. Use Layout Rows to place fields side-by-side.',
+        },
+        step3: {
+          title: 'Configure with the properties panel',
+          desc: 'Click any field to open the right panel — set the label, mark required, define options, or add visibility rules.',
+        },
+        step4: {
+          title: 'Preview, then export',
+          desc: 'Hit Preview to test the live form on desktop or mobile. When you are happy, export it as Vue 3, React, or Angular.',
+        },
+        cta: 'Open the builder',
+      },
+      elements: {
+        eyebrow: 'Elements',
+        title: 'A typed palette, not a generic shape library',
+        desc: 'Every element on the left is a strongly-typed field. Pick the right primitive and validation, accessibility, and export are handled for you.',
+        alt: 'FormAI builder canvas with elements palette',
+        caption: 'The builder canvas — drop fields, then refine them in the properties panel.',
+        groups: {
+          text: {
+            title: 'Text fields',
+            desc: 'Short text, long text, number, email, phone, and URL — each with the right validators wired in.',
+          },
+          choice: {
+            title: 'Choice fields',
+            desc: 'Dropdown, radio, and checkbox — all support dependent options that react to other fields.',
+          },
+          date: {
+            title: 'Date & time',
+            desc: 'Native date, time, and date-time pickers with locale-aware formatting and RTL support.',
+          },
+          upload: {
+            title: 'Upload & layout',
+            desc: 'File upload primitives plus layout rows for placing fields side-by-side without fighting CSS.',
+          },
+        },
+      },
+      properties: {
+        eyebrow: 'Properties',
+        title: 'Configure without leaving the canvas',
+        desc: 'The right panel is where the logic lives — labels, requireds, options, visibility rules, and dependent options. Click any field to bring it into focus.',
+        alt: 'Builder showing the properties panel for a radio field',
+        urlLabel: '/builder',
+        feature1: {
+          title: 'Visibility rules',
+          desc: 'Show this field only when another field equals, does not equal, is one of, is empty, or is not empty.',
+        },
+        feature2: {
+          title: 'Dependent options',
+          desc: 'Map a parent field value to a different set of child options — perfect for country/state or plan/seats.',
+        },
+      },
+      preview: {
+        eyebrow: 'Preview',
+        title: 'Test on desktop and mobile in one click',
+        desc: 'The preview view renders your form exactly as users will see it — including conditional logic and required-field validation. Toggle between desktop and mobile frames without leaving the builder.',
+        altDesktop: 'Desktop preview of the rendered form',
+        altMobile: 'Mobile preview of the rendered form',
+        captionDesktop: 'Desktop preview',
+        captionMobile: 'Mobile preview',
+      },
+      export: {
+        eyebrow: 'Export',
+        title: 'One schema, three frameworks',
+        desc: 'Pick a framework and copy or download a component you can paste straight into your project. Styled with Tailwind, typed with TypeScript, no proprietary runtime.',
+        alt: 'Export dialog showing generated Vue 3 component code',
+        targets: {
+          vue: {
+            title: 'Vue 3 — Script Setup',
+            desc: 'Single-file component with reactive state, v-if visibility, and v-model on every field.',
+          },
+          react: {
+            title: 'React — Functional',
+            desc: 'Function component with controlled inputs, hooks, and conditional rendering already wired.',
+          },
+          angular: {
+            title: 'Angular — Signals',
+            desc: 'Standalone component using Signals for reactivity — zoneless-ready, no zone.js drag.',
+          },
+        },
+      },
+      aiPrompt: {
+        eyebrow: 'AI Prompt',
+        title: 'Turn your form into an AI-ready blueprint',
+        desc: 'Every export comes with an AI Prompt tab — a strict, framework-aware brief you can paste into any LLM or coding agent. The agent gets schema, state library, and UI conventions, not vague vibes.',
+        alt: 'AI Prompt tab with framework-aware blueprint',
+        tip: {
+          label: 'Tip:',
+          body: 'Prompts encode your selected framework, validation rules, conditional logic, and accessibility requirements. Agents execute, they do not guess.',
+        },
+      },
+      dark: {
+        alt: 'Builder canvas in dark mode',
+        caption: 'The builder ships with first-class dark mode — every panel adapts.',
+      },
+    },
+    examples: {
+      hero: {
+        eyebrow: 'Examples',
+        titleP1: 'See FormAI in motion —',
+        titleGradient: 'real builds, real screenshots.',
+        subtitle: 'Every screenshot below is captured straight from the builder. Drop into any of these flows and see how the canvas, properties, preview, and export hang together.',
+        cta: 'Try it yourself',
+        docs: 'Read the docs',
+      },
+      cards: {
+        onboarding: {
+          tag: 'Form builder',
+          url: '/builder · Customer Onboarding',
+          title: 'Customer onboarding with conditional logic',
+          desc: 'A row layout for the name, a select for role, a radio for plan, and a team-size field that only appears for Pro and Enterprise. Built in under a minute.',
+        },
+        preview: {
+          tag: 'Desktop preview',
+          url: '/preview · desktop',
+          title: 'Pixel-true desktop preview',
+          desc: 'The preview frame mirrors a real browser chrome so you can show stakeholders the final experience before exporting.',
+        },
+        mobile: {
+          tag: 'Mobile preview',
+          url: '/preview · mobile',
+          title: 'Mobile that respects the platform',
+          desc: 'Toggle to mobile and see the form in a phone frame — the same component, the same behavior, no extra responsive work.',
+        },
+        export: {
+          tag: 'Export dialog',
+          url: '/builder · export',
+          title: 'Vue, React, or Angular — your call',
+          desc: 'The export dialog hands you a component file and a copy/download flow. Filename, framework, and code live in one place.',
+        },
+        aiPrompt: {
+          tag: 'AI prompt',
+          url: '/builder · ai prompt',
+          title: 'A blueprint built for AI agents',
+          desc: 'The same export dialog generates a strict prompt — framework, schema, validation, and conventions — for any LLM or coding agent to execute.',
+        },
+        darkMode: {
+          tag: 'Dark mode',
+          url: '/builder · dark',
+          title: 'A dark mode that earns its keep',
+          desc: 'The whole builder shifts to a glassmorphic dark palette — high contrast, low glare, and consistent with the marketing surface.',
+        },
+      },
+      cta: {
+        title: 'Ready to build yours?',
+        subtitle: 'Open the builder, drag in a few fields, and export a component you would be proud to commit.',
+        button: 'Start building',
       },
     },
     auth: {
@@ -242,6 +528,97 @@ const messages = {
         description: 'استخدم معايير الويب لتدفق ملاحظات التحقق في الوقت الفعلي. حافظ على سرعة الاستجابة والدقة العالية للمستخدمين.'
       }
     },
+    audience: {
+      eyebrow: 'لمن صُمم',
+      title: 'مصنوع للمطورين الذين يطلقون منتجات',
+      subtitle: 'ليست أداة لا تتطلب كوداً لأصحاب الأعمال. بل أداة قوية للمهندسين وقادة الفرق وفرق الذكاء الاصطناعي الذين يحوّلون النماذج إلى منتج.',
+      developers: {
+        role: 'مطورو الواجهة الأمامية',
+        stack: 'Angular · React · Vue',
+        desc: 'سئموا من الدوامة المتكررة للتحقق ومعالجة الأخطاء وإدارة الحالة في كل مشروع.',
+      },
+      leads: {
+        role: 'قادة الفرق التقنية',
+        stack: 'البنية المعمارية · المعايير',
+        desc: 'وحّد بنية النماذج عبر الفريق — مصدر واحد للحقيقة، وجودة ثابتة.',
+      },
+      freelancers: {
+        role: 'العاملون لحسابهم',
+        stack: 'إطلاق سريع · جودة عالية',
+        desc: 'سلّم أعمال العملاء في ساعات لا أيام. مخرجات بجودة عالية في كل مرة، دون إعادة عمل.',
+      },
+      agentUsers: {
+        role: 'مستخدمو وكلاء الذكاء الاصطناعي',
+        stack: 'Cursor · Claude · MCP',
+        desc: 'حين يولّد الوكيل واجهة تبدو صحيحة لكنها مكسورة. توقّف عن مصارعة المنطق المُهلوس.',
+      },
+    },
+    value: {
+      eyebrow: 'لماذا FormAI',
+      title: 'نسد الفجوة بين التصميم والمنطق',
+      subtitle: 'الذكاء الاصطناعي يبني الشكل. FormAI يضمن المنطق.',
+      prompt: {
+        chip: 'هندسة الموجّهات',
+        title: 'موجّهات جاهزة للذكاء، لا تخمينات مبهمة',
+        desc: 'سبب أخطاء الوكلاء في النماذج هو الموجّهات الفضفاضة. ينتج FormAI مخططاً صارماً — للسكيما، والحالة، ومكتبة الواجهة — لينفّذ الوكيل بدقة، لا تخميناً.',
+        bullet1: 'مخططات دقيقة — Zod أو Yup',
+        bullet2: 'حالة محددة — Signals، Pinia، Redux',
+        bullet3: 'مواصفات مكتبة الواجهة — PrimeNG، Tailwind v4، Material',
+        blueprintLabel: 'المخطط المُولَّد',
+        kSchema: 'السكيما',
+        kState: 'الحالة',
+        kUI: 'مكتبة الواجهة',
+        kFields: 'الحقول',
+        kValidation: 'التحقق',
+        vSchema: 'Zod · وضع صارم',
+        vState: 'Vue 3 · Pinia',
+        vUI: 'Tailwind v4',
+        vFields: 'email · plan · seats',
+        vValidation: 'email.required · plan.in([…])',
+        result: 'ينفّذ الوكيل المخطط بدقة 100%.',
+      },
+      export: {
+        chip: 'متعدد الأطر',
+        title: 'حقل واحد، ثلاثة أطر',
+        desc: 'اسحب المكوّن مرة واحدة. صدّره كحقل في Angular مع Signals، أو ‎Vue 3 SFC‎، أو مكوّن React الوظيفي. اختر ما يستخدمه فريقك — أو الثلاثة معاً.',
+        source: 'سكيما FormAI',
+        angular: 'Angular · Signals',
+        vue: 'Vue 3 · Script Setup',
+        react: 'React · Functional',
+        forkLabel: 'مصدر واحد · أهداف متعددة',
+      },
+      lowCode: {
+        chip: 'يركّز على المطور',
+        title: 'سحب وإفلات بلا فوضى CSS',
+        desc: 'ليست أداة بلا كود تنتج علامات غير قابلة للقراءة. كل حقل يُصدَّر ككود نظيف ومألوف تفخر بإيداعه.',
+        bullet1: 'منطق شرطي من البداية للنهاية',
+        bullet2: 'قواعد تحقق متعددة الخطوات',
+        bullet3: 'بلا سحر وبلا قفل تقني',
+      },
+    },
+    power: {
+      eyebrow: 'مزايا متقدمة',
+      title: 'مبني على ما يأتي تالياً',
+      subtitle: 'نتبنى تقنيات الغد اليوم، ليُطلَق ما تُولّده نماذجك بأحدث صورة.',
+      signals: {
+        badge: 'لـ Angular v18+',
+        title: 'Zoneless و Signals بشكل افتراضي',
+        desc: 'دعم متقدم لـ Angular Signals وكشف تغييرات بدون zone.js — الخيار الطبيعي لأي فريق على Angular الحديث. بلا zone.js. بلا ضريبة ترحيل. تفاعلية تعمل ببساطة.',
+        point1: 'بدائل تفاعلية، لا تضخّم RxJS',
+        point2: 'جاهز لـ Zoneless فور الإطلاق',
+        point3: 'مكوّنات Standalone وقوالب حديثة',
+      },
+      tailwind: {
+        badge: 'CSS · v4',
+        title: 'Tailwind v4 أصلي',
+        desc: 'تنسيق متطور مدمج. أدوات حديثة وخفيفة — بلا أعباء أطر قديمة ولا ديون ترحيل.',
+      },
+      mcp: {
+        badge: 'تجريبي',
+        title: 'خادم MCP مخصّص',
+        desc: 'اربط FormAI بمحرّرك. دع الوكلاء يرون تصاميم النماذج ويكتبون منطقها مباشرة، داخل بيئة التطوير.',
+      },
+    },
     builder: {
       nav: {
         builder: 'المنشئ',
@@ -323,6 +700,201 @@ const messages = {
           addOption: '+ إضافة خيار',
         },
         canvasChip: 'يعتمد على {label}',
+      },
+    },
+    docs: {
+      hero: {
+        eyebrow: 'التوثيق',
+        titleP1: 'كل ما تحتاجه لإطلاق',
+        titleGradient: 'نماذج ذكية بسرعة',
+        subtitle: 'جولة في منشئ FormAI — لوحة العناصر، والخصائص، والمعاينة، والتصدير، وموجّه الذكاء الاصطناعي الذي يحوّل سكيمتك إلى كود جاهز لإطار العمل.',
+      },
+      toc: {
+        title: 'في هذه الصفحة',
+        overview: 'نظرة عامة',
+        gettingStarted: 'البدء السريع',
+        elements: 'العناصر',
+        properties: 'الخصائص',
+        preview: 'المعاينة',
+        export: 'التصدير',
+        aiPrompt: 'موجّه الذكاء',
+      },
+      overview: {
+        eyebrow: 'نظرة عامة',
+        title: 'ما هو منشئ FormAI؟',
+        desc: 'لوحة من ثلاث أجزاء مصمّمة للمهندسين: لوحة عناصر قابلة للسحب على اليسار، ومنطقة بناء حيّة في الوسط، ولوحة خصائص متقدّمة على اليمين. ابنِ، تحقّق، عاين، وصدّر — دون أن تفقد بنية السكيمة.',
+        cards: {
+          drag: {
+            title: 'سحب وإفلات وانتهى',
+            desc: 'ثبّت الحقول في مكانها من خلال لوحة من البدائل المُحدَّدة الأنواع — نص، اختيار، تاريخ، ملف، وصفوف تخطيط.',
+          },
+          logic: {
+            title: 'منطق شرطي',
+            desc: 'أظهر، أخفِ، أو فرّع الحقول بناءً على قيمة أي حقل آخر — دون كتابة جافاسكربت.',
+          },
+          export: {
+            title: 'تصدير جاهز للإطار',
+            desc: 'احصل على مكوّن نظيف بـ Vue 3 أو React أو Angular تفخر بإيداعه — مع تنسيقات Tailwind.',
+          },
+        },
+      },
+      start: {
+        eyebrow: 'البدء السريع',
+        title: 'ابنِ نموذجك الأول في أربع خطوات',
+        desc: 'افتح المنشئ، أسقط بعض العناصر، اضبطها، ثم عاين أو صدّر. الدورة كاملة لا تتجاوز الدقيقة.',
+        step1: {
+          title: 'افتح المنشئ',
+          desc: 'سجّل الدخول وانتقل إلى المنشئ. مسوّدتك تُحفظ تلقائياً محلياً أثناء عملك — بلا أوامر إيداع.',
+        },
+        step2: {
+          title: 'أضف العناصر من اللوحة',
+          desc: 'اسحب الحقول من الشريط الجانبي إلى منطقة البناء. استخدم صفوف التخطيط لجعل الحقول جنباً إلى جنب.',
+        },
+        step3: {
+          title: 'اضبط من لوحة الخصائص',
+          desc: 'انقر أي حقل لتفتح اللوحة اليمنى — اضبط التسمية، علّم كمطلوب، حدّد الخيارات، أو أضف قواعد ظهور.',
+        },
+        step4: {
+          title: 'عاين، ثم صدّر',
+          desc: 'اضغط معاينة لاختبار النموذج الحي على سطح المكتب أو الهاتف. عند الرضى، صدّره كـ Vue 3 أو React أو Angular.',
+        },
+        cta: 'افتح المنشئ',
+      },
+      elements: {
+        eyebrow: 'العناصر',
+        title: 'لوحة محدّدة الأنواع، لا مكتبة أشكال عامة',
+        desc: 'كل عنصر على اليسار حقل محدّد النوع. اختر البديل المناسب فيتم التحقق وإمكانية الوصول والتصدير من أجلك.',
+        alt: 'منطقة بناء FormAI مع لوحة العناصر',
+        caption: 'منطقة البناء — أسقط الحقول ثم حسّنها من لوحة الخصائص.',
+        groups: {
+          text: {
+            title: 'حقول النص',
+            desc: 'نص قصير، نص طويل، رقم، بريد إلكتروني، هاتف، ورابط — مع المُحقِّقات الصحيحة جاهزة.',
+          },
+          choice: {
+            title: 'حقول الاختيار',
+            desc: 'قائمة منسدلة، اختيار فردي، ومربعات اختيار — جميعها تدعم خيارات تابعة تتفاعل مع الحقول الأخرى.',
+          },
+          date: {
+            title: 'تاريخ ووقت',
+            desc: 'منتقيات تاريخ ووقت ودمج، بتنسيقات تراعي اللغة ودعم اتجاه RTL.',
+          },
+          upload: {
+            title: 'الرفع والتخطيط',
+            desc: 'بدائل لرفع الملفات وصفوف تخطيط لجعل الحقول جنباً إلى جنب دون عناء CSS.',
+          },
+        },
+      },
+      properties: {
+        eyebrow: 'الخصائص',
+        title: 'اضبط دون مغادرة منطقة البناء',
+        desc: 'اللوحة اليمنى هي حيث يعيش المنطق — التسميات، المطلوب، الخيارات، قواعد الظهور، والخيارات التابعة. انقر أي حقل لإحضاره للتركيز.',
+        alt: 'المنشئ يعرض لوحة الخصائص لحقل اختيار فردي',
+        urlLabel: '/builder',
+        feature1: {
+          title: 'قواعد الظهور',
+          desc: 'أظهر هذا الحقل فقط عندما يساوي حقل آخر، أو لا يساوي، أو ضمن قيم، أو فارغ، أو غير فارغ.',
+        },
+        feature2: {
+          title: 'خيارات تابعة',
+          desc: 'اربط قيمة حقل أب بمجموعة مختلفة من الخيارات الفرعية — مثالي لـ الدولة/المدينة أو الخطة/المقاعد.',
+        },
+      },
+      preview: {
+        eyebrow: 'المعاينة',
+        title: 'اختبر على سطح المكتب والهاتف بنقرة واحدة',
+        desc: 'تعرض المعاينة نموذجك تماماً كما سيراه المستخدمون — بما في ذلك المنطق الشرطي والتحقق من الحقول المطلوبة. بدّل بين إطار سطح المكتب والهاتف دون مغادرة المنشئ.',
+        altDesktop: 'معاينة سطح المكتب للنموذج المعروض',
+        altMobile: 'معاينة الهاتف للنموذج المعروض',
+        captionDesktop: 'معاينة سطح المكتب',
+        captionMobile: 'معاينة الهاتف',
+      },
+      export: {
+        eyebrow: 'التصدير',
+        title: 'سكيمة واحدة، ثلاثة أُطر',
+        desc: 'اختر إطاراً ثم انسخ أو نزّل مكوّناً جاهزاً للصق في مشروعك. مصمَّم بـ Tailwind ومكتوب بـ TypeScript، بلا وقت تشغيل خاص.',
+        alt: 'حوار التصدير يعرض كود مكوّن Vue 3 المُولَّد',
+        targets: {
+          vue: {
+            title: 'Vue 3 — Script Setup',
+            desc: 'مكوّن SFC مع حالة تفاعلية، v-if للظهور، و v-model على كل حقل.',
+          },
+          react: {
+            title: 'React — وظيفي',
+            desc: 'مكوّن دالي مع مدخلات مُتحكَّم بها وخطّافات ومنطق شرطي مُهيّأ.',
+          },
+          angular: {
+            title: 'Angular — Signals',
+            desc: 'مكوّن Standalone يستخدم Signals للتفاعلية — جاهز لـ Zoneless بلا أعباء.',
+          },
+        },
+      },
+      aiPrompt: {
+        eyebrow: 'موجّه الذكاء',
+        title: 'حوّل نموذجك إلى مخطّط جاهز للذكاء',
+        desc: 'كل تصدير يأتي مع تبويب موجّه ذكاء — موجز صارم وواعٍ بالإطار يمكنك لصقه في أي LLM أو وكيل برمجة. يحصل الوكيل على السكيمة، ومكتبة الحالة، وأعراف الواجهة، لا تخمينات مبهمة.',
+        alt: 'تبويب موجّه الذكاء بمخطّط واعٍ بالإطار',
+        tip: {
+          label: 'نصيحة:',
+          body: 'يحفظ الموجّه الإطار المختار، وقواعد التحقق، والمنطق الشرطي، ومتطلبات إمكانية الوصول. الوكلاء ينفّذون، لا يخمّنون.',
+        },
+      },
+      dark: {
+        alt: 'منطقة بناء المنشئ في الوضع الداكن',
+        caption: 'المنشئ يأتي بدعم من الدرجة الأولى للوضع الداكن — كل لوحة تتكيّف.',
+      },
+    },
+    examples: {
+      hero: {
+        eyebrow: 'أمثلة',
+        titleP1: 'شاهد FormAI أثناء العمل —',
+        titleGradient: 'تجارب حقيقية وصور حقيقية.',
+        subtitle: 'كل صورة بالأسفل ملتقطة مباشرة من المنشئ. تجوّل بين هذه التدفّقات وشاهد كيف تتكامل منطقة البناء، والخصائص، والمعاينة، والتصدير.',
+        cta: 'جرّبه بنفسك',
+        docs: 'اقرأ التوثيق',
+      },
+      cards: {
+        onboarding: {
+          tag: 'منشئ النموذج',
+          url: '/builder · إعداد العميل',
+          title: 'إعداد العميل بمنطق شرطي',
+          desc: 'تخطيط صف لاسم العميل، قائمة منسدلة للدور، اختيار فردي للخطة، وحقل لحجم الفريق يظهر فقط لـ Pro و Enterprise. مبني في أقل من دقيقة.',
+        },
+        preview: {
+          tag: 'معاينة سطح المكتب',
+          url: '/preview · سطح المكتب',
+          title: 'معاينة سطح مكتب طبق الأصل',
+          desc: 'إطار المعاينة يحاكي متصفحاً حقيقياً لتُري أصحاب القرار التجربة النهائية قبل التصدير.',
+        },
+        mobile: {
+          tag: 'معاينة الهاتف',
+          url: '/preview · الهاتف',
+          title: 'هاتف يحترم المنصّة',
+          desc: 'بدّل إلى الهاتف وشاهد النموذج في إطار جوّال — نفس المكوّن، نفس السلوك، بلا عمل استجابي إضافي.',
+        },
+        export: {
+          tag: 'حوار التصدير',
+          url: '/builder · تصدير',
+          title: 'Vue أو React أو Angular — قرارك',
+          desc: 'يقدّم لك حوار التصدير ملف مكوّن وتدفّق نسخ/تنزيل. اسم الملف، الإطار، والكود في مكان واحد.',
+        },
+        aiPrompt: {
+          tag: 'موجّه الذكاء',
+          url: '/builder · موجّه ذكاء',
+          title: 'مخطّط مبني لوكلاء الذكاء',
+          desc: 'يولّد نفس حوار التصدير موجّهاً صارماً — إطار، سكيمة، تحقق، وأعراف — لينفّذه أي LLM أو وكيل برمجة.',
+        },
+        darkMode: {
+          tag: 'الوضع الداكن',
+          url: '/builder · داكن',
+          title: 'وضع داكن يستحق وجوده',
+          desc: 'كامل المنشئ ينتقل إلى لوحة داكنة زجاجية — تباين عالٍ، وهج منخفض، واتساق مع واجهة التسويق.',
+        },
+      },
+      cta: {
+        title: 'جاهز لبناء نموذجك؟',
+        subtitle: 'افتح المنشئ، اسحب بعض الحقول، وصدّر مكوّناً تفخر بإيداعه.',
+        button: 'ابدأ البناء',
       },
     },
     auth: {

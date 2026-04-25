@@ -4,6 +4,9 @@ import Footer from '../components/layout/Footer.vue'
 import HeroSection from '../components/home/HeroSection.vue'
 import FrameworkSupport from '../components/home/FrameworkSupport.vue'
 import FeatureCards from '../components/home/FeatureCards.vue'
+import TargetAudience from '../components/home/TargetAudience.vue'
+import ValueProposition from '../components/home/ValueProposition.vue'
+import PowerFeatures from '../components/home/PowerFeatures.vue'
 </script>
 
 <template>
@@ -21,7 +24,10 @@ import FeatureCards from '../components/home/FeatureCards.vue'
     <main class="relative z-10 flex flex-col items-center w-full flex-1">
       <HeroSection />
       <FrameworkSupport />
+      <TargetAudience />
       <FeatureCards />
+      <ValueProposition />
+      <PowerFeatures />
     </main>
 
     <Footer />

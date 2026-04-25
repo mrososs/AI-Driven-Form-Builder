@@ -64,24 +64,26 @@ async function handleLogout() {
 
         <!-- Desktop Navigation -->
         <nav class="hidden md:flex items-center gap-1 flex-1 justify-center">
-          <a
-            href="#"
+          <RouterLink
+            to="/docs"
             class="px-3.5 py-2 text-sm font-medium rounded-lg transition-all text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-white/65 dark:hover:text-white dark:hover:bg-white/[0.07]"
+            active-class="text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10"
           >
             {{ t("nav.docs") }}
-          </a>
+          </RouterLink>
           <a
             href="#"
             class="px-3.5 py-2 text-sm font-medium rounded-lg transition-all text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-white/65 dark:hover:text-white dark:hover:bg-white/[0.07]"
           >
             {{ t("nav.api") }}
           </a>
-          <a
-            href="#"
+          <RouterLink
+            to="/examples"
             class="px-3.5 py-2 text-sm font-medium rounded-lg transition-all text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-white/65 dark:hover:text-white dark:hover:bg-white/[0.07]"
+            active-class="text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10"
           >
             {{ t("nav.examples") }}
-          </a>
+          </RouterLink>
           <a
             href="#"
             class="px-3.5 py-2 text-sm font-medium rounded-lg transition-all text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-white/65 dark:hover:text-white dark:hover:bg-white/[0.07]"
@@ -205,11 +207,11 @@ async function handleLogout() {
         </div>
 
         <div class="flex flex-col gap-6">
-          <a
-            href="#"
+          <RouterLink
+            to="/docs"
             @click="isMenuOpen = false"
             class="text-base font-semibold text-slate-700 dark:text-white/80 hover:text-indigo-600 dark:hover:text-indigo-400"
-            >{{ t("nav.docs") }}</a
+            >{{ t("nav.docs") }}</RouterLink
           >
           <a
             href="#"
@@ -217,11 +219,11 @@ async function handleLogout() {
             class="text-base font-semibold text-slate-700 dark:text-white/80 hover:text-indigo-600 dark:hover:text-indigo-400"
             >{{ t("nav.api") }}</a
           >
-          <a
-            href="#"
+          <RouterLink
+            to="/examples"
             @click="isMenuOpen = false"
             class="text-base font-semibold text-slate-700 dark:text-white/80 hover:text-indigo-600 dark:hover:text-indigo-400"
-            >{{ t("nav.examples") }}</a
+            >{{ t("nav.examples") }}</RouterLink
           >
           <a
             href="#"
