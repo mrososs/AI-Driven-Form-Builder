@@ -38,7 +38,7 @@ function onElementAdded(event: { newIndex: number }) {
   <main class="flex-1 min-w-0 flex flex-col">
     <!-- Sub-toolbar -->
     <div
-      class="h-14 shrink-0 flex items-center gap-3 px-6 border-b border-slate-200 dark:border-white/[0.05] bg-slate-100 dark:bg-[#0d0d14]"
+      class="h-14 shrink-0 flex items-center gap-3 px-4 sm:px-6 border-b border-slate-200 dark:border-white/[0.05] bg-slate-100 dark:bg-[#0d0d14]"
     >
       <button
         type="button"
@@ -82,11 +82,11 @@ function onElementAdded(event: { newIndex: number }) {
     <div
       v-if="step"
       :key="step.id"
-      class="flex-1 overflow-y-auto scrollbar-thin p-8 lg:p-12 flex justify-center bg-slate-100 dark:bg-[#0d0d14]"
+      class="flex-1 overflow-y-auto scrollbar-thin p-4 sm:p-6 lg:p-8 xl:p-12 flex justify-center bg-slate-100 dark:bg-[#0d0d14]"
     >
       <div class="w-full max-w-2xl space-y-4 ms-step-enter">
         <!-- Step header card -->
-        <div class="rounded-2xl border border-slate-200 dark:border-white/[0.07] bg-white dark:bg-[#111118] p-6 sm:p-8 shadow-sm dark:shadow-none">
+        <div class="rounded-2xl border border-slate-200 dark:border-white/[0.07] bg-white dark:bg-[#111118] p-5 sm:p-6 xl:p-8 shadow-sm dark:shadow-none">
           <div class="flex items-center gap-3 mb-3">
             <div
               class="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-100 to-violet-50 border border-indigo-200 dark:from-indigo-500/30 dark:to-violet-500/20 dark:border-indigo-500/30 flex items-center justify-center text-indigo-600 dark:text-indigo-300"
@@ -156,7 +156,7 @@ function onElementAdded(event: { newIndex: number }) {
 
         <!-- Bottom: step navigation -->
         <div
-          class="flex items-center justify-between pt-4 border-t border-dashed border-slate-200 dark:border-white/[0.07]"
+          class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pt-4 border-t border-dashed border-slate-200 dark:border-white/[0.07]"
         >
           <p class="text-[11px] text-slate-500 dark:text-white/30 font-medium">
             Respondents will see
@@ -165,7 +165,7 @@ function onElementAdded(event: { newIndex: number }) {
           <button
             type="button"
             @click="insertAfter"
-            class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-500/10 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 transition-colors"
+            class="self-start sm:self-auto flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-500/10 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 transition-colors whitespace-nowrap"
             style="transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1)"
           >
             <Plus class="h-3 w-3" /> Insert step after this

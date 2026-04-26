@@ -7,15 +7,26 @@ import {
   Copy,
   Trash2,
   Shield,
+  FolderInput,
+  X,
 } from 'lucide-vue-next'
 import { useMultiStepFormStore } from '../../../stores/multistepForm'
 import { STEP_ICONS } from '../utils/icons'
 import type { FormStep } from '../../../stores/multistepForm'
+import ImportFormDialog from './ImportFormDialog.vue'
+import { useMultiStepUI } from '../composables/useMultiStepUI'
 
 const store = useMultiStepFormStore()
+const { isStepsOpen, isMobile, closeSheets } = useMultiStepUI()
 const hover = ref<string | null>(null)
 const renaming = ref<string | null>(null)
 const inputRef = useTemplateRef<HTMLInputElement>('renameInput')
+const isImportOpen = ref(false)
+
+function selectStepAndCloseOnMobile(id: string) {
+  store.selectStep(id)
+  if (isMobile.value) closeSheets()
+}
 
 async function startRename(id: string) {
   renaming.value = id
@@ -39,28 +50,70 @@ function onRenameKey(step: FormStep, e: KeyboardEvent) {
 </script>
 
 <template>
+  <Transition
+    enter-active-class="transition duration-200 ease-out"
+    enter-from-class="opacity-0"
+    enter-to-class="opacity-100"
+    leave-active-class="transition duration-150 ease-in"
+    leave-from-class="opacity-100"
+    leave-to-class="opacity-0"
+  >
+    <div
+      v-if="isStepsOpen"
+      @click="closeSheets"
+      class="fixed inset-0 bg-slate-900/40 dark:bg-black/60 backdrop-blur-sm z-30 lg:hidden"
+      aria-hidden="true"
+    />
+  </Transition>
+
   <aside
-    class="w-64 shrink-0 bg-slate-50 dark:bg-[#0c0c12] border-e border-slate-200 dark:border-white/[0.06] flex flex-col"
+    :class="[
+      'bg-slate-50 dark:bg-[#0c0c12] flex flex-col',
+      'lg:static lg:w-56 xl:w-64 lg:shrink-0 lg:translate-y-0 lg:border-e lg:border-slate-200 lg:dark:border-white/[0.06] lg:rounded-none lg:shadow-none lg:max-h-none lg:transition-none',
+      'fixed inset-x-0 bottom-[52px] z-40 max-h-[70vh] rounded-t-2xl border-t border-slate-200 dark:border-white/[0.07] shadow-2xl shadow-black/20 dark:shadow-black/60 transition-transform duration-300 ease-out',
+      isStepsOpen ? 'translate-y-0' : 'translate-y-[calc(100%+52px)] lg:translate-y-0',
+    ]"
     aria-label="Form steps"
   >
-    <div class="p-4 pb-3 border-b border-slate-200 dark:border-white/[0.05] flex items-center justify-between">
-      <div>
+    <div class="p-4 pb-3 border-b border-slate-200 dark:border-white/[0.05] flex items-center justify-between gap-2">
+      <div class="min-w-0">
         <h2 class="text-[10px] font-semibold text-slate-500 dark:text-white/40 uppercase tracking-[0.14em]">
           Steps
         </h2>
         <p class="text-[11px] text-slate-400 dark:text-white/30 mt-0.5">
-          {{ store.steps.length === 0 ? 'No steps yet' : 'Click to switch steps' }}
+          {{ store.steps.length === 0 ? 'No steps yet' : 'Tap to switch steps' }}
         </p>
       </div>
-      <button
-        type="button"
-        @click="store.addStep()"
-        title="Add step"
-        class="p-1.5 rounded-lg text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 dark:text-white/60 dark:hover:text-indigo-300 dark:hover:bg-indigo-500/10 transition-colors"
-        style="transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1)"
-      >
-        <Plus class="h-4 w-4" />
-      </button>
+      <div class="flex items-center gap-1 shrink-0">
+        <button
+          type="button"
+          @click="isImportOpen = true"
+          title="Import from existing form"
+          aria-label="Import from existing form"
+          class="p-1.5 rounded-lg text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 dark:text-white/60 dark:hover:text-indigo-300 dark:hover:bg-indigo-500/10 transition-colors"
+          style="transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1)"
+        >
+          <FolderInput class="h-4 w-4" />
+        </button>
+        <button
+          type="button"
+          @click="store.addStep()"
+          title="Add step"
+          aria-label="Add step"
+          class="p-1.5 rounded-lg text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 dark:text-white/60 dark:hover:text-indigo-300 dark:hover:bg-indigo-500/10 transition-colors"
+          style="transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1)"
+        >
+          <Plus class="h-4 w-4" />
+        </button>
+        <button
+          type="button"
+          @click="closeSheets"
+          class="lg:hidden p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:text-white/40 dark:hover:text-white dark:hover:bg-white/[0.07] transition-colors"
+          aria-label="Close steps panel"
+        >
+          <X class="h-4 w-4" />
+        </button>
+      </div>
     </div>
 
     <div class="flex-1 overflow-y-auto scrollbar-thin p-3 space-y-1.5">
@@ -79,7 +132,7 @@ function onRenameKey(step: FormStep, e: KeyboardEvent) {
       >
         <button
           type="button"
-          @click="store.selectStep(step.id)"
+          @click="selectStepAndCloseOnMobile(step.id)"
           class="w-full flex items-start gap-3 p-3 text-start"
         >
           <div class="flex flex-col items-center gap-1 shrink-0">
@@ -135,8 +188,8 @@ function onRenameKey(step: FormStep, e: KeyboardEvent) {
 
         <div
           :class="[
-            'absolute end-2 top-2 flex items-center gap-0.5 transition-opacity',
-            hover === step.id ? 'opacity-100' : 'opacity-0',
+            'absolute end-2 top-2 flex items-center gap-0.5 transition-opacity opacity-100',
+            hover === step.id ? 'lg:opacity-100' : 'lg:opacity-0',
           ]"
           style="transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1)"
         >
@@ -190,7 +243,7 @@ function onRenameKey(step: FormStep, e: KeyboardEvent) {
       </button>
     </div>
 
-    <div class="p-3 border-t border-slate-200 dark:border-white/[0.05]">
+    <div class="hidden lg:block p-3 border-t border-slate-200 dark:border-white/[0.05]">
       <div
         class="rounded-lg bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.06] p-3"
       >
@@ -206,5 +259,7 @@ function onRenameKey(step: FormStep, e: KeyboardEvent) {
         </p>
       </div>
     </div>
+
+    <ImportFormDialog v-model:open="isImportOpen" />
   </aside>
 </template>

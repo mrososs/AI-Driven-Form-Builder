@@ -1,15 +1,17 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import draggable from 'vuedraggable'
-import { Wand2 } from 'lucide-vue-next'
+import { Wand2, X } from 'lucide-vue-next'
 import {
   useMultiStepFormStore,
   newId,
   type MultiStepElement,
 } from '../../../stores/multistepForm'
 import { CATALOG, CATALOG_GROUPS, type CatalogEntry, type CatalogGroupKey } from '../utils/catalog'
+import { useMultiStepUI } from '../composables/useMultiStepUI'
 
 const store = useMultiStepFormStore()
+const { isElementsOpen, isMobile, closeSheets } = useMultiStepUI()
 
 const groupedCatalog = computed(() =>
   CATALOG_GROUPS.map(g => ({
@@ -20,6 +22,7 @@ const groupedCatalog = computed(() =>
 
 function add(type: (typeof CATALOG)[number]['type'], label: string) {
   store.addElement(type, label)
+  if (isMobile.value) closeSheets()
 }
 
 function cloneFromCatalog(entry: CatalogEntry): MultiStepElement {
@@ -40,14 +43,43 @@ defineProps<{ groupKey?: CatalogGroupKey }>()
 </script>
 
 <template>
+  <Transition
+    enter-active-class="transition duration-200 ease-out"
+    enter-from-class="opacity-0"
+    enter-to-class="opacity-100"
+    leave-active-class="transition duration-150 ease-in"
+    leave-from-class="opacity-100"
+    leave-to-class="opacity-0"
+  >
+    <div
+      v-if="isElementsOpen"
+      @click="closeSheets"
+      class="fixed inset-0 bg-slate-900/40 dark:bg-black/60 backdrop-blur-sm z-30 lg:hidden"
+      aria-hidden="true"
+    />
+  </Transition>
+
   <aside
-    class="w-60 shrink-0 bg-white dark:bg-[#111118] border-e border-slate-200 dark:border-white/[0.07] flex flex-col"
+    :class="[
+      'bg-white dark:bg-[#111118] flex flex-col',
+      'lg:static lg:w-52 xl:w-60 lg:shrink-0 lg:translate-y-0 lg:border-e lg:border-slate-200 lg:dark:border-white/[0.07] lg:rounded-none lg:shadow-none lg:max-h-none lg:transition-none',
+      'fixed inset-x-0 bottom-[52px] z-40 max-h-[70vh] rounded-t-2xl border-t border-slate-200 dark:border-white/[0.07] shadow-2xl shadow-black/20 dark:shadow-black/60 transition-transform duration-300 ease-out',
+      isElementsOpen ? 'translate-y-0' : 'translate-y-[calc(100%+52px)] lg:translate-y-0',
+    ]"
     aria-label="Element catalog"
   >
-    <div class="p-4 border-b border-slate-200 dark:border-white/[0.05]">
+    <div class="p-4 border-b border-slate-200 dark:border-white/[0.05] flex items-center justify-between">
       <h2 class="text-[10px] font-semibold text-slate-500 dark:text-white/40 uppercase tracking-[0.14em]">
         Elements
       </h2>
+      <button
+        type="button"
+        @click="closeSheets"
+        class="lg:hidden p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:text-white/40 dark:hover:text-white dark:hover:bg-white/[0.07] transition-colors"
+        aria-label="Close elements panel"
+      >
+        <X class="h-4 w-4" />
+      </button>
     </div>
     <div class="flex-1 overflow-y-auto scrollbar-thin p-3 space-y-4">
       <section
@@ -73,7 +105,7 @@ defineProps<{ groupKey?: CatalogGroupKey }>()
             <button
               type="button"
               @click="add(entry.type, entry.label)"
-              class="w-full flex items-center gap-3 p-2.5 rounded-lg border border-slate-200 dark:border-white/[0.06] hover:border-indigo-400 hover:bg-indigo-50 dark:hover:border-indigo-500/40 dark:hover:bg-indigo-500/[0.06] transition-all group text-start md:cursor-grab md:active:cursor-grabbing"
+              class="w-full flex items-center gap-3 p-2.5 rounded-lg border border-slate-200 dark:border-white/[0.06] hover:border-indigo-400 hover:bg-indigo-50 dark:hover:border-indigo-500/40 dark:hover:bg-indigo-500/[0.06] transition-all group text-start lg:cursor-grab lg:active:cursor-grabbing"
               style="transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1)"
               :aria-label="`Add ${entry.label} field`"
             >

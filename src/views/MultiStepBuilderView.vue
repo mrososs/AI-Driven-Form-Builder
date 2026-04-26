@@ -10,6 +10,7 @@ import PropertiesPanel from '../features/multistep/components/PropertiesPanel.vu
 import PreviewMode from '../features/multistep/components/PreviewMode.vue'
 import LogicPage from '../features/multistep/components/LogicPage.vue'
 import MultiStepExportDialog from '../features/multistep/components/MultiStepExportDialog.vue'
+import MultiStepMobileTabs from '../features/multistep/components/MultiStepMobileTabs.vue'
 import type { MultiStepMode } from '../features/multistep/components/types'
 
 const store = useMultiStepFormStore()
@@ -52,7 +53,7 @@ function exitToBuilder() {
       @save="handleSave"
     />
 
-    <div v-if="mode === 'build'" class="flex-1 min-h-0 flex">
+    <div v-if="mode === 'build'" class="flex-1 min-h-0 flex pb-[52px] lg:pb-0">
       <StepRail />
       <ElementsSidebar v-if="store.steps.length > 0" />
       <MultiStepCanvas v-if="store.steps.length > 0" />
@@ -63,6 +64,7 @@ function exitToBuilder() {
     <PreviewMode v-else-if="mode === 'preview'" @exit="exitToBuilder" />
     <LogicPage v-else @exit="exitToBuilder" />
 
+    <MultiStepMobileTabs v-if="mode === 'build'" />
     <MultiStepExportDialog v-model:open="exportOpen" />
   </div>
 </template>

@@ -7,7 +7,7 @@ const store = useMultiStepFormStore()
 
 <template>
   <main
-    class="flex-1 min-w-0 flex items-center justify-center bg-slate-100 dark:bg-[#0d0d14] p-8 lg:p-12"
+    class="flex-1 min-w-0 flex items-center justify-center bg-slate-100 dark:bg-[#0d0d14] p-4 sm:p-8 lg:p-12"
   >
     <div class="max-w-md text-center ms-fade-up">
       <div

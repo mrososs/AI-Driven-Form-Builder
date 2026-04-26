@@ -5,10 +5,12 @@ import { useMultiStepFormStore } from '../../../stores/multistepForm'
 import FieldProps from './FieldProps.vue'
 import StepProps from './StepProps.vue'
 import FlowProps from './FlowProps.vue'
+import { useMultiStepUI } from '../composables/useMultiStepUI'
 
 type InspectorTab = 'field' | 'step' | 'flow'
 
 const store = useMultiStepFormStore()
+const { isPropertiesOpen, isMobile, closeSheets } = useMultiStepUI()
 const tab = ref<InspectorTab>('field')
 
 const tabs: Array<{ key: InspectorTab; label: string }> = [
@@ -34,12 +36,34 @@ function tabClass(key: InspectorTab) {
 
 function close() {
   store.selectElement(null)
+  if (isMobile.value) closeSheets()
 }
 </script>
 
 <template>
+  <Transition
+    enter-active-class="transition duration-200 ease-out"
+    enter-from-class="opacity-0"
+    enter-to-class="opacity-100"
+    leave-active-class="transition duration-150 ease-in"
+    leave-from-class="opacity-100"
+    leave-to-class="opacity-0"
+  >
+    <div
+      v-if="isPropertiesOpen"
+      @click="closeSheets"
+      class="fixed inset-0 bg-slate-900/40 dark:bg-black/60 backdrop-blur-sm z-30 lg:hidden"
+      aria-hidden="true"
+    />
+  </Transition>
+
   <aside
-    class="w-80 shrink-0 bg-white dark:bg-[#111118] border-s border-slate-200 dark:border-white/[0.07] flex flex-col"
+    :class="[
+      'bg-white dark:bg-[#111118] flex flex-col',
+      'lg:static lg:w-72 xl:w-80 lg:shrink-0 lg:translate-y-0 lg:border-s lg:border-slate-200 lg:dark:border-white/[0.07] lg:rounded-none lg:shadow-none lg:max-h-none lg:transition-none',
+      'fixed inset-x-0 bottom-[52px] z-40 max-h-[70vh] rounded-t-2xl border-t border-slate-200 dark:border-white/[0.07] shadow-2xl shadow-black/20 dark:shadow-black/60 transition-transform duration-300 ease-out',
+      isPropertiesOpen ? 'translate-y-0' : 'translate-y-[calc(100%+52px)] lg:translate-y-0',
+    ]"
     aria-label="Inspector"
   >
     <div class="px-5 pt-5 pb-3 flex items-center justify-between">

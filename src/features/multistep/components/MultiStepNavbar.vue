@@ -26,7 +26,7 @@ const tabs: Array<{ key: MultiStepMode; label: string }> = [
 ]
 
 function tabClass(key: MultiStepMode) {
-  const base = 'px-3 py-1.5 rounded-lg font-medium transition-all'
+  const base = 'px-2 sm:px-3 py-1.5 rounded-lg font-medium transition-all'
   return props.mode === key
     ? `${base} text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-500/10`
     : `${base} text-slate-600 dark:text-white/60 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.07]`
@@ -39,10 +39,10 @@ function backToBuilder() {
 
 <template>
   <header
-    class="h-14 shrink-0 flex items-center justify-between px-4 lg:px-6 bg-white/95 dark:bg-[#0a0a0f]/95 backdrop-blur-xl border-b border-slate-200/80 dark:border-white/[0.07] z-40"
+    class="h-14 shrink-0 flex items-center justify-between gap-2 px-3 sm:px-4 lg:px-6 bg-white/95 dark:bg-[#0a0a0f]/95 backdrop-blur-xl border-b border-slate-200/80 dark:border-white/[0.07] z-40"
     style="transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1)"
   >
-    <div class="flex items-center gap-2 min-w-0">
+    <div class="flex items-center gap-2 min-w-0 shrink-0">
       <button
         type="button"
         @click="backToBuilder"
@@ -57,11 +57,11 @@ function backToBuilder() {
       >
         <Sparkles class="h-3.5 w-3.5 text-white" />
       </div>
-      <span class="font-bold text-base tracking-tight font-heading text-slate-900 dark:text-white">
+      <span class="hidden sm:inline font-bold text-base tracking-tight font-heading text-slate-900 dark:text-white">
         FormAI
       </span>
       <span
-        class="ms-3 px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 text-[11px] font-semibold tracking-wide uppercase border border-indigo-200 dark:border-indigo-500/20 hidden sm:inline"
+        class="ms-3 px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 text-[11px] font-semibold tracking-wide uppercase border border-indigo-200 dark:border-indigo-500/20 hidden md:inline"
       >
         Multi-step
       </span>
@@ -79,7 +79,7 @@ function backToBuilder() {
       </button>
     </nav>
 
-    <div class="flex items-center gap-1.5">
+    <div class="flex items-center gap-1 sm:gap-1.5 shrink-0">
       <div class="hidden lg:flex items-center gap-3 text-[11px] text-slate-500 dark:text-white/40 me-2">
         <span>
           <span class="text-slate-700 dark:text-white/70 font-semibold">{{ stepCount }}</span>
@@ -103,17 +103,19 @@ function backToBuilder() {
       <button
         type="button"
         @click="emit('export')"
-        class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-500/10 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 font-medium"
+        aria-label="Export"
+        class="flex items-center gap-2 p-2 sm:px-3 sm:py-1.5 rounded-lg text-sm text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-500/10 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 font-medium"
       >
-        <Upload class="h-3.5 w-3.5" />
+        <Upload class="h-4 w-4 sm:h-3.5 sm:w-3.5" />
         <span class="hidden sm:inline">Export</span>
       </button>
       <button
         type="button"
         @click="emit('save')"
+        aria-label="Save"
         class="ms-builder-primary flex items-center gap-2 text-sm"
       >
-        <Save class="h-3.5 w-3.5" />
+        <Save class="h-4 w-4 sm:h-3.5 sm:w-3.5" />
         <span class="hidden sm:inline">Save</span>
       </button>
     </div>
@@ -125,12 +127,18 @@ function backToBuilder() {
   background-image: linear-gradient(to right, #4f46e5, #6366f1);
   color: white;
   font-weight: 600;
-  padding: 0.5rem 1rem;
+  padding: 0.5rem;
   border-radius: 0.5rem;
   box-shadow: 0 10px 25px -10px rgba(99, 102, 241, 0.55);
   transition:
     transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
     box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (min-width: 640px) {
+  .ms-builder-primary {
+    padding: 0.5rem 1rem;
+  }
 }
 
 .ms-builder-primary:hover {

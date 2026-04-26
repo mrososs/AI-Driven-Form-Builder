@@ -52,27 +52,27 @@ const placeholder = computed(() => props.element.placeholder || placeholderFor(p
           class="font-semibold text-slate-900 dark:text-white w-full bg-transparent border-none p-0 text-sm focus:outline-none"
         />
       </div>
-      <div class="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+      <div class="flex items-center gap-1 shrink-0 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
         <button
           type="button"
           @click.stop="emit('select')"
           :class="[
-            'p-1.5 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-500/10',
+            'p-2 md:p-1.5 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-500/10',
             selected
               ? 'text-indigo-700 bg-indigo-100 dark:text-indigo-300 dark:bg-indigo-500/10'
-              : 'text-slate-400 hover:text-indigo-600 dark:text-white/40 dark:hover:text-indigo-300',
+              : 'text-slate-500 hover:text-indigo-600 dark:text-white/50 dark:hover:text-indigo-300',
           ]"
           aria-label="Edit field"
         >
-          <Settings2 class="h-3.5 w-3.5" />
+          <Settings2 class="h-4 w-4 md:h-3.5 md:w-3.5" />
         </button>
         <button
           type="button"
           @click.stop="emit('remove')"
-          class="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:text-white/40 dark:hover:text-rose-400 dark:hover:bg-rose-500/10"
+          class="p-2 md:p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 dark:text-white/50 dark:hover:text-rose-400 dark:hover:bg-rose-500/10"
           aria-label="Delete field"
         >
-          <Trash2 class="h-3.5 w-3.5" />
+          <Trash2 class="h-4 w-4 md:h-3.5 md:w-3.5" />
         </button>
       </div>
     </div>
