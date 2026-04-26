@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import draggable from 'vuedraggable'
 import { ChevronLeft, ChevronRight, Plus, Layers } from 'lucide-vue-next'
 import { useMultiStepFormStore } from '../../../stores/multistepForm'
 import { STEP_ICONS } from '../utils/icons'
@@ -25,6 +26,11 @@ function next() {
 
 function insertAfter() {
   store.addStep(stepIndex.value)
+}
+
+function onElementAdded(event: { newIndex: number }) {
+  const dropped = step.value?.elements[event.newIndex]
+  if (dropped) store.selectElement(dropped.id)
 }
 </script>
 
@@ -109,30 +115,44 @@ function insertAfter() {
         </div>
 
         <!-- Elements -->
-        <ElementCard
-          v-for="el in step.elements"
-          :key="el.id"
-          :element="el"
-          :selected="store.selectedElementId === el.id"
-          @select="store.selectElement(el.id)"
-          @remove="store.removeElement(el.id)"
-          @update="patch => store.updateElement(el.id, patch)"
-        />
-
-        <div
-          v-if="step.elements.length === 0"
-          class="rounded-2xl border-2 border-dashed border-slate-300 dark:border-white/[0.08] p-14 text-center bg-white/50 dark:bg-transparent"
+        <draggable
+          :list="step.elements"
+          item-key="id"
+          :group="{ name: 'multistep-canvas', put: true }"
+          handle=".drag-handle"
+          :delay="150"
+          :delay-on-touch-only="true"
+          :touch-start-threshold="5"
+          ghost-class="ms-drag-ghost"
+          class="space-y-4 min-h-[60px]"
+          @add="onElementAdded"
         >
-          <div
-            class="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-white/[0.05] flex items-center justify-center mx-auto mb-4 ring-1 ring-slate-200 dark:ring-white/[0.06]"
-          >
-            <Layers class="h-[18px] w-[18px] text-slate-500 dark:text-white/40" />
-          </div>
-          <p class="text-slate-700 dark:text-white/70 font-semibold text-sm mb-1">This step is empty</p>
-          <p class="text-slate-500 dark:text-white/40 text-sm">
-            Add elements from the sidebar, or let AI suggest them for this step.
-          </p>
-        </div>
+          <template #item="{ element: el }">
+            <ElementCard
+              :element="el"
+              :selected="store.selectedElementId === el.id"
+              @select="store.selectElement(el.id)"
+              @remove="store.removeElement(el.id)"
+              @update="patch => store.updateElement(el.id, patch)"
+            />
+          </template>
+          <template #footer>
+            <div
+              v-if="step.elements.length === 0"
+              class="rounded-2xl border-2 border-dashed border-slate-300 dark:border-white/[0.08] p-14 text-center bg-white/50 dark:bg-transparent"
+            >
+              <div
+                class="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-white/[0.05] flex items-center justify-center mx-auto mb-4 ring-1 ring-slate-200 dark:ring-white/[0.06]"
+              >
+                <Layers class="h-[18px] w-[18px] text-slate-500 dark:text-white/40" />
+              </div>
+              <p class="text-slate-700 dark:text-white/70 font-semibold text-sm mb-1">This step is empty</p>
+              <p class="text-slate-500 dark:text-white/40 text-sm">
+                Drag an element from the sidebar, tap one, or let AI suggest fields for this step.
+              </p>
+            </div>
+          </template>
+        </draggable>
 
         <!-- Bottom: step navigation -->
         <div
@@ -176,5 +196,13 @@ function insertAfter() {
   .ms-step-enter {
     animation: none;
   }
+}
+
+:deep(.drag-handle) {
+  touch-action: none;
+}
+
+.ms-drag-ghost {
+  opacity: 0.4;
 }
 </style>

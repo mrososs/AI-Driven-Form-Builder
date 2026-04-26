@@ -30,18 +30,28 @@ const placeholder = computed(() => props.element.placeholder || placeholderFor(p
     style="transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1)"
   >
     <div
-      class="hidden md:block absolute -start-3 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-white border border-slate-200 dark:bg-[#111118] dark:border-white/[0.07] rounded-md p-1 shadow-md"
+      class="hidden md:block absolute -start-3 top-1/2 -translate-y-1/2 drag-handle cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity bg-white border border-slate-200 dark:bg-[#111118] dark:border-white/[0.07] rounded-md p-1 shadow-md"
+      aria-label="Drag to reorder"
     >
       <GripVertical class="h-3.5 w-3.5 text-slate-400 dark:text-white/40" />
     </div>
 
     <div class="flex justify-between items-start mb-3 gap-2">
-      <input
-        :value="element.label"
-        @click.stop
-        @input="emit('update', { label: ($event.target as HTMLInputElement).value })"
-        class="font-semibold text-slate-900 dark:text-white w-full bg-transparent border-none p-0 text-sm focus:outline-none"
-      />
+      <div class="flex items-center gap-2 flex-1 min-w-0">
+        <span
+          class="md:hidden drag-handle cursor-grab active:cursor-grabbing p-1 -ms-1 text-slate-400 dark:text-white/30 shrink-0"
+          aria-label="Drag to reorder"
+          @click.stop
+        >
+          <GripVertical class="h-4 w-4" aria-hidden="true" />
+        </span>
+        <input
+          :value="element.label"
+          @click.stop
+          @input="emit('update', { label: ($event.target as HTMLInputElement).value })"
+          class="font-semibold text-slate-900 dark:text-white w-full bg-transparent border-none p-0 text-sm focus:outline-none"
+        />
+      </div>
       <div class="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
         <button
           type="button"

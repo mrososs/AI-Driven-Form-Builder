@@ -1,8 +1,13 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import draggable from 'vuedraggable'
 import { Wand2 } from 'lucide-vue-next'
-import { useMultiStepFormStore } from '../../../stores/multistepForm'
-import { CATALOG, CATALOG_GROUPS, type CatalogGroupKey } from '../utils/catalog'
+import {
+  useMultiStepFormStore,
+  newId,
+  type MultiStepElement,
+} from '../../../stores/multistepForm'
+import { CATALOG, CATALOG_GROUPS, type CatalogEntry, type CatalogGroupKey } from '../utils/catalog'
 
 const store = useMultiStepFormStore()
 
@@ -15,6 +20,20 @@ const groupedCatalog = computed(() =>
 
 function add(type: (typeof CATALOG)[number]['type'], label: string) {
   store.addElement(type, label)
+}
+
+function cloneFromCatalog(entry: CatalogEntry): MultiStepElement {
+  const el: MultiStepElement = {
+    id: newId(),
+    type: entry.type,
+    label: entry.label,
+    placeholder: '',
+    required: false,
+  }
+  if (entry.type === 'select' || entry.type === 'radio') {
+    el.options = ['Option 1', 'Option 2']
+  }
+  return el
 }
 
 defineProps<{ groupKey?: CatalogGroupKey }>()
@@ -39,23 +58,36 @@ defineProps<{ groupKey?: CatalogGroupKey }>()
         <h3 class="px-1 text-[10px] font-semibold text-slate-400 dark:text-white/30 uppercase tracking-wider">
           {{ group.label }}
         </h3>
-        <button
-          v-for="entry in group.entries"
-          :key="entry.type"
-          type="button"
-          @click="add(entry.type, entry.label)"
-          class="w-full flex items-center gap-3 p-2.5 rounded-lg border border-slate-200 dark:border-white/[0.06] hover:border-indigo-400 hover:bg-indigo-50 dark:hover:border-indigo-500/40 dark:hover:bg-indigo-500/[0.06] transition-all group text-start"
-          style="transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1)"
+        <draggable
+          :list="group.entries"
+          item-key="type"
+          :group="{ name: 'multistep-canvas', pull: 'clone', put: false }"
+          :clone="cloneFromCatalog"
+          :sort="false"
+          :delay="150"
+          :delay-on-touch-only="true"
+          :touch-start-threshold="5"
+          class="space-y-1.5"
         >
-          <div
-            class="p-1.5 rounded-md bg-slate-100 group-hover:bg-indigo-100 text-slate-500 group-hover:text-indigo-600 dark:bg-white/[0.05] dark:group-hover:bg-indigo-500/20 dark:text-white/50 dark:group-hover:text-indigo-300 transition-colors"
-          >
-            <component :is="entry.icon" class="h-3.5 w-3.5" />
-          </div>
-          <span class="text-[13px] font-medium text-slate-700 group-hover:text-indigo-700 dark:text-white/80 dark:group-hover:text-indigo-200">
-            {{ entry.label }}
-          </span>
-        </button>
+          <template #item="{ element: entry }">
+            <button
+              type="button"
+              @click="add(entry.type, entry.label)"
+              class="w-full flex items-center gap-3 p-2.5 rounded-lg border border-slate-200 dark:border-white/[0.06] hover:border-indigo-400 hover:bg-indigo-50 dark:hover:border-indigo-500/40 dark:hover:bg-indigo-500/[0.06] transition-all group text-start md:cursor-grab md:active:cursor-grabbing"
+              style="transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1)"
+              :aria-label="`Add ${entry.label} field`"
+            >
+              <div
+                class="p-1.5 rounded-md bg-slate-100 group-hover:bg-indigo-100 text-slate-500 group-hover:text-indigo-600 dark:bg-white/[0.05] dark:group-hover:bg-indigo-500/20 dark:text-white/50 dark:group-hover:text-indigo-300 transition-colors"
+              >
+                <component :is="entry.icon" class="h-3.5 w-3.5" />
+              </div>
+              <span class="text-[13px] font-medium text-slate-700 group-hover:text-indigo-700 dark:text-white/80 dark:group-hover:text-indigo-200">
+                {{ entry.label }}
+              </span>
+            </button>
+          </template>
+        </draggable>
       </section>
 
       <button
