@@ -1,6 +1,11 @@
 import { ref, shallowRef, computed } from 'vue'
 import { defineStore } from 'pinia'
 import type { StepIconKey } from '../features/multistep/utils/icons'
+import type { SavedForm } from './form'
+import {
+  convertSavedFormToStep,
+  type ConversionSummary,
+} from '../features/multistep/utils/importForm'
 
 export type MultiStepElementType =
   | 'text'
@@ -420,6 +425,21 @@ export const useMultiStepFormStore = defineStore('multistepForm', () => {
     localStorage.removeItem(STORAGE_KEY)
   }
 
+  function importFormAsStep(
+    form: SavedForm,
+    afterIndex: number | null = null
+  ): { stepId: string; summary: ConversionSummary } {
+    const { step, summary } = convertSavedFormToStep(form)
+    if (afterIndex == null) {
+      steps.value.push(step)
+    } else {
+      steps.value.splice(afterIndex + 1, 0, step)
+    }
+    activeStepId.value = step.id
+    selectedElementId.value = null
+    return { stepId: step.id, summary }
+  }
+
   function applyTemplate(templateId: string) {
     const template = TEMPLATES.find(t => t.id === templateId)
     if (!template) return
@@ -459,5 +479,6 @@ export const useMultiStepFormStore = defineStore('multistepForm', () => {
     saveDraft,
     resetDraft,
     applyTemplate,
+    importFormAsStep,
   }
 })
