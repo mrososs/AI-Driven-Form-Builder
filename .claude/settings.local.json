@@ -27,7 +27,20 @@
       "Bash(npx vue-tsc *)",
       "Read(//c/Users/OMHAME~1/AppData/Local/Temp/claude/D--Study-SaaS-form-builder-AI-Driven-Form-Builder/c9743d28-02f9-4543-b320-a64d4afe485e/tasks/**)",
       "mcp__plugin_chrome-devtools-mcp_chrome-devtools__list_console_messages",
-      "mcp__plugin_chrome-devtools-mcp_chrome-devtools__wait_for"
+      "mcp__plugin_chrome-devtools-mcp_chrome-devtools__wait_for",
+      "Bash(mkdir -p extracted)",
+      "Bash(tar -xf design -C extracted)",
+      "Bash(cp /tmp/design-fetch/extracted/ai-form-builder/README.md \"D:/Study/SaaS form builder/AI-Driven-Form-Builder/.design-readme.md\")",
+      "Bash(cp \"/tmp/design-fetch/extracted/ai-form-builder/project/Multi-Step Form Builder.html\" \"D:/Study/SaaS form builder/AI-Driven-Form-Builder/.design-multistep.html\")",
+      "Bash(cp /tmp/design-fetch/extracted/ai-form-builder/chats/chat1.md \"D:/Study/SaaS form builder/AI-Driven-Form-Builder/.design-chat1.md\")",
+      "Bash(cp /tmp/design-fetch/extracted/ai-form-builder/chats/chat2.md \"D:/Study/SaaS form builder/AI-Driven-Form-Builder/.design-chat2.md\")",
+      "Bash(echo \"EXIT=$?\")",
+      "Bash(curl -s \"http://localhost:5178/src/views/MultiStepBuilderView.vue\")",
+      "Bash(curl -s -o /dev/null -w \"VIEW %{http_code}\\\\n\" \"http://localhost:5178/src/views/MultiStepBuilderView.vue\")",
+      "Bash(grep -rn \"bg-\\\\${\" src/features/multistep src/views/MultiStepBuilderView.vue)",
+      "PowerShell(Get-Process | Where-Object { $_.ProcessName -match 'chrome' -and $_.Path -match 'chrome-devtools-mcp' } | Select-Object Id, ProcessName, Path)",
+      "PowerShell(Get-CimInstance *)",
+      "mcp__plugin_chrome-devtools-mcp_chrome-devtools__fill_form"
     ]
   }
 }
