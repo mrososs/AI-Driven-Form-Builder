@@ -26,6 +26,12 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/builder/multi-step',
+      name: 'builder-multi-step',
+      component: () => import('../views/MultiStepBuilderView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/docs',
       name: 'docs',
       component: () => import('../views/DocsView.vue'),

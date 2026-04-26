@@ -2,7 +2,7 @@
 import { computed, ref } from 'vue'
 import draggable from 'vuedraggable'
 import { useFormStore } from '../../stores/form'
-import { Layers, Save, Eye, Eraser, Download } from 'lucide-vue-next'
+import { Layers, Save, Eye, Eraser, Download, ListOrdered } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import FormElementCard from './components/FormElementCard.vue'
@@ -34,6 +34,10 @@ async function handleSave() {
 
 function goToPreview() {
   if (formStore.hasElements) router.push('/preview')
+}
+
+function goToMultiStep() {
+  router.push({ name: 'builder-multi-step' })
 }
 
 const isClearDialogOpen = ref(false)
@@ -84,6 +88,15 @@ function openExportDialog() {
         >
           <Eye class="h-4 w-4" />
           <span class="hidden md:inline">{{ t('builder.toolbar.preview') }}</span>
+        </button>
+        <button
+          @click="goToMultiStep"
+          class="flex items-center gap-2 px-2 sm:px-4 py-2 text-sm font-medium text-violet-600 dark:text-violet-300 bg-violet-50 dark:bg-violet-500/10 hover:bg-violet-100 dark:hover:bg-violet-500/20 rounded-lg transition-colors"
+          :title="t('builder.toolbar.multiStep')"
+          :aria-label="t('builder.toolbar.multiStep')"
+        >
+          <ListOrdered class="h-4 w-4" />
+          <span class="hidden md:inline">{{ t('builder.toolbar.multiStep') }}</span>
         </button>
         <button
           @click="openExportDialog"

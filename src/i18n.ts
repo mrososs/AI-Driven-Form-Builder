@@ -158,6 +158,7 @@ const messages = {
         export: 'Export',
         save: 'Save',
         saving: 'Saving...',
+        multiStep: 'Multi-step',
       },
       export: {
         title: 'Export form as component',
@@ -638,6 +639,7 @@ const messages = {
         export: 'تصدير',
         save: 'حفظ',
         saving: 'جارٍ الحفظ...',
+        multiStep: 'متعدد الخطوات',
       },
       export: {
         title: 'تصدير النموذج كمكوّن',
