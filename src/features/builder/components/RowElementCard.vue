@@ -114,7 +114,7 @@ function updateChildLabel(id: string, value: string) {
             </div>
 
             <div class="mt-1">
-              <div v-if="TEXT_INPUT_TYPES.includes(colElement.type)" class="border border-slate-200 dark:border-white/[0.07] rounded bg-slate-50 dark:bg-white/[0.04] px-2 py-1.5 text-xs text-slate-500 dark:text-white/30">
+              <div v-if="TEXT_INPUT_TYPES.includes(colElement.type)" class="border border-slate-200 dark:border-white/[0.07] rounded bg-slate-50 dark:bg-white/[0.04] px-2 py-1.5 text-xs text-slate-500 dark:text-white/30 truncate">
                 {{ colElement.placeholder || 'User input...' }}
               </div>
               <div v-else-if="colElement.type === 'select'" class="border border-slate-200 dark:border-white/[0.07] rounded bg-slate-50 dark:bg-white/[0.04] px-2 py-1.5 flex justify-between items-center">
