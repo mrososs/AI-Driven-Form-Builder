@@ -13,6 +13,10 @@ import {
   Rocket,
   Wand2,
   ShieldCheck,
+  GitBranch,
+  SkipForward,
+  Lock,
+  CloudCog,
 } from 'lucide-vue-next'
 import Navbar from '../components/layout/Navbar.vue'
 import Footer from '../components/layout/Footer.vue'
@@ -24,6 +28,9 @@ import exportShot from '../assets/docs/builder-export-dialog.png'
 import promptShot from '../assets/docs/builder-ai-prompt.png'
 import previewMobileShot from '../assets/docs/preview-mobile.png'
 import previewDesktopShot from '../assets/docs/preview-desktop.png'
+import multistepBuilderShot from '../assets/docs/multistep-builder.png'
+import multistepPreviewShot from '../assets/docs/multistep-preview.png'
+import multistepLogicShot from '../assets/docs/multistep-logic.png'
 
 const { t } = useI18n()
 
@@ -35,7 +42,34 @@ const sections = [
   { id: 'preview', label: 'docs.toc.preview' },
   { id: 'export', label: 'docs.toc.export' },
   { id: 'ai-prompt', label: 'docs.toc.aiPrompt' },
+  { id: 'multistep', label: 'docs.toc.multistep' },
 ] as const
+
+const multistepRules = [
+  { key: 'branch', icon: GitBranch, accent: 'indigo' },
+  { key: 'skip', icon: SkipForward, accent: 'violet' },
+  { key: 'gate', icon: Lock, accent: 'emerald' },
+  { key: 'async', icon: CloudCog, accent: 'amber' },
+] as const
+
+const multistepRuleAccent = {
+  indigo: {
+    wrap: 'bg-indigo-50/60 dark:bg-indigo-500/[0.08] border-indigo-200/70 dark:border-indigo-500/20',
+    icon: 'text-indigo-600 dark:text-indigo-400',
+  },
+  violet: {
+    wrap: 'bg-violet-50/60 dark:bg-violet-500/[0.08] border-violet-200/70 dark:border-violet-500/20',
+    icon: 'text-violet-600 dark:text-violet-400',
+  },
+  emerald: {
+    wrap: 'bg-emerald-50/60 dark:bg-emerald-500/[0.08] border-emerald-200/70 dark:border-emerald-500/20',
+    icon: 'text-emerald-600 dark:text-emerald-400',
+  },
+  amber: {
+    wrap: 'bg-amber-50/60 dark:bg-amber-500/[0.08] border-amber-200/70 dark:border-amber-500/20',
+    icon: 'text-amber-600 dark:text-amber-400',
+  },
+} as const
 
 const activeId = shallowRef<string>(sections[0].id)
 let observer: IntersectionObserver | null = null
@@ -474,6 +508,94 @@ onBeforeUnmount(() => {
                   {{ t('docs.aiPrompt.tip.body') }}
                 </p>
               </div>
+            </article>
+
+            <!-- Multi-step -->
+            <article id="multistep" class="scroll-mt-24">
+              <p class="text-xs font-semibold uppercase tracking-widest text-indigo-600 dark:text-indigo-400">
+                08 — {{ t('docs.multistep.eyebrow') }}
+              </p>
+              <h2 class="mt-3 font-heading font-bold tracking-tight
+                text-3xl sm:text-4xl text-slate-900 dark:text-white">
+                {{ t('docs.multistep.title') }}
+              </h2>
+              <p class="mt-4 text-base leading-relaxed text-slate-600 dark:text-slate-300">
+                {{ t('docs.multistep.desc') }}
+              </p>
+
+              <!-- Builder canvas screenshot -->
+              <figure class="mt-8 rounded-2xl overflow-hidden
+                bg-white dark:bg-[#0d0d14]
+                border border-slate-200 dark:border-white/[0.07]
+                shadow-xl shadow-slate-200/40 dark:shadow-black/40
+                ring-1 ring-inset ring-slate-100/50 dark:ring-white/[0.04]">
+                <div class="flex items-center gap-1.5 px-4 py-3 border-b border-slate-200 dark:border-white/[0.06] bg-slate-50/80 dark:bg-white/[0.02]">
+                  <div class="w-2.5 h-2.5 rounded-full bg-rose-400/70"></div>
+                  <div class="w-2.5 h-2.5 rounded-full bg-amber-400/70"></div>
+                  <div class="w-2.5 h-2.5 rounded-full bg-emerald-400/70"></div>
+                  <span class="ml-3 text-xs font-mono text-slate-500 dark:text-white/40">
+                    {{ t('docs.multistep.urlBuilder') }}
+                  </span>
+                </div>
+                <img :src="multistepBuilderShot" :alt="t('docs.multistep.builder.alt')"
+                  class="block w-full h-auto" loading="lazy" />
+                <figcaption class="px-4 py-3 text-xs text-slate-500 dark:text-white/40 border-t border-slate-200 dark:border-white/[0.06] bg-slate-50/80 dark:bg-white/[0.02]">
+                  {{ t('docs.multistep.builder.caption') }}
+                </figcaption>
+              </figure>
+
+              <!-- Rule kinds grid -->
+              <div class="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div v-for="rule in multistepRules" :key="rule.key"
+                  :class="['p-5 rounded-2xl border', multistepRuleAccent[rule.accent].wrap]">
+                  <component :is="rule.icon"
+                    :class="['h-5 w-5', multistepRuleAccent[rule.accent].icon]" />
+                  <h3 class="mt-3 font-heading font-bold text-base text-slate-900 dark:text-white">
+                    {{ t(`docs.multistep.rules.${rule.key}.title`) }}
+                  </h3>
+                  <p class="mt-2 text-sm leading-relaxed text-slate-600 dark:text-white/65">
+                    {{ t(`docs.multistep.rules.${rule.key}.desc`) }}
+                  </p>
+                </div>
+              </div>
+
+              <!-- Logic + Preview side-by-side -->
+              <div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-5">
+                <figure class="rounded-2xl overflow-hidden
+                  bg-white dark:bg-[#0d0d14]
+                  border border-slate-200 dark:border-white/[0.07]
+                  shadow-lg shadow-slate-200/40 dark:shadow-black/40">
+                  <img :src="multistepLogicShot" :alt="t('docs.multistep.logic.alt')"
+                    class="block w-full h-auto" loading="lazy" />
+                  <figcaption class="px-4 py-3 text-xs text-slate-500 dark:text-white/40 border-t border-slate-200 dark:border-white/[0.06] bg-slate-50/80 dark:bg-white/[0.02] flex items-center gap-2">
+                    <GitBranch class="h-3.5 w-3.5" />
+                    {{ t('docs.multistep.logic.caption') }}
+                  </figcaption>
+                </figure>
+                <figure class="rounded-2xl overflow-hidden
+                  bg-white dark:bg-[#0d0d14]
+                  border border-slate-200 dark:border-white/[0.07]
+                  shadow-lg shadow-slate-200/40 dark:shadow-black/40">
+                  <img :src="multistepPreviewShot" :alt="t('docs.multistep.preview.alt')"
+                    class="block w-full h-auto" loading="lazy" />
+                  <figcaption class="px-4 py-3 text-xs text-slate-500 dark:text-white/40 border-t border-slate-200 dark:border-white/[0.06] bg-slate-50/80 dark:bg-white/[0.02] flex items-center gap-2">
+                    <Eye class="h-3.5 w-3.5" />
+                    {{ t('docs.multistep.preview.caption') }}
+                  </figcaption>
+                </figure>
+              </div>
+
+              <RouterLink to="/builder/multi-step"
+                class="mt-8 inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold rounded-xl text-white
+                  bg-indigo-600 hover:bg-indigo-500
+                  dark:bg-gradient-to-r dark:from-indigo-500 dark:to-violet-600
+                  dark:hover:from-indigo-400 dark:hover:to-violet-500
+                  shadow-md shadow-indigo-500/25
+                  transition-all duration-200 hover:-translate-y-0.5 group">
+                <Layers class="h-4 w-4" />
+                {{ t('docs.multistep.cta') }}
+                <ArrowRight class="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-0.5" />
+              </RouterLink>
             </article>
 
             <!-- Final dark sample showcase -->

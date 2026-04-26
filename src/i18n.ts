@@ -239,6 +239,7 @@ const messages = {
         preview: 'Preview',
         export: 'Export',
         aiPrompt: 'AI Prompt',
+        multistep: 'Multi-step',
       },
       overview: {
         eyebrow: 'Overview',
@@ -364,6 +365,45 @@ const messages = {
         alt: 'Builder canvas in dark mode',
         caption: 'The builder ships with first-class dark mode — every panel adapts.',
       },
+      multistep: {
+        eyebrow: 'Multi-step',
+        title: 'Break long forms into focused, branching steps',
+        desc: 'Open /builder/multi-step to compose a wizard. Drag fields onto each step, design conditional flow with branch / skip / gate / async rules, and preview the respondent experience without leaving the builder.',
+        urlBuilder: '/builder/multi-step',
+        urlPreview: '/builder/multi-step · preview',
+        urlLogic: '/builder/multi-step · logic',
+        builder: {
+          alt: 'Multi-step builder with steps rail, element palette, canvas, and inspector',
+          caption: 'Steps rail on the left, element catalog beside it, canvas in the middle, inspector on the right.',
+        },
+        preview: {
+          alt: 'Respondent-facing preview of a multi-step form',
+          caption: 'Preview the exact respondent flow — numbered progress, Back / Continue, validation included.',
+        },
+        logic: {
+          alt: 'Logic editor with flow diagram and branch/skip/gate/async rule editor',
+          caption: 'Flow diagram up top, rule list on the side, IF / THEN editor with a plain-English summary.',
+        },
+        rules: {
+          branch: {
+            title: 'Branch',
+            desc: 'Jump to a different step when a field equals a value. Useful for skipping irrelevant questions.',
+          },
+          skip: {
+            title: 'Skip',
+            desc: 'Drop a step entirely based on an earlier answer — keep enterprise paths short.',
+          },
+          gate: {
+            title: 'Gate',
+            desc: 'Block forward progress until a verification (e.g., OTP) clears. Required-step gating built in.',
+          },
+          async: {
+            title: 'Async check',
+            desc: 'Validate against your backend mid-step — uniqueness, availability, anything you can hit with HTTP.',
+          },
+        },
+        cta: 'Open the multi-step builder',
+      },
     },
     examples: {
       hero: {
@@ -410,6 +450,24 @@ const messages = {
           url: '/builder · dark',
           title: 'A dark mode that earns its keep',
           desc: 'The whole builder shifts to a glassmorphic dark palette — high contrast, low glare, and consistent with the marketing surface.',
+        },
+        multistepBuilder: {
+          tag: 'Multi-step',
+          url: '/builder/multi-step',
+          title: 'Multi-step wizards in one canvas',
+          desc: 'A six-step tenant onboarding flow — account, OTP, company, plan, invites, finish. Steps rail and inspector keep the whole journey in view while you edit a single field.',
+        },
+        multistepLogic: {
+          tag: 'Logic editor',
+          url: '/builder/multi-step · logic',
+          title: 'Branch, skip, gate, async — visualized',
+          desc: 'A flow diagram of every rule and a plain-English summary like "When Company size in Company details equals 201+, branch → Plan & billing." No JS to wire conditional paths.',
+        },
+        multistepPreview: {
+          tag: 'Respondent view',
+          url: '/builder/multi-step · preview',
+          title: 'Preview the wizard, not just one screen',
+          desc: 'Numbered progress, Back / Continue, validation, and required-field gating — exactly as the respondent will see it. Switch to Builder and back without losing draft state.',
         },
       },
       cta: {
@@ -720,6 +778,7 @@ const messages = {
         preview: 'المعاينة',
         export: 'التصدير',
         aiPrompt: 'موجّه الذكاء',
+        multistep: 'متعدد الخطوات',
       },
       overview: {
         eyebrow: 'نظرة عامة',
@@ -845,6 +904,45 @@ const messages = {
         alt: 'منطقة بناء المنشئ في الوضع الداكن',
         caption: 'المنشئ يأتي بدعم من الدرجة الأولى للوضع الداكن — كل لوحة تتكيّف.',
       },
+      multistep: {
+        eyebrow: 'متعدد الخطوات',
+        title: 'قسّم النماذج الطويلة إلى خطوات مركّزة وذات تفرّع',
+        desc: 'افتح ‎/builder/multi-step‎ لتركيب معالج متعدد الخطوات. اسحب الحقول إلى كل خطوة، وصمّم تدفّقاً شرطياً عبر قواعد التفرّع / التخطّي / البوابة / التحقق غير المتزامن، وعاين تجربة المُجيب دون مغادرة المنشئ.',
+        urlBuilder: '/builder/multi-step',
+        urlPreview: '/builder/multi-step · معاينة',
+        urlLogic: '/builder/multi-step · منطق',
+        builder: {
+          alt: 'منشئ متعدد الخطوات بشريط الخطوات ولوحة العناصر ومنطقة البناء والمفتش',
+          caption: 'شريط الخطوات على اليسار، ولوحة العناصر بجانبه، ومنطقة البناء في الوسط، والمفتش على اليمين.',
+        },
+        preview: {
+          alt: 'معاينة النموذج متعدد الخطوات من واجهة المُجيب',
+          caption: 'عاين تدفّق المُجيب بالضبط — تقدّم مرقّم، أزرار رجوع/متابعة، والتحقق مدمج.',
+        },
+        logic: {
+          alt: 'محرّر المنطق مع مخطّط التدفّق ومحرّر قواعد التفرّع/التخطّي/البوابة/غير المتزامن',
+          caption: 'مخطّط التدفّق في الأعلى، وقائمة القواعد على الجانب، ومحرّر إذا/عندئذٍ مع ملخّص باللغة الطبيعية.',
+        },
+        rules: {
+          branch: {
+            title: 'تفرّع',
+            desc: 'انتقل إلى خطوة مختلفة عندما تساوي قيمة حقل قيمةً معيّنة — مفيد لتخطّي الأسئلة غير ذات الصلة.',
+          },
+          skip: {
+            title: 'تخطّي',
+            desc: 'استبعد خطوة كاملة بناءً على إجابة سابقة — أبقِ مسارات الشركات الكبرى مختصرة.',
+          },
+          gate: {
+            title: 'بوابة',
+            desc: 'احجب التقدّم حتى يكتمل تحقّق (مثل OTP). البوابة المطلوبة مدمجة من البداية.',
+          },
+          async: {
+            title: 'تحقق غير متزامن',
+            desc: 'تحقّق من خلفيتك أثناء الخطوة — توفّر اسم، فرادة، أو أي فحص تستطيع الاتصال به عبر HTTP.',
+          },
+        },
+        cta: 'افتح المنشئ متعدد الخطوات',
+      },
     },
     examples: {
       hero: {
@@ -891,6 +989,24 @@ const messages = {
           url: '/builder · داكن',
           title: 'وضع داكن يستحق وجوده',
           desc: 'كامل المنشئ ينتقل إلى لوحة داكنة زجاجية — تباين عالٍ، وهج منخفض، واتساق مع واجهة التسويق.',
+        },
+        multistepBuilder: {
+          tag: 'متعدد الخطوات',
+          url: '/builder/multi-step',
+          title: 'معالجات متعدّدة الخطوات في منطقة بناء واحدة',
+          desc: 'تدفّق إعداد مستأجر من ست خطوات — حساب، رمز تحقق، شركة، خطة، دعوات، إنهاء. شريط الخطوات والمفتش يبقيان الرحلة كاملة أمامك أثناء تحرير حقل واحد.',
+        },
+        multistepLogic: {
+          tag: 'محرّر المنطق',
+          url: '/builder/multi-step · منطق',
+          title: 'تفرّع، تخطّي، بوابة، غير متزامن — مرئياً',
+          desc: 'مخطّط تدفّق لكل قاعدة وملخّص باللغة الطبيعية مثل: «عندما يساوي حجم الشركة في تفاصيل الشركة 201+، تفرّع → الخطة والفوترة». بلا جافاسكربت لربط المسارات الشرطية.',
+        },
+        multistepPreview: {
+          tag: 'واجهة المُجيب',
+          url: '/builder/multi-step · معاينة',
+          title: 'عاين المعالج كله، لا شاشة واحدة',
+          desc: 'تقدّم مرقّم، أزرار رجوع/متابعة، تحقق، وحجب الحقول المطلوبة — تماماً كما سيراها المُجيب. بدّل بين البناء والمعاينة دون فقدان حالة المسوّدة.',
         },
       },
       cta: {
