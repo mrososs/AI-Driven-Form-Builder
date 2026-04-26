@@ -10,6 +10,9 @@ import {
   Smartphone,
   Monitor as MonitorIcon,
   Workflow,
+  Layers,
+  GitBranch,
+  Footprints,
 } from 'lucide-vue-next'
 import Navbar from '../components/layout/Navbar.vue'
 import Footer from '../components/layout/Footer.vue'
@@ -20,10 +23,31 @@ import previewMobileShot from '../assets/docs/preview-mobile.png'
 import previewDesktopShot from '../assets/docs/preview-desktop.png'
 import exportShot from '../assets/docs/builder-export-dialog.png'
 import promptShot from '../assets/docs/builder-ai-prompt.png'
+import multistepBuilderShot from '../assets/docs/multistep-builder.png'
+import multistepLogicShot from '../assets/docs/multistep-logic.png'
+import multistepPreviewShot from '../assets/docs/multistep-preview.png'
 
 const { t } = useI18n()
 
 const examples = [
+  {
+    key: 'multistepBuilder',
+    image: multistepBuilderShot,
+    accent: 'indigo',
+    badgeIcon: Layers,
+  },
+  {
+    key: 'multistepLogic',
+    image: multistepLogicShot,
+    accent: 'violet',
+    badgeIcon: GitBranch,
+  },
+  {
+    key: 'multistepPreview',
+    image: multistepPreviewShot,
+    accent: 'rose',
+    badgeIcon: Footprints,
+  },
   {
     key: 'onboarding',
     image: builderShot,
@@ -92,6 +116,11 @@ const accentMap = {
     badge: 'bg-fuchsia-50 dark:bg-fuchsia-500/10 text-fuchsia-700 dark:text-fuchsia-300 border-fuchsia-200/70 dark:border-fuchsia-500/25',
     glow: 'group-hover:shadow-fuchsia-500/20',
     border: 'group-hover:border-fuchsia-300 dark:group-hover:border-fuchsia-500/30',
+  },
+  rose: {
+    badge: 'bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-300 border-rose-200/70 dark:border-rose-500/25',
+    glow: 'group-hover:shadow-rose-500/20',
+    border: 'group-hover:border-rose-300 dark:group-hover:border-rose-500/30',
   },
 } as const
 </script>
