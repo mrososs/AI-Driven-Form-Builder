@@ -1,5 +1,21 @@
 import { ref, shallowRef, computed } from 'vue'
 import { defineStore } from 'pinia'
+import { db } from '../firebase'
+import {
+  collection,
+  doc,
+  addDoc,
+  setDoc,
+  getDoc,
+  getDocs,
+  deleteDoc,
+  query,
+  where,
+  orderBy,
+  serverTimestamp,
+  type Timestamp,
+} from 'firebase/firestore'
+import { useAuthStore } from './auth'
 import type { StepIconKey } from '../features/multistep/utils/icons'
 import type { SavedForm } from './form'
 import {
@@ -56,6 +72,18 @@ export type RuleOperator =
   | 'isVerified'
   | 'asyncCheck'
 export type RuleAction = 'jumpTo' | 'skipStep' | 'gate' | 'validate'
+
+export interface SavedMultiStepForm {
+  id: string
+  name: string
+  steps: FormStep[]
+  progressStyle: ProgressStyle
+  flow: FlowSettings
+  rules: LogicRule[]
+  userId: string
+  createdAt: Timestamp
+  updatedAt: Timestamp
+}
 
 export interface LogicRule {
   id: string
@@ -183,6 +211,8 @@ interface PersistedDraft {
   progressStyle: ProgressStyle
   flow: FlowSettings
   rules?: LogicRule[]
+  name?: string
+  currentFormId?: string
 }
 
 function loadDraft(): PersistedDraft | null {
@@ -248,6 +278,11 @@ export const useMultiStepFormStore = defineStore('multistepForm', () => {
   const progressStyle = shallowRef<ProgressStyle>(persisted?.progressStyle ?? 'numbered')
   const flow = ref<FlowSettings>(persisted?.flow ?? { linear: true, requireAll: true })
   const rules = ref<LogicRule[]>(persisted?.rules ?? [])
+  const currentFormId = shallowRef<string | null>(persisted?.currentFormId ?? null)
+  const formName = shallowRef<string>(persisted?.name ?? '')
+  const isSaving = shallowRef(false)
+  const isLoading = shallowRef(false)
+  const savedForms = ref<SavedMultiStepForm[]>([])
 
   const activeStep = computed(() => steps.value.find(s => s.id === activeStepId.value) ?? null)
   const activeStepIndex = computed(() =>
@@ -407,6 +442,8 @@ export const useMultiStepFormStore = defineStore('multistepForm', () => {
       progressStyle: progressStyle.value,
       flow: flow.value,
       rules: rules.value,
+      name: formName.value,
+      currentFormId: currentFormId.value ?? undefined,
     }
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(payload))
@@ -422,7 +459,84 @@ export const useMultiStepFormStore = defineStore('multistepForm', () => {
     progressStyle.value = 'numbered'
     flow.value = { linear: true, requireAll: true }
     rules.value = []
+    currentFormId.value = null
+    formName.value = ''
     localStorage.removeItem(STORAGE_KEY)
+  }
+
+  async function saveToFirestore(name: string): Promise<void> {
+    const authStore = useAuthStore()
+    if (!authStore.user) throw new Error('Not authenticated')
+    isSaving.value = true
+    try {
+      const payload = {
+        name,
+        steps: steps.value,
+        progressStyle: progressStyle.value,
+        flow: flow.value,
+        rules: rules.value,
+        userId: authStore.user.uid,
+        updatedAt: serverTimestamp(),
+      }
+      if (currentFormId.value) {
+        await setDoc(doc(db, 'multistep-forms', currentFormId.value), payload, { merge: true })
+      } else {
+        const docRef = await addDoc(collection(db, 'multistep-forms'), {
+          ...payload,
+          createdAt: serverTimestamp(),
+        })
+        currentFormId.value = docRef.id
+      }
+      formName.value = name
+      saveDraft()
+    } finally {
+      isSaving.value = false
+    }
+  }
+
+  async function fetchSavedForms(): Promise<void> {
+    const authStore = useAuthStore()
+    if (!authStore.user) return
+    isLoading.value = true
+    try {
+      const q = query(
+        collection(db, 'multistep-forms'),
+        where('userId', '==', authStore.user.uid),
+        orderBy('updatedAt', 'desc'),
+      )
+      const snap = await getDocs(q)
+      savedForms.value = snap.docs.map(d => ({ id: d.id, ...d.data() }) as SavedMultiStepForm)
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  async function loadFormById(id: string): Promise<void> {
+    isLoading.value = true
+    try {
+      const snap = await getDoc(doc(db, 'multistep-forms', id))
+      if (!snap.exists()) return
+      const data = snap.data() as Omit<SavedMultiStepForm, 'id'>
+      steps.value = data.steps ?? []
+      progressStyle.value = data.progressStyle ?? 'numbered'
+      flow.value = data.flow ?? { linear: true, requireAll: true }
+      rules.value = data.rules ?? []
+      activeStepId.value = data.steps?.[0]?.id ?? null
+      selectedElementId.value = null
+      currentFormId.value = id
+      formName.value = data.name ?? ''
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  async function deleteSavedForm(id: string): Promise<void> {
+    await deleteDoc(doc(db, 'multistep-forms', id))
+    savedForms.value = savedForms.value.filter(f => f.id !== id)
+    if (currentFormId.value === id) {
+      currentFormId.value = null
+      formName.value = ''
+    }
   }
 
   function importFormAsStep(
@@ -457,6 +571,11 @@ export const useMultiStepFormStore = defineStore('multistepForm', () => {
     progressStyle,
     flow,
     rules,
+    currentFormId,
+    formName,
+    isSaving,
+    isLoading,
+    savedForms,
     activeStep,
     activeStepIndex,
     selectedElement,
@@ -478,6 +597,10 @@ export const useMultiStepFormStore = defineStore('multistepForm', () => {
     removeRule,
     saveDraft,
     resetDraft,
+    saveToFirestore,
+    fetchSavedForms,
+    loadFormById,
+    deleteSavedForm,
     applyTemplate,
     importFormAsStep,
   }
