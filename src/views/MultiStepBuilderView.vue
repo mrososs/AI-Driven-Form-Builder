@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref, watch, onBeforeUnmount } from 'vue'
+import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
+import { useRoute } from 'vue-router'
 import { useMultiStepFormStore } from '../stores/multistepForm'
 import MultiStepNavbar from '../features/multistep/components/MultiStepNavbar.vue'
 import StepRail from '../features/multistep/components/StepRail.vue'
@@ -10,12 +11,22 @@ import PropertiesPanel from '../features/multistep/components/PropertiesPanel.vu
 import PreviewMode from '../features/multistep/components/PreviewMode.vue'
 import LogicPage from '../features/multistep/components/LogicPage.vue'
 import MultiStepExportDialog from '../features/multistep/components/MultiStepExportDialog.vue'
+import MultiStepSaveDialog from '../features/multistep/components/MultiStepSaveDialog.vue'
 import MultiStepMobileTabs from '../features/multistep/components/MultiStepMobileTabs.vue'
 import type { MultiStepMode } from '../features/multistep/components/types'
 
 const store = useMultiStepFormStore()
+const route = useRoute()
 const mode = ref<MultiStepMode>('build')
 const exportOpen = ref(false)
+const saveDialogOpen = ref(false)
+
+onMounted(async () => {
+  const id = route.query.id as string | undefined
+  if (id && id !== store.currentFormId) {
+    await store.loadFormById(id)
+  }
+})
 
 onBeforeUnmount(() => {
   store.saveDraft()
@@ -30,7 +41,7 @@ watch(
 )
 
 function handleSave() {
-  store.saveDraft()
+  saveDialogOpen.value = true
 }
 
 function openExport() {
@@ -48,6 +59,7 @@ function exitToBuilder() {
   >
     <MultiStepNavbar
       :mode="mode"
+      :form-name="store.formName"
       @update:mode="mode = $event"
       @export="openExport"
       @save="handleSave"
@@ -66,6 +78,7 @@ function exitToBuilder() {
 
     <MultiStepMobileTabs v-if="mode === 'build'" />
     <MultiStepExportDialog v-model:open="exportOpen" />
+    <MultiStepSaveDialog v-model:open="saveDialogOpen" />
   </div>
 </template>
 

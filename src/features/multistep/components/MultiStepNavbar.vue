@@ -6,7 +6,7 @@ import { useMultiStepFormStore } from '../../../stores/multistepForm'
 import { useTheme } from '../../../composables/useTheme'
 import type { MultiStepMode } from './types'
 
-const props = defineProps<{ mode: MultiStepMode }>()
+const props = defineProps<{ mode: MultiStepMode; formName?: string }>()
 const emit = defineEmits<{
   'update:mode': [mode: MultiStepMode]
   export: []
@@ -64,6 +64,13 @@ function backToBuilder() {
         class="ms-3 px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 text-[11px] font-semibold tracking-wide uppercase border border-indigo-200 dark:border-indigo-500/20 hidden md:inline"
       >
         Multi-step
+      </span>
+      <span
+        v-if="props.formName"
+        class="hidden lg:inline ms-1 text-sm text-slate-500 dark:text-white/40 font-normal truncate max-w-[180px]"
+        :title="props.formName"
+      >
+        — {{ props.formName }}
       </span>
     </div>
 
