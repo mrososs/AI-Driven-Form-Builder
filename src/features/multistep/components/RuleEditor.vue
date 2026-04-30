@@ -205,7 +205,7 @@ const thenLabelClass = computed(
               },
             })
           "
-          class="w-full border border-white/[0.07] rounded-lg px-2.5 py-2 text-[13px] text-white bg-white/[0.03] focus:border-indigo-500 focus:outline-none max-w-sm"
+          class="w-full border border-slate-200 dark:border-white/[0.07] rounded-lg px-2.5 py-2 text-[13px] text-slate-900 dark:text-white bg-white dark:bg-white/[0.03] focus:border-indigo-500 focus:outline-none max-w-sm"
         >
           <option v-for="s in store.steps" :key="s.id" :value="s.id" class="bg-white dark:bg-[#111118]">
             {{ s.title }}
