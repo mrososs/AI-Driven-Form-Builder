@@ -1,24 +1,55 @@
 <script setup lang="ts">
-import { shallowRef, useTemplateRef } from 'vue'
+import { computed, shallowRef, useTemplateRef } from 'vue'
 import { useRouter, useRoute, RouterLink } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { Sparkles, Moon, Sun, LogOut, ChevronDown } from 'lucide-vue-next'
+import { Sparkles, Moon, Sun, LogOut, ChevronDown, Wand2 } from 'lucide-vue-next'
 import { onClickOutside } from '@vueuse/core'
 import { useAuthStore } from '../../stores/auth'
 import { useTheme } from '../../composables/useTheme'
+import { useFormStore } from '../../stores/form'
+import { useFormGeneration } from './ai/useFormGeneration'
+import GeneratePromptDialog from './ai/GeneratePromptDialog.vue'
 
 const router = useRouter()
 const route = useRoute()
 const { t } = useI18n()
 const authStore = useAuthStore()
 const { isDark, toggleDark } = useTheme()
+const formStore = useFormStore()
+const generation = useFormGeneration()
 
 const isProfileOpen = shallowRef(false)
 const profileMenuRef = useTemplateRef<HTMLElement>('profileMenuRef')
+const isGenerateOpen = shallowRef(false)
 
 onClickOutside(profileMenuRef, () => {
   isProfileOpen.value = false
 })
+
+const generateProgress = computed(() => {
+  const n = generation.elementsAdded.value
+  if (n === 0) return 'Thinking…'
+  return `${n} field${n === 1 ? '' : 's'} added…`
+})
+
+const hasExistingContent = computed(() => formStore.hasElements)
+
+const examples = [
+  'Customer feedback survey with NPS and one open question',
+  'Job application: role, resume, portfolio, salary expectation',
+  'Event registration with dietary preferences',
+]
+
+async function handleGenerateSubmit(prompt: string) {
+  await generation.start(prompt)
+  if (!generation.error.value) {
+    isGenerateOpen.value = false
+  }
+}
+
+function openGenerate() {
+  isGenerateOpen.value = true
+}
 
 async function handleLogout() {
   isProfileOpen.value = false
@@ -69,8 +100,27 @@ async function handleLogout() {
       </RouterLink>
     </nav>
 
-    <!-- Right: Theme toggle + profile -->
+    <!-- Right: Generate + Theme toggle + profile -->
     <div class="flex items-center gap-1 flex-shrink-0">
+      <!-- Generate Form (AI) -->
+      <button
+        type="button"
+        @click="openGenerate"
+        class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-gradient-to-r from-indigo-500 to-violet-600 text-white shadow-md shadow-indigo-500/30 hover:shadow-indigo-500/50 hover:-translate-y-px transition-all me-1"
+        aria-label="Generate form with AI"
+      >
+        <Wand2 class="h-3.5 w-3.5" />
+        <span>Generate Form</span>
+      </button>
+      <button
+        type="button"
+        @click="openGenerate"
+        class="sm:hidden p-2 rounded-lg bg-gradient-to-r from-indigo-500 to-violet-600 text-white shadow-md shadow-indigo-500/30"
+        aria-label="Generate form with AI"
+      >
+        <Wand2 class="h-4 w-4" />
+      </button>
+
       <!-- Theme toggle -->
       <button
         @click="toggleDark()"
@@ -147,4 +197,17 @@ async function handleLogout() {
       </div>
     </div>
   </header>
+
+  <GeneratePromptDialog
+    v-model:open="isGenerateOpen"
+    :is-generating="generation.isGenerating.value"
+    :error="generation.error.value"
+    :warnings="generation.warnings.value"
+    :progress-label="generateProgress"
+    :has-existing-content="hasExistingContent"
+    mode-label="Single-step form"
+    :examples="examples"
+    @submit="handleGenerateSubmit"
+    @cancel="generation.cancel"
+  />
 </template>

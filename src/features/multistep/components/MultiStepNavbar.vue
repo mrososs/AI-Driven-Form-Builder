@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, shallowRef } from 'vue'
 import { useRouter } from 'vue-router'
-import { Sparkles, Save, Upload, Moon, Sun, ChevronLeft } from 'lucide-vue-next'
+import { Sparkles, Save, Upload, Moon, Sun, ChevronLeft, Wand2 } from 'lucide-vue-next'
 import { useMultiStepFormStore } from '../../../stores/multistepForm'
 import { useTheme } from '../../../composables/useTheme'
+import { useMultiStepGeneration } from '../ai/useMultiStepGeneration'
+import GeneratePromptDialog from '../../builder/ai/GeneratePromptDialog.vue'
 import type { MultiStepMode } from './types'
 
 const props = defineProps<{ mode: MultiStepMode; formName?: string }>()
@@ -16,8 +18,35 @@ const emit = defineEmits<{
 const router = useRouter()
 const store = useMultiStepFormStore()
 const { isDark, toggleDark } = useTheme()
+const generation = useMultiStepGeneration()
 
 const stepCount = computed(() => store.steps.length)
+const isGenerateOpen = shallowRef(false)
+
+const generateProgress = computed(() => {
+  const n = generation.stepsAdded.value
+  if (n === 0) return 'Thinking…'
+  return `${n} step${n === 1 ? '' : 's'} added…`
+})
+
+const hasExistingSteps = computed(() => store.steps.length > 0)
+
+const examples = [
+  'Tenant signup: account → verify email → company → plan → finish',
+  'Job application wizard: about you → experience → portfolio → review',
+  'Insurance quote: vehicle details → driver info → coverage → confirm',
+]
+
+async function handleGenerateSubmit(prompt: string) {
+  await generation.start(prompt)
+  if (!generation.error.value) {
+    isGenerateOpen.value = false
+  }
+}
+
+function openGenerate() {
+  isGenerateOpen.value = true
+}
 
 const tabs: Array<{ key: MultiStepMode; label: string }> = [
   { key: 'build', label: 'Builder' },
@@ -109,6 +138,23 @@ function backToBuilder() {
       </button>
       <button
         type="button"
+        @click="openGenerate"
+        aria-label="Generate form with AI"
+        class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-gradient-to-r from-indigo-500 to-violet-600 text-white shadow-md shadow-indigo-500/30 hover:shadow-indigo-500/50 hover:-translate-y-px transition-all"
+      >
+        <Wand2 class="h-3.5 w-3.5" />
+        <span>Generate Form</span>
+      </button>
+      <button
+        type="button"
+        @click="openGenerate"
+        aria-label="Generate form with AI"
+        class="sm:hidden p-2 rounded-lg bg-gradient-to-r from-indigo-500 to-violet-600 text-white shadow-md shadow-indigo-500/30"
+      >
+        <Wand2 class="h-4 w-4" />
+      </button>
+      <button
+        type="button"
         @click="emit('export')"
         aria-label="Export"
         class="flex items-center gap-2 p-2 sm:px-3 sm:py-1.5 rounded-lg text-sm text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-500/10 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 font-medium"
@@ -127,6 +173,19 @@ function backToBuilder() {
       </button>
     </div>
   </header>
+
+  <GeneratePromptDialog
+    v-model:open="isGenerateOpen"
+    :is-generating="generation.isGenerating.value"
+    :error="generation.error.value"
+    :warnings="generation.warnings.value"
+    :progress-label="generateProgress"
+    :has-existing-content="hasExistingSteps"
+    mode-label="Multi-step form"
+    :examples="examples"
+    @submit="handleGenerateSubmit"
+    @cancel="generation.cancel"
+  />
 </template>
 
 <style scoped>
