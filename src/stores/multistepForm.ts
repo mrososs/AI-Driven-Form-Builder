@@ -502,10 +502,15 @@ export const useMultiStepFormStore = defineStore('multistepForm', () => {
       const q = query(
         collection(db, 'multistep-forms'),
         where('userId', '==', authStore.user.uid),
-        orderBy('updatedAt', 'desc'),
       )
       const snap = await getDocs(q)
-      savedForms.value = snap.docs.map(d => ({ id: d.id, ...d.data() }) as SavedMultiStepForm)
+      const forms = snap.docs.map(d => ({ id: d.id, ...d.data() }) as SavedMultiStepForm)
+      forms.sort((a, b) => {
+        const aMs = a.updatedAt?.toMillis?.() ?? 0
+        const bMs = b.updatedAt?.toMillis?.() ?? 0
+        return bMs - aMs
+      })
+      savedForms.value = forms
     } finally {
       isLoading.value = false
     }
