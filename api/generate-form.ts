@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { handleGenerate } from '../server/handleGenerate'
+import { handleGenerate } from '../server/handleGenerate.js'
 
 export const config = {
   runtime: 'nodejs',
