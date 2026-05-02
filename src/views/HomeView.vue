@@ -7,6 +7,7 @@ import FeatureCards from '../components/home/FeatureCards.vue'
 import TargetAudience from '../components/home/TargetAudience.vue'
 import ValueProposition from '../components/home/ValueProposition.vue'
 import PowerFeatures from '../components/home/PowerFeatures.vue'
+import McpSection from '../components/home/McpSection.vue'
 </script>
 
 <template>
@@ -28,6 +29,7 @@ import PowerFeatures from '../components/home/PowerFeatures.vue'
       <FeatureCards />
       <ValueProposition />
       <PowerFeatures />
+      <McpSection />
     </main>
 
     <Footer />

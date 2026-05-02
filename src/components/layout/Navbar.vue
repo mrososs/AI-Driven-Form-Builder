@@ -78,6 +78,13 @@ async function handleLogout() {
           >
             {{ t("nav.examples") }}
           </RouterLink>
+          <a
+            href="/#mcp"
+            class="inline-flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium rounded-lg transition-all text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-white/65 dark:hover:text-white dark:hover:bg-white/[0.07]"
+          >
+            <span class="inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500 ring-2 ring-emerald-500/25"></span>
+            {{ t("nav.mcp") }}
+          </a>
         </nav>
 
         <!-- Actions -->
@@ -207,6 +214,14 @@ async function handleLogout() {
             class="text-base font-semibold text-slate-700 dark:text-white/80 hover:text-indigo-600 dark:hover:text-indigo-400"
             >{{ t("nav.examples") }}</RouterLink
           >
+          <a
+            href="/#mcp"
+            @click="isMenuOpen = false"
+            class="inline-flex items-center gap-2 text-base font-semibold text-slate-700 dark:text-white/80 hover:text-emerald-600 dark:hover:text-emerald-400"
+          >
+            <span class="inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500 ring-2 ring-emerald-500/25 shrink-0"></span>
+            {{ t("nav.mcp") }}
+          </a>
 
           <div class="h-px bg-slate-200 dark:bg-white/10 my-2 w-full"></div>
 
