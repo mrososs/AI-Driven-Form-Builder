@@ -8,6 +8,11 @@ export const config = {
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  if (req.method !== 'POST') {
+    res.status(405).json({ error: 'Method Not Allowed. MCP requires POST.' })
+    return
+  }
+
   // Stateless mode: each request creates a fresh server + transport.
   // Required for Vercel Functions because there's no shared memory across invocations.
   const server = createServer()
