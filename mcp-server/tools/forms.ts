@@ -1,4 +1,4 @@
-import { adminAuth, adminDb } from '../adminInit.ts'
+import { adminAuth, adminDb } from '../adminInit.js'
 
 interface FormSummary {
   id: string

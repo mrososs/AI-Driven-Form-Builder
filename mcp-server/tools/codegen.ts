@@ -1,5 +1,5 @@
-import { generateComponent } from '../../src/utils/codegen/index.ts'
-import type { FormElement, Framework } from '../types.ts'
+import { generateComponent } from '../../src/utils/codegen/index.js'
+import type { FormElement, Framework } from '../types.js'
 
 export interface CodegenInput {
   elements: FormElement[]

@@ -1,6 +1,6 @@
 import { GoogleGenAI, Type, FunctionCallingConfigMode } from '@google/genai'
-import { verifyAndGetUid, checkAndIncrementQuota } from '../adminInit.ts'
-import type { GenerateFormResult, FormElement, FormStep } from '../types.ts'
+import { verifyAndGetUid, checkAndIncrementQuota } from '../adminInit.js'
+import type { GenerateFormResult, FormElement, FormStep } from '../types.js'
 
 const SINGLE_FORM_SYSTEM_PROMPT = `You are an expert form designer. Convert a natural-language description into a structured form schema by calling the provided functions ONLY.
 
