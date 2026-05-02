@@ -341,37 +341,50 @@ export async function handleGenerate(req: IncomingMessage, res: ServerResponse) 
   try {
     sseWrite(res, 'start', { mode, model, remaining: quota.remaining })
 
-    const stream = await ai.models.generateContentStream({
-      model,
-      contents: [
-        {
-          role: 'user',
-          parts: [{ text: `<user_input>\n${userPrompt}\n</user_input>` }],
-        },
-      ],
-      config: {
-        systemInstruction: systemPrompt,
-        temperature: 0.4,
-        tools: [{ functionDeclarations }],
-        toolConfig: {
-          functionCallingConfig: {
-            mode: FunctionCallingConfigMode.ANY,
-            allowedFunctionNames: functionDeclarations.map((fn) => fn.name),
+    // Multi-turn agentic loop: Gemini's ANY mode satisfies the constraint with
+    // a single call and stops. We send back function results each turn so the
+    // model continues calling emit_element / emit_step until done.
+    const contents: any[] = [
+      {
+        role: 'user',
+        parts: [{ text: `<user_input>\n${userPrompt}\n</user_input>` }],
+      },
+    ]
+    let toolCount = 0
+    const MAX_TURNS = 12
+
+    for (let turn = 0; turn < MAX_TURNS; turn++) {
+      const response = await ai.models.generateContent({
+        model,
+        contents,
+        config: {
+          systemInstruction: systemPrompt,
+          temperature: 0.4,
+          tools: [{ functionDeclarations }],
+          toolConfig: {
+            functionCallingConfig: {
+              mode: turn === 0 ? FunctionCallingConfigMode.ANY : FunctionCallingConfigMode.AUTO,
+              allowedFunctionNames: functionDeclarations.map((fn) => fn.name),
+            },
           },
         },
-      },
-    })
+      })
 
-    let toolCount = 0
-    for await (const chunk of stream) {
-      const calls = chunk.functionCalls
-      if (calls && calls.length > 0) {
-        for (const call of calls) {
-          if (!call.name) continue
-          sseWrite(res, 'tool', { name: call.name, input: call.args ?? {} })
-          toolCount += 1
-        }
+      const calls = response.functionCalls
+      if (!calls || calls.length === 0) break
+
+      const fnResponseParts: any[] = []
+      for (const call of calls) {
+        if (!call.name) continue
+        sseWrite(res, 'tool', { name: call.name, input: call.args ?? {} })
+        toolCount += 1
+        fnResponseParts.push({
+          functionResponse: { name: call.name, response: { success: true } },
+        })
       }
+
+      contents.push({ role: 'model', parts: response.candidates?.[0]?.content?.parts ?? [] })
+      contents.push({ role: 'user', parts: fnResponseParts })
     }
 
     sseWrite(res, 'done', { tools: toolCount, remaining: quota.remaining })
