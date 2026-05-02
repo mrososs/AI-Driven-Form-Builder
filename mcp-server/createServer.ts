@@ -8,7 +8,7 @@ import {
 import { authenticate } from './tools/auth.js'
 import { generateForm } from './tools/generate.js'
 import { generateCode } from './tools/codegen.js'
-import { listForms, getForm, listMultiStepForms, getMultiStepForm } from './tools/forms.js'
+import { listForms, getForm, listMultiStepForms, getMultiStepForm, saveForm, editForm } from './tools/forms.js'
 
 const TOOLS: Tool[] = [
   {
@@ -83,6 +83,68 @@ const TOOLS: Tool[] = [
         },
       },
       required: ['elements', 'title', 'framework'],
+    },
+  },
+  {
+    name: 'save_form',
+    description:
+      'Save a generated form schema to Firestore. ' +
+      'Use this immediately after generate_form to persist the result. ' +
+      'If form_id is provided, the existing form is updated (ownership is verified). ' +
+      'If omitted, a new form document is created and its ID is returned.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        token: { type: 'string', description: 'Firebase ID token from the authenticate tool.' },
+        mode: {
+          type: 'string',
+          enum: ['single', 'multistep'],
+          description: '"single" for one-page forms, "multistep" for wizard forms.',
+        },
+        form: {
+          type: 'object',
+          description:
+            'The form schema to save. ' +
+            'For single: { title, description, elements[] }. ' +
+            'For multistep: { name, steps[] }. ' +
+            'Pass the object returned by generate_form directly.',
+        },
+        form_id: {
+          type: 'string',
+          description: 'Optional. If provided, updates the existing form with this ID.',
+        },
+      },
+      required: ['token', 'mode', 'form'],
+    },
+  },
+  {
+    name: 'edit_form',
+    description:
+      'Edit an existing saved form using a natural language instruction. ' +
+      'The AI will apply the change (e.g. "add a phone field after email", ' +
+      '"make all fields required", "remove the address field") and save back automatically. ' +
+      'Does not consume the daily generation quota. ' +
+      'Works for both single and multistep forms — mode is auto-detected if omitted.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        token: { type: 'string', description: 'Firebase ID token from the authenticate tool.' },
+        form_id: { type: 'string', description: 'ID of the saved form to edit (from save_form or list_forms).' },
+        instruction: {
+          type: 'string',
+          description:
+            'Natural language description of the change to apply. ' +
+            'Examples: "add a phone number field after the email field", ' +
+            '"make the subject field required", "remove the company name field", ' +
+            '"add a country dropdown with options: Egypt, Saudi Arabia, UAE".',
+        },
+        mode: {
+          type: 'string',
+          enum: ['single', 'multistep'],
+          description: 'Optional. Skips auto-detection if you already know the form type.',
+        },
+      },
+      required: ['token', 'form_id', 'instruction'],
     },
   },
   {
@@ -180,6 +242,26 @@ export function createServer(): Server {
               },
             ],
           }
+        }
+
+        case 'save_form': {
+          const result = await saveForm(
+            args.token as string,
+            (args.mode as 'single' | 'multistep' | undefined) ?? 'single',
+            args.form as Parameters<typeof saveForm>[2],
+            args.form_id as string | undefined,
+          )
+          return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] }
+        }
+
+        case 'edit_form': {
+          const result = await editForm(
+            args.token as string,
+            args.form_id as string,
+            args.instruction as string,
+            args.mode as 'single' | 'multistep' | undefined,
+          )
+          return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] }
         }
 
         case 'list_forms': {

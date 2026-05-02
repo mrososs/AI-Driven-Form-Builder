@@ -18,6 +18,7 @@ export function useAiQuota() {
   const authStore = useAuthStore()
   const usage = shallowRef<AiUsageDoc | null>(null)
   const ready = shallowRef(false)
+  const isAdmin = shallowRef(false)
   let unsub: Unsubscribe | null = null
 
   function detach() {
@@ -29,13 +30,20 @@ export function useAiQuota() {
 
   watch(
     () => authStore.user?.uid,
-    (uid) => {
+    async (uid) => {
       detach()
       ready.value = false
       usage.value = null
+      isAdmin.value = false
       if (!uid) {
         ready.value = true
         return
+      }
+      try {
+        const result = await auth.currentUser?.getIdTokenResult()
+        isAdmin.value = result?.claims?.['admin'] === true
+      } catch {
+        isAdmin.value = false
       }
       const ref = doc(db, 'aiUsage', uid)
       unsub = onSnapshot(
@@ -62,7 +70,7 @@ export function useAiQuota() {
     return data.date === todayUtc() ? data.count ?? 0 : 0
   })
   const remaining = computed(() => Math.max(0, AI_DAILY_LIMIT - used.value))
-  const exhausted = computed(() => remaining.value === 0)
+  const exhausted = computed(() => !isAdmin.value && remaining.value === 0)
   const emailVerified = computed(() => auth.currentUser?.emailVerified ?? false)
 
   return {
@@ -71,6 +79,7 @@ export function useAiQuota() {
     remaining,
     exhausted,
     emailVerified,
+    isAdmin,
     limit: AI_DAILY_LIMIT,
   }
 }

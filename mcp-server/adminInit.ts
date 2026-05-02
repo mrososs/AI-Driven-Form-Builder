@@ -33,12 +33,12 @@ export function adminDb() {
   return getFirestore(getAdminApp())
 }
 
-export async function verifyAndGetUid(token: string): Promise<string> {
+export async function verifyAndGetUid(token: string): Promise<{ uid: string; isAdmin: boolean }> {
   const decoded = await adminAuth().verifyIdToken(token)
   if (!decoded.email_verified) {
     throw new Error('EMAIL_NOT_VERIFIED: Please verify your email before using AI generation.')
   }
-  return decoded.uid
+  return { uid: decoded.uid, isAdmin: decoded['admin'] === true }
 }
 
 interface QuotaResult {
@@ -51,7 +51,9 @@ function todayUtcDateString(): string {
   return new Date().toISOString().slice(0, 10)
 }
 
-export async function checkAndIncrementQuota(uid: string): Promise<QuotaResult> {
+export async function checkAndIncrementQuota(uid: string, isAdmin = false): Promise<QuotaResult> {
+  if (isAdmin) return { allowed: true, used: 0, remaining: Infinity as unknown as number }
+
   const db = adminDb()
   const usageRef = db.collection('aiUsage').doc(uid)
   const today = todayUtcDateString()

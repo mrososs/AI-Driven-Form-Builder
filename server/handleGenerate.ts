@@ -257,6 +257,7 @@ export async function handleGenerate(req: IncomingMessage, res: ServerResponse) 
 
   // 2. Verify token + require verified email
   let uid: string
+  let isAdmin = false
   try {
     const decoded = await getAdminAuth(adminApp()).verifyIdToken(token)
     if (!decoded.email_verified) {
@@ -267,6 +268,7 @@ export async function handleGenerate(req: IncomingMessage, res: ServerResponse) 
       return
     }
     uid = decoded.uid
+    isAdmin = decoded['admin'] === true
   } catch (err) {
     const message = err instanceof Error && err.message.includes('credentials')
       ? err.message
@@ -275,14 +277,18 @@ export async function handleGenerate(req: IncomingMessage, res: ServerResponse) 
     return
   }
 
-  // 3. Atomic quota check
+  // 3. Atomic quota check (skipped for admins)
   let quota: QuotaResult
-  try {
-    quota = await checkAndIncrementQuota(uid)
-  } catch (err) {
-    const message = err instanceof Error ? err.message : 'Quota check failed'
-    jsonError(res, 500, { error: message, code: 'quota_error' })
-    return
+  if (isAdmin) {
+    quota = { allowed: true, used: 0, remaining: Infinity as unknown as number }
+  } else {
+    try {
+      quota = await checkAndIncrementQuota(uid)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Quota check failed'
+      jsonError(res, 500, { error: message, code: 'quota_error' })
+      return
+    }
   }
   if (!quota.allowed) {
     res.statusCode = 429
