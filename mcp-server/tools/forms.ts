@@ -277,7 +277,7 @@ export async function editForm(
     `<current_form>\n${schemaJson}\n</current_form>\n\nChange to apply:\n<user_input>\n${sanitized}\n</user_input>`
 
   const ai = new GoogleGenAI({ apiKey })
-  const modelId = process.env.GEMINI_MODEL || 'gemini-2.5-flash'
+  const modelId = process.env.GEMINI_MODEL || 'gemini-2.0-flash'
 
   const response = await ai.models.generateContent({
     model: modelId,
@@ -285,6 +285,7 @@ export async function editForm(
     config: {
       systemInstruction: systemPrompt,
       temperature: 0.3,
+      thinkingConfig: { includeThoughts: false },
       tools: [{ functionDeclarations }],
       toolConfig: {
         functionCallingConfig: {
@@ -296,6 +297,14 @@ export async function editForm(
   })
 
   const calls = response.functionCalls ?? []
+
+  if (calls.length === 0) {
+    const finish = response.candidates?.[0]?.finishReason ?? 'unknown'
+    throw new Error(
+      `EDIT_FAILED: Gemini returned no function calls (finishReason: ${finish}). ` +
+      `Try rephrasing the instruction or set GEMINI_MODEL=gemini-2.0-flash.`,
+    )
+  }
   const db = adminDb()
   const now = Timestamp.now()
 

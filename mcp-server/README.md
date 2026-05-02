@@ -50,6 +50,8 @@ The agent will call three tools in sequence: `authenticate` → `generate_form` 
 |------|---------|
 | `authenticate` | Sign in with email + password, returns a Firebase ID token (1-hour expiry). |
 | `generate_form` | Generate a single-page or multi-step form schema from a natural language prompt. |
+| `save_form` | Persist a generated schema to Firestore. Pass `form_id` to update an existing form. |
+| `edit_form` | Edit a saved form with a natural language instruction (does not consume daily quota). |
 | `generate_code` | Convert a form schema into a Vue 3 SFC, React TSX, or Angular component. |
 | `list_forms` | List all saved single-page forms for the authenticated user. |
 | `get_form` | Get the full schema of a saved single-page form. |

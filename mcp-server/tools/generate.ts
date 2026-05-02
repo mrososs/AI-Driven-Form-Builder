@@ -212,7 +212,10 @@ export async function generateForm(
     : [setFormMetaDecl, emitElementDecl, emitRowDecl]
 
   const ai = new GoogleGenAI({ apiKey })
-  const modelId = process.env.GEMINI_MODEL || 'gemini-2.5-flash'
+  // gemini-2.0-flash is the default: stable, non-thinking, reliable for function calling.
+  // gemini-2.5-flash (thinking model) can silently return 0 function calls when thinking
+  // conflicts with forced function-call mode — use GEMINI_MODEL env var to override.
+  const modelId = process.env.GEMINI_MODEL || 'gemini-2.0-flash'
 
   const response = await ai.models.generateContent({
     model: modelId,
@@ -220,6 +223,7 @@ export async function generateForm(
     config: {
       systemInstruction: systemPrompt,
       temperature: 0.4,
+      thinkingConfig: { includeThoughts: false },
       tools: [{ functionDeclarations }],
       toolConfig: {
         functionCallingConfig: {
@@ -232,6 +236,14 @@ export async function generateForm(
 
   const calls = response.functionCalls ?? []
 
+  if (calls.length === 0) {
+    const finish = response.candidates?.[0]?.finishReason ?? 'unknown'
+    throw new Error(
+      `GENERATION_FAILED: Gemini returned no function calls (finishReason: ${finish}). ` +
+      `Try rephrasing the prompt or set GEMINI_MODEL=gemini-2.0-flash.`,
+    )
+  }
+
   if (mode === 'multistep') {
     let name = 'Untitled Form'
     const steps: FormStep[] = []
@@ -242,6 +254,10 @@ export async function generateForm(
       } else if (call.name === 'emit_step') {
         steps.push(call.args as unknown as FormStep)
       }
+    }
+
+    if (steps.length === 0) {
+      throw new Error('GENERATION_FAILED: Form generated but contains no steps. Try a more specific prompt.')
     }
 
     return { type: 'multistep', name, steps, remaining: quota.remaining }
@@ -273,6 +289,10 @@ export async function generateForm(
           for (const child of children) elements.push(child)
         }
       }
+    }
+
+    if (elements.length === 0) {
+      throw new Error('GENERATION_FAILED: Form generated but contains no fields. Try a more specific prompt.')
     }
 
     return { type: 'single', title, description, elements, remaining: quota.remaining }
