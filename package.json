@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc -b && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "mcp:start": "tsx --env-file=.env.local mcp-server/index.ts",
+    "mcp:dev": "tsx watch --env-file=.env.local mcp-server/index.ts"
   },
   "dependencies": {
     "@google/genai": "^0.7.0",
@@ -22,6 +24,7 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "@tailwindcss/postcss": "^4.2.2",
     "@tailwindcss/vite": "^4.2.2",
     "@types/node": "^24.12.2",
@@ -31,6 +34,7 @@
     "autoprefixer": "^10.5.0",
     "postcss": "^8.5.10",
     "tailwindcss": "^4.2.2",
+    "tsx": "^4.21.0",
     "typescript": "~6.0.2",
     "vite": "^8.0.4",
     "vite-plugin-vue-devtools": "^8.1.1",

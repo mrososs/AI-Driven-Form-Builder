@@ -48,7 +48,10 @@
       "Bash(git check-ignore *)",
       "Bash(firebase deploy *)",
       "Bash(git push *)",
-      "mcp__mcp-registry__search_mcp_registry"
+      "mcp__mcp-registry__search_mcp_registry",
+      "Bash(timeout 5 node --import tsx/esm --env-file=.env.local mcp-server/index.ts)",
+      "Bash(npx tsc *)",
+      "Bash(git checkout *)"
     ]
   }
 }
