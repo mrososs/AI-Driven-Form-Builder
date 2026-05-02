@@ -9,6 +9,60 @@ import { authenticate } from './tools/auth.js'
 import { generateForm } from './tools/generate.js'
 import { generateCode } from './tools/codegen.js'
 import { listForms, getForm, listMultiStepForms, getMultiStepForm, saveForm, editForm } from './tools/forms.js'
+import type { GenerateFormResult, FormElement, FormStep } from './types.js'
+
+// ─── Preview formatters ───────────────────────────────────────────────────────
+
+function fieldLine(el: FormElement, indent = ''): string {
+  const req = el.required ? ' *(required)*' : ''
+  if (el.type === 'row' && Array.isArray(el.children)) {
+    return el.children.map((c) => `${indent}  - **${c.label}** \`${c.type}\`${c.required ? ' *(required)*' : ''}`).join('\n')
+  }
+  const opts = Array.isArray(el.options) && el.options.length ? ` — options: ${el.options.slice(0, 4).join(', ')}${el.options.length > 4 ? '…' : ''}` : ''
+  return `${indent}- **${el.label}** \`${el.type}\`${req}${opts}`
+}
+
+function stepLine(step: FormStep, index: number): string {
+  const fieldCount = Array.isArray(step.elements) ? step.elements.length : 0
+  const lines = [
+    `**Step ${index + 1} — ${step.title}** \`${step.icon}\` · ${fieldCount} field${fieldCount !== 1 ? 's' : ''}`,
+    `  *${step.description}*`,
+  ]
+  if (Array.isArray(step.elements)) {
+    for (const el of step.elements) {
+      const req = el.required ? ' *(required)*' : ''
+      const opts = Array.isArray(el.options) && el.options.length ? ` — options: ${el.options.slice(0, 4).join(', ')}${el.options.length > 4 ? '…' : ''}` : ''
+      lines.push(`  - **${el.label}** \`${el.type}\`${req}${opts}`)
+    }
+  }
+  return lines.join('\n')
+}
+
+function formatPreview(result: GenerateFormResult): string {
+  const lines: string[] = []
+  lines.push('> ⚠️ **Form generated but NOT saved yet.** Review below, then reply with your decision.\n')
+
+  if (result.type === 'multistep') {
+    const totalFields = result.steps.reduce((acc, s) => acc + (Array.isArray(s.elements) ? s.elements.length : 0), 0)
+    lines.push(`### 📋 ${result.name}`)
+    lines.push(`**${result.steps.length} steps · ${totalFields} fields total**\n`)
+    result.steps.forEach((step, i) => lines.push(stepLine(step, i) + '\n'))
+  } else {
+    const totalFields = result.elements.reduce((acc, el) => acc + (el.type === 'row' && el.children ? el.children.length : 1), 0)
+    lines.push(`### 📋 ${result.title}`)
+    if (result.description) lines.push(`*${result.description}*`)
+    lines.push(`**${totalFields} field${totalFields !== 1 ? 's' : ''} total**\n`)
+    for (const el of result.elements) lines.push(fieldLine(el))
+  }
+
+  lines.push('\n---')
+  lines.push('**What would you like to do?**')
+  lines.push('- Reply **"save"** to persist this form')
+  lines.push('- Reply **"edit: [describe your change]"** to modify it first')
+  lines.push('- Reply **"discard"** to cancel')
+
+  return lines.join('\n')
+}
 
 const TOOLS: Tool[] = [
   {
@@ -30,8 +84,11 @@ const TOOLS: Tool[] = [
     name: 'generate_form',
     description:
       'Generate a complete form schema from a natural language prompt using Gemini AI. ' +
-      'Returns a JSON schema ready for code generation. Requires a valid Firebase token. ' +
-      'Daily limit: 2 generations per user (resets at 00:00 UTC). ' +
+      'Returns a PREVIEW of the generated form — steps and fields — for the user to review. ' +
+      'IMPORTANT: Do NOT call save_form automatically after this. ' +
+      'Always present the preview to the user and ask whether they want to save, edit, or discard. ' +
+      'Only call save_form once the user explicitly confirms they want to save. ' +
+      'Requires a valid Firebase token. Daily limit: 2 generations per user (resets at 00:00 UTC). ' +
       'The user account must have a verified email.',
     inputSchema: {
       type: 'object',
@@ -88,8 +145,8 @@ const TOOLS: Tool[] = [
   {
     name: 'save_form',
     description:
-      'Save a generated form schema to Firestore. ' +
-      'Use this immediately after generate_form to persist the result. ' +
+      'Persist a generated form schema to Firestore. ' +
+      'Call this ONLY after the user has reviewed the generate_form preview and explicitly confirmed they want to save. ' +
       'If form_id is provided, the existing form is updated (ownership is verified). ' +
       'If omitted, a new form document is created and its ID is returned.',
     inputSchema: {
@@ -223,8 +280,13 @@ export function createServer(): Server {
         case 'generate_form': {
           const mode = (args.mode as 'single' | 'multistep' | undefined) ?? 'single'
           const result = await generateForm(args.prompt as string, mode, args.token as string)
+          const preview = formatPreview(result)
+          const schema = JSON.stringify(result, null, 2)
           return {
-            content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+            content: [
+              { type: 'text', text: preview },
+              { type: 'text', text: `\n<generated_schema>\n${schema}\n</generated_schema>` },
+            ],
           }
         }
 
