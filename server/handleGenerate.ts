@@ -362,10 +362,14 @@ export async function handleGenerate(req: IncomingMessage, res: ServerResponse) 
           temperature: 0.4,
           tools: [{ functionDeclarations }],
           toolConfig: {
-            functionCallingConfig: {
-              mode: turn === 0 ? FunctionCallingConfigMode.ANY : FunctionCallingConfigMode.AUTO,
-              allowedFunctionNames: functionDeclarations.map((fn) => fn.name),
-            },
+            functionCallingConfig: turn === 0
+              ? {
+                  mode: FunctionCallingConfigMode.ANY,
+                  allowedFunctionNames: functionDeclarations.map((fn) => fn.name),
+                }
+              : {
+                  mode: FunctionCallingConfigMode.AUTO,
+                },
           },
         },
       })
