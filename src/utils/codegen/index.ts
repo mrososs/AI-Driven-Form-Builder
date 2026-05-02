@@ -1,10 +1,10 @@
 import type { FormElement } from '../../stores/form'
-import type { Framework, GeneratedComponent } from './shared'
-import { generateVueComponent } from './vue'
-import { generateReactComponent } from './react'
-import { generateAngularComponent } from './angular'
+import type { Framework, GeneratedComponent } from './shared.js'
+import { generateVueComponent } from './vue.js'
+import { generateReactComponent } from './react.js'
+import { generateAngularComponent } from './angular.js'
 
-export type { Framework, GeneratedComponent } from './shared'
+export type { Framework, GeneratedComponent } from './shared.js'
 
 export function generateComponent(
   elements: FormElement[],

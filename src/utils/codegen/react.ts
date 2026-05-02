@@ -15,7 +15,7 @@ import {
   type CodegenNode,
   type Field,
   type GeneratedComponent,
-} from './shared'
+} from './shared.js'
 
 const INPUT_CLASS =
   'w-full px-3.5 py-2.5 text-sm rounded-lg transition-colors text-slate-800 dark:text-white bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 placeholder:text-slate-400 dark:placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 dark:focus:border-indigo-400'
