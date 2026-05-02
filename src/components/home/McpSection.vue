@@ -1,62 +1,129 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import {
   KeyRound, Sparkles, Code2, LayoutList, FileText,
   Layers, FileStack, Copy, Check, Plug, Terminal,
-  ChevronRight, Cpu,
+  ChevronRight, Cpu, CheckCircle2, MonitorPlay,
 } from 'lucide-vue-next'
 
 const { t } = useI18n()
 
 const ENDPOINT = 'https://ai-driven-form-builder.vercel.app/api/mcp'
+const CLI_COMMAND = `claude mcp add ai-form-builder --transport http ${ENDPOINT}`
 
 const copiedEndpoint = ref(false)
-const copiedClient = ref<string | null>(null)
-const activeClient = ref<'claude' | 'cursor' | 'claudeCode'>('claude')
+const copiedClient  = ref<string | null>(null)
+const copiedCli     = ref(false)
+
+const activeClient      = ref<'claude' | 'cursor' | 'vscode' | 'windsurf' | 'claudeCode'>('claude')
+const activeOS          = ref<'mac' | 'windows'>('mac')
+const claudeCodeMethod  = ref<'cli' | 'config'>('cli')
 
 async function copyEndpoint() {
   await navigator.clipboard.writeText(ENDPOINT)
   copiedEndpoint.value = true
-  setTimeout(() => { copiedEndpoint.value = false }, 2000)
+  setTimeout(() => (copiedEndpoint.value = false), 2000)
 }
 
-async function copyConfig(clientKey: string, text: string) {
+async function copyConfig(key: string, text: string) {
   await navigator.clipboard.writeText(text)
-  copiedClient.value = clientKey
-  setTimeout(() => { copiedClient.value = null }, 2000)
+  copiedClient.value = key
+  setTimeout(() => (copiedClient.value = null), 2000)
 }
+
+async function copyCli() {
+  await navigator.clipboard.writeText(CLI_COMMAND)
+  copiedCli.value = true
+  setTimeout(() => (copiedCli.value = false), 2000)
+}
+
+const claudeConfigPath = computed(() =>
+  activeOS.value === 'mac'
+    ? '~/Library/Application Support/Claude/claude_desktop_config.json'
+    : '%APPDATA%\\Claude\\claude_desktop_config.json',
+)
+
+const MCP_REMOTE_ARGS = `[\n        "-y",\n        "mcp-remote",\n        "${ENDPOINT}"\n      ]`
 
 const configs: Record<string, string> = {
-  claude: `{\n  "mcpServers": {\n    "ai-form-builder": {\n      "url": "${ENDPOINT}"\n    }\n  }\n}`,
-  cursor: `{\n  "mcpServers": {\n    "ai-form-builder": {\n      "url": "${ENDPOINT}"\n    }\n  }\n}`,
-  claudeCode: `{\n  "mcpServers": {\n    "ai-form-builder": {\n      "type": "http",\n      "url": "${ENDPOINT}"\n    }\n  }\n}`,
+  claude:    `{\n  "mcpServers": {\n    "ai-form-builder": {\n      "command": "npx",\n      "args": ${MCP_REMOTE_ARGS}\n    }\n  }\n}`,
+  cursor:    `{\n  "mcpServers": {\n    "ai-form-builder": {\n      "command": "npx",\n      "args": ${MCP_REMOTE_ARGS}\n    }\n  }\n}`,
+  vscode:    `{\n  "servers": {\n    "ai-form-builder": {\n      "type": "stdio",\n      "command": "npx",\n      "args": ${MCP_REMOTE_ARGS}\n    }\n  }\n}`,
+  windsurf:  `{\n  "mcpServers": {\n    "ai-form-builder": {\n      "command": "npx",\n      "args": ${MCP_REMOTE_ARGS}\n    }\n  }\n}`,
+  claudeCode:`{\n  "mcpServers": {\n    "ai-form-builder": {\n      "type": "http",\n      "url": "${ENDPOINT}"\n    }\n  }\n}`,
 }
 
 const configMeta = [
-  { key: 'claude',     label: 'Claude Desktop', file: 'claude_desktop_config.json' },
-  { key: 'cursor',     label: 'Cursor',          file: '.cursor/mcp.json' },
-  { key: 'claudeCode', label: 'Claude Code',     file: '~/.claude/settings.json' },
+  { key: 'claude',     label: 'Claude Desktop', shortLabel: 'Claude' },
+  { key: 'cursor',     label: 'Cursor',          shortLabel: 'Cursor' },
+  { key: 'vscode',     label: 'VS Code',         shortLabel: 'VS Code' },
+  { key: 'windsurf',   label: 'Windsurf',        shortLabel: 'Windsurf' },
+  { key: 'claudeCode', label: 'Claude Code',     shortLabel: 'Code' },
 ] as const
+
+const claudeSteps = computed(() => [
+  'Install Claude Desktop from claude.ai/download if you haven\'t already.',
+  `Open the config file at the path shown above${activeOS.value === 'mac' ? ' (create it if it doesn\'t exist)' : ''}.`,
+  'Add the mcpServers block — merge into the existing JSON object if the file already has content.',
+  `Fully quit Claude Desktop ${activeOS.value === 'mac' ? '(⌘Q)' : '(Alt+F4)'} then relaunch it.`,
+  'A hammer icon (🔨) in the chat input confirms MCP tools are loaded and ready.',
+])
+
+const cursorSteps = [
+  'Create .cursor/mcp.json in your project root for project-scoped tools.',
+  'For tools available across all projects, use ~/.cursor/mcp.json instead.',
+  'Paste the config block above into the chosen file.',
+  'Reload Cursor: Cmd+Shift+P (or Ctrl+Shift+P) → "Developer: Reload Window".',
+  'Open the AI panel — ai-form-builder tools appear in the tool list automatically.',
+]
+
+const claudeCodeCliSteps = [
+  'Run the command above in any terminal — no client restart needed.',
+  'Verify the connection: type /mcp in a Claude Code session.',
+  'Look for ai-form-builder in the server list — tools are ready immediately.',
+]
+
+const claudeCodeConfigSteps = [
+  'Open ~/.claude/settings.json in any editor. Create it if it doesn\'t exist.',
+  'Paste the mcpServers block above (merge if the file already has other settings).',
+  'Save the file — no restart needed.',
+  'Verify: type /mcp in Claude Code and confirm ai-form-builder appears.',
+]
+
+const vsCodeSteps = [
+  'Make sure you have GitHub Copilot (v1.99+) or a Copilot-compatible extension installed.',
+  'Create .vscode/mcp.json at your project root — VS Code will detect it automatically.',
+  'Paste the servers block above (merge if the file already has content).',
+  'Reload VS Code: Cmd+Shift+P (or Ctrl+Shift+P) → "Developer: Reload Window".',
+  'Switch GitHub Copilot Chat to Agent mode — ai-form-builder tools appear in the tool picker.',
+]
+
+const windsurfSteps = [
+  'Open Windsurf → Preferences → MCP, or edit ~/.codeium/windsurf/mcp_config.json directly.',
+  'Paste the mcpServers block above (create the file if it doesn\'t exist).',
+  'Click "Refresh" in the MCP settings panel, or fully restart Windsurf.',
+  'Open a new Cascade session — ai-form-builder tools appear in the tool list automatically.',
+]
 
 type ToolColor = 'violet' | 'indigo' | 'sky' | 'emerald' | 'amber'
 
 const TOOLS: { name: string; icon: typeof KeyRound; color: ToolColor; params: string[] }[] = [
-  { name: 'authenticate',       icon: KeyRound,    color: 'violet',  params: ['email', 'password'] },
-  { name: 'generate_form',      icon: Sparkles,    color: 'indigo',  params: ['prompt', 'token', 'mode?'] },
-  { name: 'generate_code',      icon: Code2,       color: 'sky',     params: ['elements', 'title', 'framework'] },
-  { name: 'list_forms',         icon: LayoutList,  color: 'emerald', params: ['token'] },
-  { name: 'get_form',           icon: FileText,    color: 'emerald', params: ['form_id', 'token'] },
-  { name: 'list_multistep_forms', icon: Layers,    color: 'amber',   params: ['token'] },
-  { name: 'get_multistep_form', icon: FileStack,   color: 'amber',   params: ['form_id', 'token'] },
+  { name: 'authenticate',         icon: KeyRound,   color: 'violet',  params: ['email', 'password'] },
+  { name: 'generate_form',        icon: Sparkles,   color: 'indigo',  params: ['prompt', 'token', 'mode?'] },
+  { name: 'generate_code',        icon: Code2,      color: 'sky',     params: ['elements', 'title', 'framework'] },
+  { name: 'list_forms',           icon: LayoutList, color: 'emerald', params: ['token'] },
+  { name: 'get_form',             icon: FileText,   color: 'emerald', params: ['form_id', 'token'] },
+  { name: 'list_multistep_forms', icon: Layers,     color: 'amber',   params: ['token'] },
+  { name: 'get_multistep_form',   icon: FileStack,  color: 'amber',   params: ['form_id', 'token'] },
 ]
 
 const colorMap: Record<ToolColor, { icon: string; badge: string; border: string; bg: string }> = {
-  violet:  { icon: 'text-violet-500 dark:text-violet-400',  badge: 'bg-violet-50 dark:bg-violet-500/10 text-violet-700 dark:text-violet-300 border-violet-200/70 dark:border-violet-500/20',  border: 'border-violet-200/80 dark:border-violet-500/20',  bg: 'bg-violet-50 dark:bg-violet-500/10' },
-  indigo:  { icon: 'text-indigo-500 dark:text-indigo-400',  badge: 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border-indigo-200/70 dark:border-indigo-500/20',   border: 'border-indigo-200/80 dark:border-indigo-500/20',  bg: 'bg-indigo-50 dark:bg-indigo-500/10' },
-  sky:     { icon: 'text-sky-500 dark:text-sky-400',        badge: 'bg-sky-50 dark:bg-sky-500/10 text-sky-700 dark:text-sky-300 border-sky-200/70 dark:border-sky-500/20',                     border: 'border-sky-200/80 dark:border-sky-500/20',        bg: 'bg-sky-50 dark:bg-sky-500/10' },
-  emerald: { icon: 'text-emerald-500 dark:text-emerald-400',badge: 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-200/70 dark:border-emerald-500/20', border: 'border-emerald-200/80 dark:border-emerald-500/20', bg: 'bg-emerald-50 dark:bg-emerald-500/10' },
-  amber:   { icon: 'text-amber-500 dark:text-amber-400',    badge: 'bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-200/70 dark:border-amber-500/20',         border: 'border-amber-200/80 dark:border-amber-500/20',    bg: 'bg-amber-50 dark:bg-amber-500/10' },
+  violet:  { icon: 'text-violet-500 dark:text-violet-400',   badge: 'bg-violet-50 dark:bg-violet-500/10 text-violet-700 dark:text-violet-300 border-violet-200/70 dark:border-violet-500/20',   border: 'border-violet-200/80 dark:border-violet-500/20',  bg: 'bg-violet-50 dark:bg-violet-500/10' },
+  indigo:  { icon: 'text-indigo-500 dark:text-indigo-400',   badge: 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border-indigo-200/70 dark:border-indigo-500/20',   border: 'border-indigo-200/80 dark:border-indigo-500/20',  bg: 'bg-indigo-50 dark:bg-indigo-500/10' },
+  sky:     { icon: 'text-sky-500 dark:text-sky-400',         badge: 'bg-sky-50 dark:bg-sky-500/10 text-sky-700 dark:text-sky-300 border-sky-200/70 dark:border-sky-500/20',                     border: 'border-sky-200/80 dark:border-sky-500/20',        bg: 'bg-sky-50 dark:bg-sky-500/10' },
+  emerald: { icon: 'text-emerald-500 dark:text-emerald-400', badge: 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-200/70 dark:border-emerald-500/20', border: 'border-emerald-200/80 dark:border-emerald-500/20', bg: 'bg-emerald-50 dark:bg-emerald-500/10' },
+  amber:   { icon: 'text-amber-500 dark:text-amber-400',     badge: 'bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-200/70 dark:border-amber-500/20',         border: 'border-amber-200/80 dark:border-amber-500/20',    bg: 'bg-amber-50 dark:bg-amber-500/10' },
 }
 </script>
 
@@ -115,7 +182,7 @@ const colorMap: Record<ToolColor, { icon: string; badge: string; border: string;
     </div>
 
     <!-- ── CLIENT SETUP ──────────────────────────────────────────── -->
-    <div class="mx-auto mt-16 max-w-7xl px-6 lg:px-8">
+    <div class="mx-auto mt-20 max-w-7xl px-6 lg:px-8">
       <div class="text-center mb-10">
         <p class="text-xs font-semibold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-2">
           {{ t('mcp.setup.eyebrow') }}
@@ -129,40 +196,127 @@ const colorMap: Record<ToolColor, { icon: string; badge: string; border: string;
       </div>
 
       <!-- Client tabs -->
-      <div class="flex items-center justify-center gap-2 mb-6 flex-wrap">
+      <div class="flex items-center justify-center gap-2 mb-8 flex-wrap">
         <button
           v-for="cm in configMeta"
           :key="cm.key"
           @click="activeClient = cm.key"
           :class="[
-            'px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200',
+            'px-5 py-2 rounded-lg text-sm font-semibold transition-all duration-200',
             activeClient === cm.key
               ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/25'
-              : 'bg-slate-100 dark:bg-white/[0.05] text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/[0.08] border border-slate-200 dark:border-white/[0.08]'
+              : 'bg-slate-100 dark:bg-white/[0.05] text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/[0.08] border border-slate-200 dark:border-white/[0.08]',
           ]"
         >
           {{ cm.label }}
         </button>
       </div>
 
-      <!-- Active client config card -->
-      <div class="mx-auto max-w-2xl">
-        <div
-          v-for="cm in configMeta"
-          v-show="activeClient === cm.key"
-          :key="cm.key"
-          class="rounded-2xl overflow-hidden border border-slate-200 dark:border-white/[0.09] shadow-lg shadow-black/5 dark:shadow-black/30"
-        >
-          <!-- Header bar -->
-          <div class="flex items-center justify-between px-4 py-2.5
+      <!-- ── CLAUDE DESKTOP CARD ── -->
+      <div v-show="activeClient === 'claude'" class="mx-auto max-w-3xl">
+        <div class="rounded-2xl overflow-hidden border border-slate-200 dark:border-white/[0.09] shadow-lg shadow-black/5 dark:shadow-black/30">
+
+          <!-- Card header: file path + OS toggle + copy -->
+          <div class="flex flex-wrap items-center justify-between gap-3 px-4 py-3
             bg-slate-100 dark:bg-white/[0.04]
             border-b border-slate-200 dark:border-white/[0.07]">
-            <div class="flex items-center gap-2">
-              <Terminal class="h-3.5 w-3.5 text-slate-400 dark:text-white/40" />
-              <span class="font-mono text-xs text-slate-500 dark:text-slate-400" dir="ltr">{{ cm.file }}</span>
+            <div class="flex items-center gap-2 min-w-0">
+              <Terminal class="shrink-0 h-3.5 w-3.5 text-slate-400 dark:text-white/40" />
+              <span class="font-mono text-xs text-slate-500 dark:text-slate-400 truncate" dir="ltr">
+                {{ claudeConfigPath }}
+              </span>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+              <!-- OS toggle -->
+              <div class="flex rounded-md overflow-hidden border border-slate-200 dark:border-white/[0.10] text-xs font-medium">
+                <button
+                  @click="activeOS = 'mac'"
+                  :class="[
+                    'px-2.5 py-1 transition-colors duration-150',
+                    activeOS === 'mac'
+                      ? 'bg-slate-700 dark:bg-white/[0.12] text-white dark:text-white'
+                      : 'bg-white dark:bg-transparent text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/[0.04]',
+                  ]"
+                >macOS</button>
+                <button
+                  @click="activeOS = 'windows'"
+                  :class="[
+                    'px-2.5 py-1 border-l border-slate-200 dark:border-white/[0.10] transition-colors duration-150',
+                    activeOS === 'windows'
+                      ? 'bg-slate-700 dark:bg-white/[0.12] text-white dark:text-white'
+                      : 'bg-white dark:bg-transparent text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/[0.04]',
+                  ]"
+                >Windows</button>
+              </div>
+              <!-- Copy button -->
+              <button
+                @click="copyConfig('claude', configs.claude)"
+                class="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium
+                  transition-all duration-200
+                  bg-white dark:bg-white/[0.05]
+                  border border-slate-200 dark:border-white/[0.10]
+                  text-slate-500 dark:text-slate-400
+                  hover:text-indigo-600 dark:hover:text-indigo-400
+                  hover:border-indigo-300 dark:hover:border-indigo-500/40"
+              >
+                <Check v-if="copiedClient === 'claude'" class="h-3 w-3 text-emerald-500" />
+                <Copy v-else class="h-3 w-3" />
+                {{ copiedClient === 'claude' ? t('mcp.copied') : t('mcp.copy') }}
+              </button>
+            </div>
+          </div>
+
+          <!-- Config code -->
+          <pre class="p-5 text-sm leading-relaxed overflow-x-auto
+            bg-white dark:bg-[#0c0c18]
+            text-slate-700 dark:text-slate-200
+            font-mono" dir="ltr"><code>{{ configs.claude }}</code></pre>
+
+          <!-- Steps -->
+          <div class="px-5 py-5 bg-slate-50/60 dark:bg-white/[0.02] border-t border-slate-200 dark:border-white/[0.07]">
+            <p class="text-[11px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-3">Setup steps</p>
+            <ol class="space-y-2.5">
+              <li
+                v-for="(step, i) in claudeSteps"
+                :key="i"
+                class="flex items-start gap-3 text-sm text-slate-600 dark:text-slate-300"
+              >
+                <span class="shrink-0 flex items-center justify-center w-5 h-5 rounded-full mt-0.5
+                  bg-indigo-100 dark:bg-indigo-500/20
+                  text-indigo-600 dark:text-indigo-300
+                  text-[11px] font-bold ring-1 ring-indigo-200/60 dark:ring-indigo-500/30">
+                  {{ i + 1 }}
+                </span>
+                <span>{{ step }}</span>
+              </li>
+            </ol>
+            <!-- Verify tip -->
+            <div class="mt-4 flex items-start gap-2 p-3 rounded-xl
+              bg-emerald-50 dark:bg-emerald-500/[0.07]
+              border border-emerald-200/70 dark:border-emerald-500/20 text-sm">
+              <CheckCircle2 class="shrink-0 h-4 w-4 text-emerald-500 mt-0.5" />
+              <p class="text-emerald-700 dark:text-emerald-300 leading-snug">
+                <span class="font-semibold">Verify:</span> After relaunch, click the composer's 🔨 icon — <span class="font-mono font-medium">ai-form-builder</span> should appear in the tools list.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── CURSOR CARD ── -->
+      <div v-show="activeClient === 'cursor'" class="mx-auto max-w-3xl">
+        <div class="rounded-2xl overflow-hidden border border-slate-200 dark:border-white/[0.09] shadow-lg shadow-black/5 dark:shadow-black/30">
+          <!-- Card header -->
+          <div class="flex items-center justify-between px-4 py-3
+            bg-slate-100 dark:bg-white/[0.04]
+            border-b border-slate-200 dark:border-white/[0.07]">
+            <div class="flex items-center gap-2 min-w-0">
+              <Terminal class="shrink-0 h-3.5 w-3.5 text-slate-400 dark:text-white/40" />
+              <span class="font-mono text-xs text-slate-500 dark:text-slate-400 truncate" dir="ltr">.cursor/mcp.json</span>
+              <span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-200 dark:bg-white/[0.08] text-slate-500 dark:text-slate-400">project</span>
             </div>
             <button
-              @click="copyConfig(cm.key, configs[cm.key])"
+              @click="copyConfig('cursor', configs.cursor)"
               class="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium
                 transition-all duration-200
                 bg-white dark:bg-white/[0.05]
@@ -171,35 +325,313 @@ const colorMap: Record<ToolColor, { icon: string; badge: string; border: string;
                 hover:text-indigo-600 dark:hover:text-indigo-400
                 hover:border-indigo-300 dark:hover:border-indigo-500/40"
             >
-              <Check v-if="copiedClient === cm.key" class="h-3 w-3 text-emerald-500" />
+              <Check v-if="copiedClient === 'cursor'" class="h-3 w-3 text-emerald-500" />
               <Copy v-else class="h-3 w-3" />
-              {{ copiedClient === cm.key ? t('mcp.copied') : t('mcp.copy') }}
+              {{ copiedClient === 'cursor' ? t('mcp.copied') : t('mcp.copy') }}
             </button>
           </div>
-          <!-- Code block -->
+
+          <!-- Config code -->
           <pre class="p-5 text-sm leading-relaxed overflow-x-auto
             bg-white dark:bg-[#0c0c18]
             text-slate-700 dark:text-slate-200
-            font-mono" dir="ltr"><code>{{ configs[cm.key] }}</code></pre>
+            font-mono" dir="ltr"><code>{{ configs.cursor }}</code></pre>
+
+          <!-- Steps -->
+          <div class="px-5 py-5 bg-slate-50/60 dark:bg-white/[0.02] border-t border-slate-200 dark:border-white/[0.07]">
+            <p class="text-[11px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-3">Setup steps</p>
+            <ol class="space-y-2.5">
+              <li
+                v-for="(step, i) in cursorSteps"
+                :key="i"
+                class="flex items-start gap-3 text-sm text-slate-600 dark:text-slate-300"
+              >
+                <span class="shrink-0 flex items-center justify-center w-5 h-5 rounded-full mt-0.5
+                  bg-indigo-100 dark:bg-indigo-500/20
+                  text-indigo-600 dark:text-indigo-300
+                  text-[11px] font-bold ring-1 ring-indigo-200/60 dark:ring-indigo-500/30">
+                  {{ i + 1 }}
+                </span>
+                <span>{{ step }}</span>
+              </li>
+            </ol>
+            <!-- Global tip -->
+            <div class="mt-4 flex items-start gap-2 p-3 rounded-xl
+              bg-sky-50 dark:bg-sky-500/[0.07]
+              border border-sky-200/70 dark:border-sky-500/20 text-sm">
+              <MonitorPlay class="shrink-0 h-4 w-4 text-sky-500 mt-0.5" />
+              <p class="text-sky-700 dark:text-sky-300 leading-snug">
+                <span class="font-semibold">Global alternative:</span> Save as <span class="font-mono font-medium">~/.cursor/mcp.json</span> to make the server available in every Cursor project without repeating setup.
+              </p>
+            </div>
+          </div>
         </div>
       </div>
 
-      <!-- Setup steps below the code block -->
-      <ol class="mx-auto mt-8 max-w-2xl space-y-3">
-        <li
-          v-for="(step, i) in [t('mcp.setup.step1'), t('mcp.setup.step2'), t('mcp.setup.step3')]"
-          :key="i"
-          class="flex items-start gap-3 text-sm text-slate-600 dark:text-slate-400"
-        >
-          <span class="shrink-0 flex items-center justify-center w-5 h-5 rounded-full
-            bg-indigo-100 dark:bg-indigo-500/20
-            text-indigo-600 dark:text-indigo-300
-            text-[11px] font-bold ring-1 ring-indigo-200/60 dark:ring-indigo-500/30 mt-0.5">
-            {{ i + 1 }}
-          </span>
-          <span>{{ step }}</span>
-        </li>
-      </ol>
+      <!-- ── VS CODE CARD ── -->
+      <div v-show="activeClient === 'vscode'" class="mx-auto max-w-3xl">
+        <div class="rounded-2xl overflow-hidden border border-slate-200 dark:border-white/[0.09] shadow-lg shadow-black/5 dark:shadow-black/30">
+          <!-- Card header -->
+          <div class="flex items-center justify-between px-4 py-3
+            bg-slate-100 dark:bg-white/[0.04]
+            border-b border-slate-200 dark:border-white/[0.07]">
+            <div class="flex items-center gap-2 min-w-0">
+              <Terminal class="shrink-0 h-3.5 w-3.5 text-slate-400 dark:text-white/40" />
+              <span class="font-mono text-xs text-slate-500 dark:text-slate-400 truncate" dir="ltr">.vscode/mcp.json</span>
+              <span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-200 dark:bg-white/[0.08] text-slate-500 dark:text-slate-400">project</span>
+            </div>
+            <button
+              @click="copyConfig('vscode', configs.vscode)"
+              class="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium
+                transition-all duration-200
+                bg-white dark:bg-white/[0.05]
+                border border-slate-200 dark:border-white/[0.10]
+                text-slate-500 dark:text-slate-400
+                hover:text-indigo-600 dark:hover:text-indigo-400
+                hover:border-indigo-300 dark:hover:border-indigo-500/40"
+            >
+              <Check v-if="copiedClient === 'vscode'" class="h-3 w-3 text-emerald-500" />
+              <Copy v-else class="h-3 w-3" />
+              {{ copiedClient === 'vscode' ? t('mcp.copied') : t('mcp.copy') }}
+            </button>
+          </div>
+
+          <!-- Config code -->
+          <pre class="p-5 text-sm leading-relaxed overflow-x-auto
+            bg-white dark:bg-[#0c0c18]
+            text-slate-700 dark:text-slate-200
+            font-mono" dir="ltr"><code>{{ configs.vscode }}</code></pre>
+
+          <!-- Steps -->
+          <div class="px-5 py-5 bg-slate-50/60 dark:bg-white/[0.02] border-t border-slate-200 dark:border-white/[0.07]">
+            <p class="text-[11px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-3">Setup steps</p>
+            <ol class="space-y-2.5">
+              <li
+                v-for="(step, i) in vsCodeSteps"
+                :key="i"
+                class="flex items-start gap-3 text-sm text-slate-600 dark:text-slate-300"
+              >
+                <span class="shrink-0 flex items-center justify-center w-5 h-5 rounded-full mt-0.5
+                  bg-indigo-100 dark:bg-indigo-500/20
+                  text-indigo-600 dark:text-indigo-300
+                  text-[11px] font-bold ring-1 ring-indigo-200/60 dark:ring-indigo-500/30">
+                  {{ i + 1 }}
+                </span>
+                <span>{{ step }}</span>
+              </li>
+            </ol>
+            <!-- Note about user-level -->
+            <div class="mt-4 flex items-start gap-2 p-3 rounded-xl
+              bg-sky-50 dark:bg-sky-500/[0.07]
+              border border-sky-200/70 dark:border-sky-500/20 text-sm">
+              <MonitorPlay class="shrink-0 h-4 w-4 text-sky-500 mt-0.5" />
+              <p class="text-sky-700 dark:text-sky-300 leading-snug">
+                <span class="font-semibold">Global alternative:</span> Place the file at
+                <span class="font-mono font-medium">~/Library/Application Support/Code/User/mcp.json</span>
+                (macOS) or <span class="font-mono font-medium">%APPDATA%\Code\User\mcp.json</span>
+                (Windows) to make the server available across all VS Code projects.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── WINDSURF CARD ── -->
+      <div v-show="activeClient === 'windsurf'" class="mx-auto max-w-3xl">
+        <div class="rounded-2xl overflow-hidden border border-slate-200 dark:border-white/[0.09] shadow-lg shadow-black/5 dark:shadow-black/30">
+          <!-- Card header -->
+          <div class="flex items-center justify-between px-4 py-3
+            bg-slate-100 dark:bg-white/[0.04]
+            border-b border-slate-200 dark:border-white/[0.07]">
+            <div class="flex items-center gap-2 min-w-0">
+              <Terminal class="shrink-0 h-3.5 w-3.5 text-slate-400 dark:text-white/40" />
+              <span class="font-mono text-xs text-slate-500 dark:text-slate-400 truncate" dir="ltr">~/.codeium/windsurf/mcp_config.json</span>
+            </div>
+            <button
+              @click="copyConfig('windsurf', configs.windsurf)"
+              class="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium
+                transition-all duration-200
+                bg-white dark:bg-white/[0.05]
+                border border-slate-200 dark:border-white/[0.10]
+                text-slate-500 dark:text-slate-400
+                hover:text-indigo-600 dark:hover:text-indigo-400
+                hover:border-indigo-300 dark:hover:border-indigo-500/40"
+            >
+              <Check v-if="copiedClient === 'windsurf'" class="h-3 w-3 text-emerald-500" />
+              <Copy v-else class="h-3 w-3" />
+              {{ copiedClient === 'windsurf' ? t('mcp.copied') : t('mcp.copy') }}
+            </button>
+          </div>
+
+          <!-- Config code -->
+          <pre class="p-5 text-sm leading-relaxed overflow-x-auto
+            bg-white dark:bg-[#0c0c18]
+            text-slate-700 dark:text-slate-200
+            font-mono" dir="ltr"><code>{{ configs.windsurf }}</code></pre>
+
+          <!-- Steps -->
+          <div class="px-5 py-5 bg-slate-50/60 dark:bg-white/[0.02] border-t border-slate-200 dark:border-white/[0.07]">
+            <p class="text-[11px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-3">Setup steps</p>
+            <ol class="space-y-2.5">
+              <li
+                v-for="(step, i) in windsurfSteps"
+                :key="i"
+                class="flex items-start gap-3 text-sm text-slate-600 dark:text-slate-300"
+              >
+                <span class="shrink-0 flex items-center justify-center w-5 h-5 rounded-full mt-0.5
+                  bg-indigo-100 dark:bg-indigo-500/20
+                  text-indigo-600 dark:text-indigo-300
+                  text-[11px] font-bold ring-1 ring-indigo-200/60 dark:ring-indigo-500/30">
+                  {{ i + 1 }}
+                </span>
+                <span>{{ step }}</span>
+              </li>
+            </ol>
+            <!-- Verify tip -->
+            <div class="mt-4 flex items-start gap-2 p-3 rounded-xl
+              bg-emerald-50 dark:bg-emerald-500/[0.07]
+              border border-emerald-200/70 dark:border-emerald-500/20 text-sm">
+              <CheckCircle2 class="shrink-0 h-4 w-4 text-emerald-500 mt-0.5" />
+              <p class="text-emerald-700 dark:text-emerald-300 leading-snug">
+                <span class="font-semibold">Verify:</span> In a Cascade session, click the tool icon — <span class="font-mono font-medium">ai-form-builder</span> should appear with its 7 tools listed.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── CLAUDE CODE CARD ── -->
+      <div v-show="activeClient === 'claudeCode'" class="mx-auto max-w-3xl">
+        <div class="rounded-2xl overflow-hidden border border-slate-200 dark:border-white/[0.09] shadow-lg shadow-black/5 dark:shadow-black/30">
+
+          <!-- Method toggle header -->
+          <div class="flex items-center justify-between px-4 py-3
+            bg-slate-100 dark:bg-white/[0.04]
+            border-b border-slate-200 dark:border-white/[0.07]">
+            <div class="flex rounded-md overflow-hidden border border-slate-200 dark:border-white/[0.10] text-xs font-semibold">
+              <button
+                @click="claudeCodeMethod = 'cli'"
+                :class="[
+                  'px-3 py-1.5 transition-colors duration-150',
+                  claudeCodeMethod === 'cli'
+                    ? 'bg-indigo-600 text-white'
+                    : 'bg-white dark:bg-transparent text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/[0.04]',
+                ]"
+              >
+                CLI Command
+              </button>
+              <button
+                @click="claudeCodeMethod = 'config'"
+                :class="[
+                  'px-3 py-1.5 border-l border-slate-200 dark:border-white/[0.10] transition-colors duration-150',
+                  claudeCodeMethod === 'config'
+                    ? 'bg-indigo-600 text-white'
+                    : 'bg-white dark:bg-transparent text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/[0.04]',
+                ]"
+              >
+                Config File
+              </button>
+            </div>
+            <!-- Copy for config method -->
+            <button
+              v-if="claudeCodeMethod === 'config'"
+              @click="copyConfig('claudeCode', configs.claudeCode)"
+              class="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium
+                transition-all duration-200
+                bg-white dark:bg-white/[0.05]
+                border border-slate-200 dark:border-white/[0.10]
+                text-slate-500 dark:text-slate-400
+                hover:text-indigo-600 dark:hover:text-indigo-400
+                hover:border-indigo-300 dark:hover:border-indigo-500/40"
+            >
+              <Check v-if="copiedClient === 'claudeCode'" class="h-3 w-3 text-emerald-500" />
+              <Copy v-else class="h-3 w-3" />
+              {{ copiedClient === 'claudeCode' ? t('mcp.copied') : t('mcp.copy') }}
+            </button>
+          </div>
+
+          <!-- CLI command block -->
+          <div v-if="claudeCodeMethod === 'cli'" class="bg-white dark:bg-[#0c0c18]">
+            <div class="flex items-center gap-3 px-5 py-4">
+              <span class="font-mono text-sm text-emerald-500 dark:text-emerald-400 select-none">$</span>
+              <code class="flex-1 font-mono text-sm text-slate-700 dark:text-slate-200 break-all" dir="ltr">{{ CLI_COMMAND }}</code>
+              <button
+                @click="copyCli"
+                class="shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium
+                  transition-all duration-200
+                  bg-slate-100 dark:bg-white/[0.05]
+                  border border-slate-200 dark:border-white/[0.10]
+                  text-slate-500 dark:text-slate-400
+                  hover:text-indigo-600 dark:hover:text-indigo-400
+                  hover:border-indigo-300 dark:hover:border-indigo-500/40"
+              >
+                <Check v-if="copiedCli" class="h-3 w-3 text-emerald-500" />
+                <Copy v-else class="h-3 w-3" />
+                {{ copiedCli ? t('mcp.copied') : t('mcp.copy') }}
+              </button>
+            </div>
+          </div>
+
+          <!-- Config file block -->
+          <pre v-if="claudeCodeMethod === 'config'" class="p-5 text-sm leading-relaxed overflow-x-auto
+            bg-white dark:bg-[#0c0c18]
+            text-slate-700 dark:text-slate-200
+            font-mono" dir="ltr"><code>{{ configs.claudeCode }}</code></pre>
+
+          <!-- Steps -->
+          <div class="px-5 py-5 bg-slate-50/60 dark:bg-white/[0.02] border-t border-slate-200 dark:border-white/[0.07]">
+
+            <div v-if="claudeCodeMethod === 'cli'">
+              <p class="text-[11px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-3">Setup steps</p>
+              <ol class="space-y-2.5">
+                <li
+                  v-for="(step, i) in claudeCodeCliSteps"
+                  :key="i"
+                  class="flex items-start gap-3 text-sm text-slate-600 dark:text-slate-300"
+                >
+                  <span class="shrink-0 flex items-center justify-center w-5 h-5 rounded-full mt-0.5
+                    bg-indigo-100 dark:bg-indigo-500/20
+                    text-indigo-600 dark:text-indigo-300
+                    text-[11px] font-bold ring-1 ring-indigo-200/60 dark:ring-indigo-500/30">
+                    {{ i + 1 }}
+                  </span>
+                  <span>{{ step }}</span>
+                </li>
+              </ol>
+            </div>
+
+            <div v-else>
+              <p class="text-[11px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-1">Config file</p>
+              <p class="font-mono text-xs text-indigo-500 dark:text-indigo-400 mb-3" dir="ltr">~/.claude/settings.json</p>
+              <ol class="space-y-2.5">
+                <li
+                  v-for="(step, i) in claudeCodeConfigSteps"
+                  :key="i"
+                  class="flex items-start gap-3 text-sm text-slate-600 dark:text-slate-300"
+                >
+                  <span class="shrink-0 flex items-center justify-center w-5 h-5 rounded-full mt-0.5
+                    bg-indigo-100 dark:bg-indigo-500/20
+                    text-indigo-600 dark:text-indigo-300
+                    text-[11px] font-bold ring-1 ring-indigo-200/60 dark:ring-indigo-500/30">
+                    {{ i + 1 }}
+                  </span>
+                  <span>{{ step }}</span>
+                </li>
+              </ol>
+            </div>
+
+            <!-- Verify tip -->
+            <div class="mt-4 flex items-start gap-2 p-3 rounded-xl
+              bg-emerald-50 dark:bg-emerald-500/[0.07]
+              border border-emerald-200/70 dark:border-emerald-500/20 text-sm">
+              <CheckCircle2 class="shrink-0 h-4 w-4 text-emerald-500 mt-0.5" />
+              <p class="text-emerald-700 dark:text-emerald-300 leading-snug">
+                <span class="font-semibold">Verify:</span> Run <span class="font-mono font-medium">/mcp</span> in any Claude Code session — <span class="font-mono font-medium">ai-form-builder</span> should appear with status <span class="font-mono font-medium text-emerald-600 dark:text-emerald-400">connected</span>.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- ── TOOLS REFERENCE ───────────────────────────────────────── -->
@@ -225,10 +657,7 @@ const colorMap: Record<ToolColor, { icon: string; badge: string; border: string;
             border border-slate-200 dark:border-white/[0.07]
             hover:shadow-lg dark:hover:shadow-black/30
             transition-all duration-300"
-          :class="`hover:border-current`"
-          :style="''"
         >
-          <!-- Icon -->
           <div class="flex items-center justify-between">
             <div
               class="flex items-center justify-center w-10 h-10 rounded-xl border transition-transform duration-300 group-hover:scale-105"
@@ -237,18 +666,12 @@ const colorMap: Record<ToolColor, { icon: string; badge: string; border: string;
               <component :is="tool.icon" class="h-5 w-5" :class="colorMap[tool.color].icon" aria-hidden="true" />
             </div>
           </div>
-
-          <!-- Tool name -->
           <div>
-            <code class="text-sm font-semibold font-mono text-slate-800 dark:text-white">
-              {{ tool.name }}
-            </code>
+            <code class="text-sm font-semibold font-mono text-slate-800 dark:text-white">{{ tool.name }}</code>
             <p class="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
               {{ t(`mcp.tools.items.${tool.name}`) }}
             </p>
           </div>
-
-          <!-- Params -->
           <div class="flex flex-wrap gap-1 mt-auto">
             <span
               v-for="param in tool.params"
@@ -257,14 +680,11 @@ const colorMap: Record<ToolColor, { icon: string; badge: string; border: string;
               :class="param.endsWith('?')
                 ? 'bg-slate-50 dark:bg-white/[0.04] text-slate-400 dark:text-slate-500 border-slate-200/70 dark:border-white/[0.07]'
                 : colorMap[tool.color].badge"
-            >
-              {{ param }}
-            </span>
+            >{{ param }}</span>
           </div>
         </div>
       </div>
 
-      <!-- Legend -->
       <p class="mt-5 text-center text-xs text-slate-400 dark:text-slate-500">
         {{ t('mcp.tools.legend') }}
       </p>
@@ -308,7 +728,6 @@ const colorMap: Record<ToolColor, { icon: string; badge: string; border: string;
           </div>
         </div>
 
-        <!-- Arrow connector (desktop) -->
         <!-- Step 2: Generate -->
         <div class="relative flex flex-col gap-4 p-7 rounded-2xl
           bg-indigo-50 dark:bg-indigo-500/[0.07]

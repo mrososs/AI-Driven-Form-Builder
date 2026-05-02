@@ -51,7 +51,10 @@
       "mcp__mcp-registry__search_mcp_registry",
       "Bash(timeout 5 node --import tsx/esm --env-file=.env.local mcp-server/index.ts)",
       "Bash(npx tsc *)",
-      "Bash(git checkout *)"
+      "Bash(git checkout *)",
+      "mcp__vercel__deploy_to_vercel",
+      "mcp__vercel__list_deployments",
+      "mcp__Claude_Preview__preview_start"
     ]
   }
 }
