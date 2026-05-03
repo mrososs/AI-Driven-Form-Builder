@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
-import { ChevronLeft, ChevronRight, Plus } from 'lucide-vue-next'
+import { ref, computed, watch, onMounted } from 'vue'
+import { ChevronLeft, ChevronRight, Plus, HelpCircle } from 'lucide-vue-next'
 import {
   useMultiStepFormStore,
   type LogicRule,
@@ -8,6 +8,59 @@ import {
 } from '../../../stores/multistepForm'
 import { STEP_ICONS, RULE_KIND_META } from '../utils/icons'
 import RuleEditor from './RuleEditor.vue'
+import TourTooltip from '../../../components/shared/TourTooltip.vue'
+import { useTour } from '../../../composables/useTour'
+
+const TOUR_STEPS = [
+  {
+    target: '[data-tour="logic-header"]',
+    title: 'This is Logic',
+    body: 'Rules control how users move through your form — <strong>branch</strong> to different steps, <strong>skip</strong> sections, <strong>gate</strong> on verification, or validate <strong>async</strong>.',
+    placement: 'bottom' as const,
+  },
+  {
+    target: '[data-tour="logic-rules-panel"]',
+    title: 'Your rules',
+    body: 'Every rule you create lives here. Toggle it on/off without deleting it — disabled rules are preserved for later.',
+    placement: 'right' as const,
+  },
+  {
+    target: '[data-tour="logic-add-rule"]',
+    title: 'Four rule kinds',
+    body: '<strong>Branch</strong> jumps to any step. <strong>Skip</strong> bypasses the next step. <strong>Gate/Require</strong> blocks progression until a condition is met. <strong>Async</strong> calls an API endpoint before letting the user continue.',
+    placement: 'right' as const,
+  },
+  {
+    target: '[data-tour="rule-editor-if"]',
+    title: 'IF — the condition',
+    body: 'Pick which step and field to watch, choose an operator (equals, not empty, greater than…), and set the trigger value.',
+    placement: 'top' as const,
+  },
+  {
+    target: '[data-tour="rule-editor-then"]',
+    title: 'THEN — the action',
+    body: 'Choose where to go or what message to show. The summary at the bottom previews the full rule in plain English.',
+    placement: 'top' as const,
+  },
+  {
+    target: '[data-tour="logic-flow-diagram"]',
+    title: 'Flow at a glance',
+    body: 'The diagram shows all steps with their active rules. Click any rule badge to jump straight to its editor.',
+    placement: 'bottom' as const,
+  },
+  {
+    target: '[data-tour="export-btn"]',
+    title: 'Rules travel with your export',
+    body: 'When you export, all enabled rules are included in the generated code and the AI prompt — no manual re-wiring needed.',
+    placement: 'bottom' as const,
+  },
+]
+
+const tour = useTour(TOUR_STEPS, 'logic-tour-seen')
+
+onMounted(() => {
+  tour.start()
+})
 
 const emit = defineEmits<{ exit: [] }>()
 
@@ -59,9 +112,20 @@ function activate(id: string) {
 </script>
 
 <template>
+  <TourTooltip
+    v-if="tour.active.value"
+    :step="tour.currentStep()"
+    :step-index="tour.stepIndex.value"
+    :total-steps="tour.totalSteps"
+    @next="tour.next()"
+    @prev="tour.prev()"
+    @end="tour.end()"
+  />
+
   <div class="flex-1 min-h-0 flex">
     <!-- Left: rule list -->
     <aside
+      data-tour="logic-rules-panel"
       class="w-72 shrink-0 bg-slate-50 dark:bg-[#0c0c12] border-e border-slate-200 dark:border-white/[0.06] flex flex-col"
       aria-label="Rules"
     >
@@ -111,7 +175,7 @@ function activate(id: string) {
         </button>
       </div>
 
-      <div class="p-3 border-t border-slate-200 dark:border-white/[0.05] space-y-1.5">
+      <div data-tour="logic-add-rule" class="p-3 border-t border-slate-200 dark:border-white/[0.05] space-y-1.5">
         <p class="text-[10px] font-semibold text-slate-500 dark:text-white/40 uppercase tracking-wider px-1">
           Add rule
         </p>
@@ -137,6 +201,7 @@ function activate(id: string) {
     <!-- Center: diagram + editor -->
     <main class="flex-1 min-w-0 flex flex-col bg-slate-100 dark:bg-[#0d0d14]">
       <div
+        data-tour="logic-header"
         class="h-14 shrink-0 flex items-center justify-between px-6 border-b border-slate-200 dark:border-white/[0.05]"
       >
         <div class="flex items-center gap-2">
@@ -160,6 +225,15 @@ function activate(id: string) {
             <span class="w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-white/30" />
             {{ disabledCount }} disabled
           </span>
+          <button
+            type="button"
+            @click="tour.forceStart()"
+            class="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:text-white/30 dark:hover:text-white/70 dark:hover:bg-white/[0.06] transition-colors"
+            aria-label="Show logic tour"
+            title="Show tour"
+          >
+            <HelpCircle class="h-3.5 w-3.5" />
+          </button>
         </div>
       </div>
 
@@ -169,6 +243,7 @@ function activate(id: string) {
             Flow diagram
           </p>
           <div
+            data-tour="logic-flow-diagram"
             class="rounded-2xl border border-slate-200 dark:border-white/[0.07] bg-white dark:bg-[#111118] p-6 mb-8 overflow-x-auto shadow-sm dark:shadow-none"
           >
             <div class="flex items-stretch gap-3 min-w-max">

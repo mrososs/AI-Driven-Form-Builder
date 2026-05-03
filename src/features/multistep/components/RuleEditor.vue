@@ -89,7 +89,7 @@ const thenLabelClass = computed(
     </div>
 
     <!-- IF block -->
-    <div class="rounded-xl border border-slate-200 dark:border-white/[0.07] bg-white dark:bg-[#111118] p-5 shadow-sm dark:shadow-none">
+    <div data-tour="rule-editor-if" class="rounded-xl border border-slate-200 dark:border-white/[0.07] bg-white dark:bg-[#111118] p-5 shadow-sm dark:shadow-none">
       <div class="flex items-center gap-2 mb-4">
         <span class="text-[10px] font-bold font-heading uppercase tracking-[0.14em] text-indigo-700 dark:text-indigo-300">
           IF
@@ -184,7 +184,7 @@ const thenLabelClass = computed(
     </div>
 
     <!-- THEN block -->
-    <div class="rounded-xl border border-slate-200 dark:border-white/[0.07] bg-white dark:bg-[#111118] p-5 shadow-sm dark:shadow-none">
+    <div data-tour="rule-editor-then" class="rounded-xl border border-slate-200 dark:border-white/[0.07] bg-white dark:bg-[#111118] p-5 shadow-sm dark:shadow-none">
       <div class="flex items-center gap-2 mb-4">
         <span :class="thenLabelClass">THEN</span>
         <span class="h-px flex-1 bg-slate-200 dark:bg-white/[0.06]" />

@@ -155,6 +155,7 @@ function backToBuilder() {
       </button>
       <button
         type="button"
+        data-tour="export-btn"
         @click="emit('export')"
         aria-label="Export"
         class="flex items-center gap-2 p-2 sm:px-3 sm:py-1.5 rounded-lg text-sm text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-500/10 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 font-medium"
