@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import draggable from "vuedraggable";
-import { Wand2, X } from "lucide-vue-next";
+import { X } from "lucide-vue-next";
 import {
   useMultiStepFormStore,
   newId,

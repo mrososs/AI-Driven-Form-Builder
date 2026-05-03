@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import draggable from "vuedraggable";
-import { Wand2, X } from "lucide-vue-next";
+import { X } from "lucide-vue-next";
 import type { FormElement } from "../../stores/form";
 import { useFormStore } from "../../stores/form";
 import { ELEMENT_GROUPS, type ElementDefinition } from "./elements";
