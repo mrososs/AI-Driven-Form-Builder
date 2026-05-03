@@ -321,7 +321,6 @@ export const useMultiStepFormStore = defineStore('multistepForm', () => {
   }
 
   function removeStep(id: string) {
-    if (steps.value.length <= 1) return
     const idx = steps.value.findIndex(s => s.id === id)
     steps.value = steps.value.filter(s => s.id !== id)
     if (activeStepId.value === id) {
@@ -386,6 +385,16 @@ export const useMultiStepFormStore = defineStore('multistepForm', () => {
     if (!activeStep.value) return
     activeStep.value.elements = activeStep.value.elements.filter(e => e.id !== id)
     if (selectedElementId.value === id) selectedElementId.value = null
+  }
+
+  function clearStepElements(id: string) {
+    const step = steps.value.find(s => s.id === id)
+    if (!step) return
+    const elementIds = new Set(step.elements.map(e => e.id))
+    step.elements = []
+    if (selectedElementId.value && elementIds.has(selectedElementId.value)) {
+      selectedElementId.value = null
+    }
   }
 
   function setProgressStyle(style: ProgressStyle) {
@@ -591,6 +600,7 @@ export const useMultiStepFormStore = defineStore('multistepForm', () => {
     duplicateStep,
     moveStep,
     updateStep,
+    clearStepElements,
     addElement,
     updateElement,
     removeElement,

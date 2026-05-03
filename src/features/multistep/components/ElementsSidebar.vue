@@ -1,28 +1,33 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import draggable from 'vuedraggable'
-import { Wand2, X } from 'lucide-vue-next'
+import { computed } from "vue";
+import draggable from "vuedraggable";
+import { Wand2, X } from "lucide-vue-next";
 import {
   useMultiStepFormStore,
   newId,
   type MultiStepElement,
-} from '../../../stores/multistepForm'
-import { CATALOG, CATALOG_GROUPS, type CatalogEntry, type CatalogGroupKey } from '../utils/catalog'
-import { useMultiStepUI } from '../composables/useMultiStepUI'
+} from "../../../stores/multistepForm";
+import {
+  CATALOG,
+  CATALOG_GROUPS,
+  type CatalogEntry,
+  type CatalogGroupKey,
+} from "../utils/catalog";
+import { useMultiStepUI } from "../composables/useMultiStepUI";
 
-const store = useMultiStepFormStore()
-const { isElementsOpen, isMobile, closeSheets } = useMultiStepUI()
+const store = useMultiStepFormStore();
+const { isElementsOpen, isMobile, closeSheets } = useMultiStepUI();
 
 const groupedCatalog = computed(() =>
-  CATALOG_GROUPS.map(g => ({
+  CATALOG_GROUPS.map((g) => ({
     ...g,
-    entries: CATALOG.filter(e => e.group === g.key),
-  })).filter(g => g.entries.length > 0)
-)
+    entries: CATALOG.filter((e) => e.group === g.key),
+  })).filter((g) => g.entries.length > 0),
+);
 
-function add(type: (typeof CATALOG)[number]['type'], label: string) {
-  store.addElement(type, label)
-  if (isMobile.value) closeSheets()
+function add(type: (typeof CATALOG)[number]["type"], label: string) {
+  store.addElement(type, label);
+  if (isMobile.value) closeSheets();
 }
 
 function cloneFromCatalog(entry: CatalogEntry): MultiStepElement {
@@ -30,16 +35,16 @@ function cloneFromCatalog(entry: CatalogEntry): MultiStepElement {
     id: newId(),
     type: entry.type,
     label: entry.label,
-    placeholder: '',
+    placeholder: "",
     required: false,
+  };
+  if (entry.type === "select" || entry.type === "radio") {
+    el.options = ["Option 1", "Option 2"];
   }
-  if (entry.type === 'select' || entry.type === 'radio') {
-    el.options = ['Option 1', 'Option 2']
-  }
-  return el
+  return el;
 }
 
-defineProps<{ groupKey?: CatalogGroupKey }>()
+defineProps<{ groupKey?: CatalogGroupKey }>();
 </script>
 
 <template>
@@ -64,12 +69,18 @@ defineProps<{ groupKey?: CatalogGroupKey }>()
       'bg-white dark:bg-[#111118] flex flex-col',
       'lg:static lg:w-52 xl:w-60 lg:shrink-0 lg:translate-y-0 lg:border-e lg:border-slate-200 lg:dark:border-white/[0.07] lg:rounded-none lg:shadow-none lg:max-h-none lg:transition-none',
       'fixed inset-x-0 bottom-[52px] z-40 max-h-[70vh] rounded-t-2xl border-t border-slate-200 dark:border-white/[0.07] shadow-2xl shadow-black/20 dark:shadow-black/60 transition-transform duration-300 ease-out',
-      isElementsOpen ? 'translate-y-0' : 'translate-y-[calc(100%+52px)] lg:translate-y-0',
+      isElementsOpen
+        ? 'translate-y-0'
+        : 'translate-y-[calc(100%+52px)] lg:translate-y-0',
     ]"
     aria-label="Element catalog"
   >
-    <div class="p-4 border-b border-slate-200 dark:border-white/[0.05] flex items-center justify-between">
-      <h2 class="text-[10px] font-semibold text-slate-500 dark:text-white/40 uppercase tracking-[0.14em]">
+    <div
+      class="p-4 border-b border-slate-200 dark:border-white/[0.05] flex items-center justify-between"
+    >
+      <h2
+        class="text-[10px] font-semibold text-slate-500 dark:text-white/40 uppercase tracking-[0.14em]"
+      >
         Elements
       </h2>
       <button
@@ -87,7 +98,9 @@ defineProps<{ groupKey?: CatalogGroupKey }>()
         :key="group.key"
         class="space-y-1.5"
       >
-        <h3 class="px-1 text-[10px] font-semibold text-slate-400 dark:text-white/30 uppercase tracking-wider">
+        <h3
+          class="px-1 text-[10px] font-semibold text-slate-400 dark:text-white/30 uppercase tracking-wider"
+        >
           {{ group.label }}
         </h3>
         <draggable
@@ -114,21 +127,15 @@ defineProps<{ groupKey?: CatalogGroupKey }>()
               >
                 <component :is="entry.icon" class="h-3.5 w-3.5" />
               </div>
-              <span class="text-[13px] font-medium text-slate-700 group-hover:text-indigo-700 dark:text-white/80 dark:group-hover:text-indigo-200">
+              <span
+                class="text-[13px] font-medium text-slate-700 group-hover:text-indigo-700 dark:text-white/80 dark:group-hover:text-indigo-200"
+              >
                 {{ entry.label }}
               </span>
             </button>
           </template>
         </draggable>
       </section>
-
-      <button
-        type="button"
-        class="w-full flex items-center justify-center gap-2 p-3 mt-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white text-sm font-semibold shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:-translate-y-0.5 transition-all"
-        style="transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1)"
-      >
-        <Wand2 class="h-3.5 w-3.5" /> AI Suggest Fields
-      </button>
     </div>
   </aside>
 </template>

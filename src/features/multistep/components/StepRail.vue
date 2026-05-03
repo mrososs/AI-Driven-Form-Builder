@@ -5,6 +5,7 @@ import {
   Settings2,
   ArrowUpDown,
   Copy,
+  Eraser,
   Trash2,
   Shield,
   FolderInput,
@@ -216,6 +217,15 @@ function onRenameKey(step: FormStep, e: KeyboardEvent) {
             class="p-1 rounded text-slate-400 hover:text-slate-900 hover:bg-slate-200 dark:text-white/40 dark:hover:text-white dark:hover:bg-white/10"
           >
             <Copy class="h-3 w-3" />
+          </button>
+          <button
+            type="button"
+            @click.stop="store.clearStepElements(step.id)"
+            title="Clear fields"
+            :disabled="step.elements.length === 0"
+            class="p-1 rounded text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:text-white/40 dark:hover:text-amber-400 dark:hover:bg-amber-500/10 disabled:opacity-30 disabled:pointer-events-none"
+          >
+            <Eraser class="h-3 w-3" />
           </button>
           <button
             type="button"
