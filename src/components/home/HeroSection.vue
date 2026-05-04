@@ -78,8 +78,8 @@ const activeTab = shallowRef<Tab>('schema.json')
           <ArrowRight class="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" />
         </RouterLink>
 
-        <a
-          href="#"
+        <RouterLink
+          to="/docs"
           class="flex items-center gap-2 px-6 py-3 text-sm sm:text-base font-semibold rounded-xl
             text-slate-700 dark:text-white/80
             bg-white dark:bg-white/[0.05]
@@ -90,7 +90,7 @@ const activeTab = shallowRef<Tab>('schema.json')
             transition-all duration-200 hover:-translate-y-0.5"
         >
           {{ t('nav.docs') }}
-        </a>
+        </RouterLink>
       </div>
 
       <!-- Code Block -->

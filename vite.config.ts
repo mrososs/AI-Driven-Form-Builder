@@ -3,6 +3,7 @@ import vue from '@vitejs/plugin-vue'
 import tailwindcss from '@tailwindcss/vite'
 import VueDevTools from 'vite-plugin-vue-devtools'
 import { aiBridgePlugin } from './server/aiBridgePlugin'
+import { sentryVitePlugin } from '@sentry/vite-plugin'
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
@@ -25,11 +26,20 @@ export default defineConfig(({ mode }) => {
   }
 
   return {
+    build: {
+      sourcemap: true,
+    },
     plugins: [
       VueDevTools(),
       vue(),
       tailwindcss(),
       aiBridgePlugin(),
+      sentryVitePlugin({
+        org: env.SENTRY_ORG,
+        project: env.SENTRY_PROJECT,
+        authToken: env.SENTRY_AUTH_TOKEN,
+        telemetry: false,
+      }),
     ],
   }
 })
