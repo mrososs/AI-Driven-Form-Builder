@@ -15,6 +15,10 @@ const values = reactive<Record<string, string | string[]>>({})
 
 const step = computed(() => store.steps[idx.value] ?? null)
 const stepIcon = computed(() => (step.value ? STEP_ICONS[step.value.icon] : null))
+const total = computed(() => store.steps.length)
+const pct = computed(() =>
+  done.value ? 100 : total.value === 0 ? 0 : Math.round(((idx.value + 1) / total.value) * 100),
+)
 
 function goNext() {
   if (idx.value < store.steps.length - 1) {
@@ -22,10 +26,14 @@ function goNext() {
   } else {
     done.value = true
   }
+  window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
 function goBack() {
-  if (idx.value > 0) idx.value--
+  if (idx.value > 0) {
+    idx.value--
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
 }
 
 function restart() {
@@ -33,284 +41,434 @@ function restart() {
   idx.value = 0
   for (const key in values) delete values[key]
 }
+
+const firstName = computed(() => {
+  for (const s of store.steps) {
+    for (const el of s.elements) {
+      const targets = el.type === 'row' ? (el.children ?? []) : [el]
+      for (const child of targets) {
+        if (/first.*name|name|guest/i.test(child.label)) {
+          const v = values[child.id]
+          if (typeof v === 'string' && v.trim()) return v.trim().split(/\s+/)[0]
+        }
+      }
+    }
+  }
+  return ''
+})
+
+const guestEmail = computed(() => {
+  for (const s of store.steps) {
+    for (const el of s.elements) {
+      const targets = el.type === 'row' ? (el.children ?? []) : [el]
+      for (const child of targets) {
+        if (child.type === 'email') {
+          const v = values[child.id]
+          if (typeof v === 'string' && v.trim()) return v.trim()
+        }
+      }
+    }
+  }
+  return ''
+})
 </script>
 
 <template>
-  <div class="flex-1 min-h-0 flex">
+  <div class="ms-preview flex-1 min-h-0 flex flex-col">
+    <!-- Empty state -->
     <div
       v-if="store.steps.length === 0"
-      class="flex-1 min-w-0 flex items-center justify-center p-6 sm:p-10"
+      class="flex-1 flex items-center justify-center p-10"
     >
       <div class="max-w-md text-center">
-        <div class="flex items-center justify-between mb-6">
-          <button
-            type="button"
-            @click="emit('exit')"
-            class="flex items-center gap-2 text-xs font-semibold text-slate-500 hover:text-slate-900 dark:text-white/40 dark:hover:text-white/80 transition-colors"
-          >
-            <ChevronLeft class="h-3.5 w-3.5 rtl:rotate-180" /> Back to builder
-          </button>
-        </div>
-        <p class="text-slate-500 dark:text-white/40 text-sm leading-relaxed">
+        <button
+          type="button"
+          @click="emit('exit')"
+          class="ms-back-link mb-6"
+        >
+          <ChevronLeft class="h-3.5 w-3.5 rtl:rotate-180" /> Back to builder
+        </button>
+        <p class="text-[14px]" style="color: var(--ms-muted)">
           Add at least one step in the builder to preview the respondent flow.
         </p>
       </div>
     </div>
 
-    <aside
-      v-else-if="store.progressStyle === 'sidebar' && !done"
-      class="w-72 shrink-0 border-e border-slate-200 dark:border-white/[0.06] bg-slate-50 dark:bg-[#0c0c12] p-6"
-    >
-      <p class="text-[10px] font-semibold text-slate-500 dark:text-white/40 uppercase tracking-[0.14em] mb-4">
-        Registration
-      </p>
-      <ol class="space-y-1">
-        <li
-          v-for="(s, i) in store.steps"
-          :key="s.id"
-          :class="[
-            'flex items-center gap-3 p-2.5 rounded-lg transition-all',
-            i === idx
-              ? 'bg-indigo-50 border border-indigo-200 dark:bg-indigo-500/10 dark:border-indigo-500/30'
-              : 'border border-transparent',
-          ]"
-          style="transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1)"
+    <template v-else>
+      <!-- Sticky top bar with progress -->
+      <header class="ms-topbar">
+        <button
+          type="button"
+          class="ms-topbar-arrow"
+          @click="goBack"
+          :disabled="idx === 0 || done"
+          aria-label="Previous step"
         >
+          <ChevronLeft class="h-4 w-4 rtl:rotate-180" />
+        </button>
+        <div class="ms-progress-track">
           <div
-            :class="[
-              'w-7 h-7 rounded-lg flex items-center justify-center shrink-0',
-              i < idx
-                ? 'bg-emerald-100 text-emerald-700 ring-1 ring-emerald-200 dark:bg-emerald-500/20 dark:text-emerald-300 dark:ring-emerald-500/30'
-                : i === idx
-                  ? 'bg-gradient-to-br from-indigo-500 to-violet-600 text-white ring-1 ring-white/20'
-                  : 'bg-white text-slate-400 ring-1 ring-slate-200 dark:bg-white/[0.04] dark:text-white/40 dark:ring-white/[0.06]',
-            ]"
-          >
-            <Check v-if="i < idx" class="h-3 w-3" />
-            <component :is="STEP_ICONS[s.icon]" v-else class="h-3 w-3" />
-          </div>
-          <div class="min-w-0">
-            <p
-              :class="[
-                'text-[13px] font-semibold truncate',
-                i === idx
-                  ? 'text-slate-900 dark:text-white'
-                  : i < idx
-                    ? 'text-slate-600 dark:text-white/60'
-                    : 'text-slate-400 dark:text-white/40',
-              ]"
-            >
-              {{ s.title }}
-            </p>
-            <p class="text-[11px] text-slate-400 dark:text-white/30 tabular-nums">
-              Step {{ String(i + 1).padStart(2, '0') }}
-            </p>
-          </div>
-        </li>
-      </ol>
-    </aside>
+            class="ms-progress-fill"
+            :style="{ width: `${pct}%` }"
+          />
+        </div>
+        <span class="ms-step-label">
+          {{ done ? 'Done' : `Step ${idx + 1}/${total}` }}
+        </span>
+        <button
+          type="button"
+          class="ms-topbar-arrow"
+          @click="goNext"
+          :disabled="done"
+          aria-label="Next step"
+        >
+          <ChevronRight class="h-4 w-4 rtl:rotate-180" />
+        </button>
+      </header>
 
-    <div
-      v-if="store.steps.length > 0"
-      class="flex-1 min-w-0 flex items-center justify-center p-6 sm:p-10 overflow-y-auto scrollbar-thin"
-    >
-      <div class="w-full max-w-xl">
-        <div class="flex items-center justify-between mb-6">
+      <div class="flex-1 overflow-y-auto scrollbar-thin">
+        <div class="ms-shell">
           <button
             type="button"
             @click="emit('exit')"
-            class="flex items-center gap-2 text-xs font-semibold text-slate-500 hover:text-slate-900 dark:text-white/40 dark:hover:text-white/80 transition-colors"
+            class="ms-back-link mb-5"
           >
             <ChevronLeft class="h-3.5 w-3.5 rtl:rotate-180" /> Back to builder
           </button>
-          <span class="text-[11px] text-slate-400 dark:text-white/30 font-semibold uppercase tracking-wider">
-            Respondent view
-          </span>
-        </div>
 
-        <div
-          v-if="!done && step"
-          :key="step.id"
-          class="rounded-2xl border border-slate-200 dark:border-white/[0.07] bg-white dark:bg-[#111118] p-8 shadow-sm dark:shadow-none ms-fade-up"
-        >
-          <!-- Numbered progress -->
+          <!-- Active step card -->
           <div
-            v-if="store.progressStyle === 'numbered'"
-            class="flex items-center gap-2 mb-6"
+            v-if="!done && step"
+            :key="step.id"
+            class="ms-form-card ms-fade-up"
           >
-            <div
-              v-for="(_, i) in store.steps"
-              :key="i"
-              class="flex items-center gap-2 flex-1"
-            >
-              <div
-                :class="[
-                  'w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold tabular-nums transition-all',
-                  i < idx
-                    ? 'bg-emerald-100 text-emerald-700 ring-1 ring-emerald-200 dark:bg-emerald-500/20 dark:text-emerald-300 dark:ring-emerald-500/30'
-                    : i === idx
-                      ? 'bg-gradient-to-br from-indigo-500 to-violet-600 text-white ring-1 ring-white/20'
-                      : 'bg-slate-100 text-slate-400 ring-1 ring-slate-200 dark:bg-white/[0.04] dark:text-white/40 dark:ring-white/[0.06]',
-                ]"
-              >
-                <Check v-if="i < idx" class="h-2.5 w-2.5" />
-                <span v-else>{{ i + 1 }}</span>
+            <header class="ms-step-header">
+              <div class="ms-step-icon-row">
+                <span class="ms-step-icon">
+                  <component :is="stepIcon" class="h-[18px] w-[18px]" />
+                </span>
+                <span class="ms-step-pill">Step {{ idx + 1 }} of {{ total }}</span>
               </div>
-              <div
-                v-if="i < store.steps.length - 1"
-                :class="[
-                  'h-0.5 flex-1 rounded transition-all',
-                  i < idx
-                    ? 'bg-emerald-300 dark:bg-emerald-500/40'
-                    : 'bg-slate-200 dark:bg-white/[0.07]',
-                ]"
-              />
-            </div>
-          </div>
+              <h1 class="ms-step-title">{{ step.title }}</h1>
+              <p v-if="step.description" class="ms-step-sub">{{ step.description }}</p>
+            </header>
 
-          <!-- Bar -->
-          <div v-else-if="store.progressStyle === 'bar'" class="mb-6">
-            <div class="h-1 rounded-full bg-slate-200 dark:bg-white/[0.07] overflow-hidden">
-              <div
-                class="h-full bg-gradient-to-r from-indigo-500 to-violet-500 transition-all"
-                :style="{ width: `${((idx + 1) / store.steps.length) * 100}%` }"
-                style="transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1)"
-              />
-            </div>
-            <p class="text-[11px] text-slate-500 dark:text-white/40 mt-2 tabular-nums">
-              Step {{ idx + 1 }} of {{ store.steps.length }}
-            </p>
-          </div>
-
-          <!-- Dots -->
-          <div
-            v-else-if="store.progressStyle === 'dots'"
-            class="flex items-center justify-center gap-2 mb-6"
-          >
-            <div
-              v-for="(_, i) in store.steps"
-              :key="i"
-              :class="[
-                'rounded-full transition-all',
-                i === idx
-                  ? 'w-6 h-1.5 bg-indigo-500 dark:bg-indigo-400'
-                  : i < idx
-                    ? 'w-1.5 h-1.5 bg-emerald-400/70'
-                    : 'w-1.5 h-1.5 bg-slate-200 dark:bg-white/10',
-              ]"
-            />
-          </div>
-
-          <!-- Step header -->
-          <div class="flex items-center gap-3 mb-1">
-            <div
-              class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-100 to-violet-50 border border-indigo-200 dark:from-indigo-500/30 dark:to-violet-500/20 dark:border-indigo-500/30 flex items-center justify-center text-indigo-600 dark:text-indigo-300"
-            >
-              <component :is="stepIcon" class="h-4 w-4" />
-            </div>
-            <span
-              class="text-[10px] font-semibold text-slate-500 dark:text-white/40 uppercase tracking-[0.14em]"
-            >
-              Step {{ idx + 1 }} of {{ store.steps.length }}
-            </span>
-          </div>
-          <h1 class="font-heading font-bold text-2xl text-slate-900 dark:text-white mb-1">
-            {{ step.title }}
-          </h1>
-          <p v-if="step.description" class="text-sm text-slate-500 dark:text-white/50 mb-6">
-            {{ step.description }}
-          </p>
-
-          <div class="space-y-4">
-            <template v-for="el in step.elements" :key="el.id">
-              <div v-if="el.type === 'row'" class="flex flex-wrap gap-3">
-                <div
-                  v-for="child in el.children ?? []"
-                  :key="child.id"
-                  class="flex-1 min-w-[180px] basis-0"
-                >
+            <div class="ms-fields">
+              <template v-for="el in step.elements" :key="el.id">
+                <div v-if="el.type === 'row'" class="ms-fields-row">
                   <LiveField
+                    v-for="child in el.children ?? []"
+                    :key="child.id"
                     :element="child"
                     :model-value="values[child.id] ?? ''"
                     @update:model-value="(v: string | string[]) => (values[child.id] = v)"
                   />
                 </div>
-              </div>
-              <LiveField
-                v-else
-                :element="el"
-                :model-value="values[el.id] ?? ''"
-                @update:model-value="(v: string | string[]) => (values[el.id] = v)"
-              />
-            </template>
+                <LiveField
+                  v-else
+                  :element="el"
+                  :model-value="values[el.id] ?? ''"
+                  @update:model-value="(v: string | string[]) => (values[el.id] = v)"
+                />
+              </template>
+            </div>
+
+            <div class="ms-step-nav">
+              <button
+                v-if="idx > 0"
+                type="button"
+                class="ms-btn ms-btn-secondary"
+                @click="goBack"
+              >
+                <ChevronLeft class="h-3.5 w-3.5 rtl:rotate-180" /> Back
+              </button>
+              <span v-else />
+              <button
+                type="button"
+                class="ms-btn ms-btn-primary"
+                @click="goNext"
+              >
+                {{ idx === total - 1 ? 'Confirm reservation' : 'Continue' }}
+                <ChevronRight class="h-3.5 w-3.5 rtl:rotate-180" />
+              </button>
+            </div>
           </div>
 
-          <div class="mt-8 flex items-center justify-between gap-3">
-            <button
-              type="button"
-              @click="goBack"
-              :disabled="idx === 0"
-              class="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 dark:text-white/70 dark:bg-white/[0.05] dark:hover:bg-white/[0.08] transition-all disabled:opacity-30 disabled:pointer-events-none"
-              style="transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1)"
-            >
-              <ChevronLeft class="h-3.5 w-3.5 rtl:rotate-180" /> Back
-            </button>
-            <button
-              type="button"
-              @click="goNext"
-              class="ms-builder-primary flex items-center gap-1.5 text-sm"
-            >
-              {{ idx === store.steps.length - 1 ? 'Finish registration' : 'Continue' }}
-              <ChevronRight class="h-3.5 w-3.5 rtl:rotate-180" />
-            </button>
-          </div>
-        </div>
-
-        <div
-          v-else-if="done"
-          class="rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50 to-white dark:border-emerald-500/30 dark:from-emerald-500/[0.08] dark:to-[#111118] p-10 text-center ms-fade-up"
-        >
+          <!-- Confirmation -->
           <div
-            class="w-14 h-14 rounded-2xl bg-emerald-100 border border-emerald-200 dark:bg-emerald-500/20 dark:border-emerald-500/30 flex items-center justify-center mx-auto mb-4 text-emerald-700 dark:text-emerald-300"
+            v-else-if="done"
+            class="ms-form-card ms-fade-up"
           >
-            <Check class="h-6 w-6" />
+            <div class="ms-confirm-icon">
+              <Check class="h-[26px] w-[26px]" />
+            </div>
+            <span class="ms-step-pill ms-pill-standalone">Reservation confirmed</span>
+            <h1 class="ms-step-title mt-3">
+              Thank you{{ firstName ? `, ${firstName}` : '' }}.
+            </h1>
+            <p class="ms-step-sub">
+              A confirmation has been sent to
+              {{ guestEmail || 'your email' }}. We'll reach out before arrival.
+            </p>
+            <div class="mt-7 flex gap-2.5">
+              <button type="button" class="ms-btn ms-btn-primary" @click="restart">
+                Make another reservation
+              </button>
+              <button type="button" class="ms-btn ms-btn-secondary" @click="emit('exit')">
+                Back to builder
+              </button>
+            </div>
           </div>
-          <h1 class="font-heading font-bold text-2xl text-slate-900 dark:text-white mb-2">
-            Your tenant is ready 🎉
-          </h1>
-          <p class="text-sm text-slate-500 dark:text-white/50 mb-6">
-            We've provisioned your workspace and sent a welcome email. Redirecting to your
-            dashboard…
-          </p>
-          <button
-            type="button"
-            @click="restart"
-            class="px-4 py-2 rounded-lg text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 dark:text-white/70 dark:bg-white/[0.05] dark:hover:bg-white/[0.08]"
-          >
-            Restart preview
-          </button>
         </div>
       </div>
-    </div>
+    </template>
   </div>
 </template>
 
 <style scoped>
-.ms-builder-primary {
-  background-image: linear-gradient(to right, #4f46e5, #6366f1);
-  color: white;
-  font-weight: 600;
-  padding: 0.5rem 1rem;
-  border-radius: 0.5rem;
-  box-shadow: 0 10px 25px -10px rgba(99, 102, 241, 0.55);
-  transition:
-    transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
-    box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+.ms-preview {
+  --ms-bg: #f4f5f7;
+  --ms-paper: #ffffff;
+  --ms-ink: #0f172a;
+  --ms-muted: #64748b;
+  --ms-muted-2: #94a3b8;
+  --ms-line: #e5e7eb;
+  --ms-line-2: #eef0f4;
+  --ms-primary: #6a4cff;
+  --ms-primary-soft: #efeaff;
+  --ms-primary-ink: #4b33c7;
+  --ms-warn: #dc2626;
+
+  font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+  background: var(--ms-bg);
+  color: var(--ms-ink);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
 }
 
-.ms-builder-primary:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 14px 28px -10px rgba(99, 102, 241, 0.7);
+.ms-topbar {
+  height: 64px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 0 32px;
+  background: var(--ms-paper);
+  border-bottom: 1px solid var(--ms-line);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.ms-topbar-arrow {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ms-muted);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition:
+    background-color 120ms ease,
+    color 120ms ease,
+    opacity 120ms ease;
+}
+.ms-topbar-arrow:hover:not(:disabled) {
+  background: var(--ms-line-2);
+  color: var(--ms-ink);
+}
+.ms-topbar-arrow:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.ms-progress-track {
+  flex: 1;
+  height: 6px;
+  background: var(--ms-line);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.ms-progress-fill {
+  height: 100%;
+  background: var(--ms-primary);
+  border-radius: 999px;
+  transition: width 600ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.ms-step-label {
+  font-size: 13px;
+  color: var(--ms-muted);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.ms-shell {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 32px 24px 96px;
+}
+
+.ms-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ms-muted);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: color 120ms ease;
+}
+.ms-back-link:hover {
+  color: var(--ms-ink);
+}
+
+.ms-form-card {
+  background: var(--ms-paper);
+  border: 1px solid var(--ms-line);
+  border-radius: 16px;
+  padding: 40px 44px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.ms-step-header {
+  margin-bottom: 32px;
+}
+
+.ms-step-icon-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.ms-step-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--ms-primary-soft);
+  color: var(--ms-primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ms-step-pill {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--ms-muted);
+  font-weight: 600;
+  padding: 4px 10px;
+  border: 1px solid var(--ms-line);
+  border-radius: 6px;
+  margin-inline-start: 10px;
+  vertical-align: middle;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.ms-pill-standalone {
+  margin-inline-start: 0;
+}
+
+.ms-step-title {
+  font-size: 28px;
+  line-height: 1.15;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin: 0 0 8px;
+  color: var(--ms-ink);
+  text-wrap: pretty;
+}
+
+.ms-step-sub {
+  color: var(--ms-muted);
+  font-size: 14px;
+  margin: 0;
+  text-wrap: pretty;
+}
+
+.ms-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.ms-fields-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+}
+
+.ms-step-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 36px;
+  padding-top: 28px;
+  border-top: 1px solid var(--ms-line);
+}
+
+.ms-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 22px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  transition:
+    background-color 140ms ease,
+    border-color 140ms ease,
+    color 140ms ease;
+  border: 1px solid transparent;
+  height: 44px;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.ms-btn-primary {
+  background: var(--ms-primary);
+  color: var(--ms-paper);
+}
+.ms-btn-primary:hover {
+  background: var(--ms-primary-ink);
+}
+.ms-btn-primary:disabled {
+  background: var(--ms-muted-2);
+  cursor: not-allowed;
+}
+
+.ms-btn-secondary {
+  background: var(--ms-paper);
+  color: var(--ms-ink);
+  border-color: var(--ms-line);
+}
+.ms-btn-secondary:hover {
+  border-color: var(--ms-muted);
+}
+
+.ms-confirm-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: var(--ms-primary-soft);
+  color: var(--ms-primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
 }
 
 .ms-fade-up {
@@ -329,6 +487,22 @@ function restart() {
 @media (prefers-reduced-motion: reduce) {
   .ms-fade-up {
     animation: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .ms-form-card {
+    padding: 28px 20px;
+  }
+  .ms-shell {
+    padding: 20px 16px 64px;
+  }
+  .ms-topbar {
+    padding: 0 16px;
+    gap: 12px;
+  }
+  .ms-step-title {
+    font-size: 24px;
   }
 }
 </style>

@@ -1,7 +1,13 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { computed } from 'vue'
 import type { MultiStepElement, RangeUnit } from '../../../stores/multistepForm'
-import { Minus, Plus } from 'lucide-vue-next'
+import {
+  Mail,
+  Phone,
+  Calendar,
+  CalendarRange,
+  ChevronDown,
+} from 'lucide-vue-next'
 
 type FieldValue = string | string[]
 
@@ -11,15 +17,6 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{ 'update:modelValue': [value: FieldValue] }>()
-
-const focused = ref(false)
-
-const inputClass = computed(() => [
-  'w-full border rounded-lg px-3 py-2.5 text-sm text-slate-900 dark:text-white bg-white dark:bg-white/[0.03] transition-all focus:outline-none',
-  focused.value
-    ? 'border-indigo-500 ring-2 ring-indigo-500/20 dark:border-indigo-500/60'
-    : 'border-slate-200 dark:border-white/[0.07]',
-])
 
 const stringValue = computed(() =>
   Array.isArray(props.modelValue) ? '' : (props.modelValue ?? ''),
@@ -56,6 +53,23 @@ function inputType() {
       return 'text'
   }
 }
+
+const labelLeadIcon = computed(() => {
+  switch (props.element.type) {
+    case 'email':
+      return Mail
+    case 'phone':
+      return Phone
+    case 'date':
+    case 'datetime':
+    case 'time':
+      return Calendar
+    case 'daterange':
+      return CalendarRange
+    default:
+      return null
+  }
+})
 
 // ---- Stepper ----
 const stepperValue = computed(() => {
@@ -141,11 +155,12 @@ function selectRadioCard(value: string) {
 </script>
 
 <template>
-  <div>
+  <div class="lf-field" :class="{ 'lf-full': element.type !== 'row' }">
+    <!-- OTP -->
     <template v-if="element.type === 'otp'">
-      <label class="block text-[12px] font-semibold text-slate-700 dark:text-white/70 mb-1.5">
+      <label class="lf-label">
         {{ element.label }}
-        <span v-if="element.required" class="text-rose-500 dark:text-rose-400 ms-1">*</span>
+        <span v-if="element.required" class="lf-req">*</span>
       </label>
       <div class="flex gap-2" dir="ltr">
         <input
@@ -154,315 +169,593 @@ function selectRadioCard(value: string) {
           :value="d"
           :maxlength="1"
           @input="setOtpDigit(i, $event)"
-          class="w-11 h-12 rounded-lg border border-slate-200 bg-white text-slate-900 dark:border-white/[0.09] dark:bg-white/[0.04] dark:text-white text-center font-mono text-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none"
+          class="lf-otp-cell"
           inputmode="numeric"
         />
       </div>
-      <p class="mt-2 text-[11px] text-slate-500 dark:text-white/40">
-        Didn't get a code?
-        <a class="text-indigo-700 dark:text-indigo-300 font-medium cursor-pointer">Resend</a>
-      </p>
     </template>
 
+    <!-- Textarea -->
     <template v-else-if="element.type === 'textarea'">
-      <label class="block text-[12px] font-semibold text-slate-700 dark:text-white/70 mb-1.5">
+      <label class="lf-label">
         {{ element.label }}
-        <span v-if="element.required" class="text-rose-500 dark:text-rose-400 ms-1">*</span>
+        <span v-if="element.required" class="lf-req">*</span>
       </label>
       <textarea
         rows="3"
         :value="stringValue"
         @input="emit('update:modelValue', ($event.target as HTMLTextAreaElement).value)"
-        @focus="focused = true"
-        @blur="focused = false"
         :placeholder="element.placeholder"
-        :class="[...inputClass, 'resize-none']"
+        class="lf-textarea"
       />
     </template>
 
+    <!-- Select -->
     <template v-else-if="element.type === 'select'">
-      <label class="block text-[12px] font-semibold text-slate-700 dark:text-white/70 mb-1.5">
+      <label class="lf-label">
         {{ element.label }}
-        <span v-if="element.required" class="text-rose-500 dark:text-rose-400 ms-1">*</span>
+        <span v-if="element.required" class="lf-req">*</span>
       </label>
       <select
         :value="stringValue"
         @change="emit('update:modelValue', ($event.target as HTMLSelectElement).value)"
-        :class="[...inputClass, 'appearance-none']"
+        class="lf-select"
       >
-        <option value="" class="bg-white dark:bg-[#111118]">Select…</option>
+        <option value="">{{ element.placeholder || 'Select…' }}</option>
         <option
           v-for="o in element.options ?? []"
           :key="o"
           :value="o"
-          class="bg-white dark:bg-[#111118]"
         >
           {{ o }}
         </option>
       </select>
     </template>
 
+    <!-- Radio (row style) -->
     <template v-else-if="element.type === 'radio'">
-      <label class="block text-[12px] font-semibold text-slate-700 dark:text-white/70 mb-1.5">
+      <label class="lf-label">
         {{ element.label }}
-        <span v-if="element.required" class="text-rose-500 dark:text-rose-400 ms-1">*</span>
+        <span v-if="element.required" class="lf-req">*</span>
       </label>
-      <div class="space-y-2">
-        <label
+      <div class="lf-radio-list">
+        <button
           v-for="o in element.options ?? []"
           :key="o"
-          :class="[
-            'flex items-center gap-3 p-3 rounded-lg border transition-all cursor-pointer',
-            stringValue === o
-              ? 'border-indigo-500 bg-indigo-50 dark:border-indigo-500/50 dark:bg-indigo-500/[0.08]'
-              : 'border-slate-200 hover:border-slate-300 bg-white dark:border-white/[0.07] dark:hover:border-white/15 dark:bg-white/[0.02]',
-          ]"
-          style="transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1)"
+          type="button"
+          :class="['lf-radio-row', { 'is-selected': stringValue === o }]"
+          @click="emit('update:modelValue', o)"
         >
-          <span
-            :class="[
-              'w-4 h-4 rounded-full border-2 shrink-0 relative',
-              stringValue === o
-                ? 'border-indigo-500 dark:border-indigo-400'
-                : 'border-slate-300 dark:border-white/20',
-            ]"
-          >
-            <span
-              v-if="stringValue === o"
-              class="absolute inset-1 rounded-full bg-indigo-500 dark:bg-indigo-400"
-            />
-          </span>
-          <input
-            type="radio"
-            :checked="stringValue === o"
-            @change="emit('update:modelValue', o)"
-            class="sr-only"
-          />
-          <span class="text-sm text-slate-800 dark:text-white/80">{{ o }}</span>
-        </label>
+          <span class="lf-radio-dot" />
+          <span class="lf-radio-label">{{ o }}</span>
+        </button>
       </div>
     </template>
 
+    <!-- Checkbox (single, row style) -->
     <template v-else-if="element.type === 'checkbox'">
-      <label
-        class="flex items-start gap-3 p-3 rounded-lg border border-slate-200 hover:border-slate-300 bg-white dark:border-white/[0.07] dark:hover:border-white/15 dark:bg-white/[0.02] cursor-pointer"
+      <button
+        type="button"
+        :class="['lf-check-row', { 'is-checked': !!stringValue }]"
+        @click="emit('update:modelValue', stringValue ? '' : 'true')"
       >
-        <input
-          type="checkbox"
-          :checked="!!stringValue"
-          @change="
-            emit('update:modelValue', ($event.target as HTMLInputElement).checked ? 'true' : '')
-          "
-          class="mt-0.5 h-4 w-4 text-indigo-600 rounded border-slate-300 bg-white dark:border-white/20 dark:bg-transparent"
-        />
-        <span class="text-sm text-slate-800 dark:text-white/80">
-          {{ element.label }}
-          <span v-if="element.required" class="text-rose-500 dark:text-rose-400 ms-1">*</span>
+        <span class="lf-checkbox">
+          <svg
+            v-if="stringValue"
+            width="11"
+            height="11"
+            viewBox="0 0 10 10"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M2 5l2 2 4-4.5" />
+          </svg>
         </span>
-      </label>
+        <span class="lf-check-label">
+          {{ element.label }}
+          <span v-if="element.required" class="lf-req">*</span>
+        </span>
+      </button>
     </template>
 
+    <!-- Number stepper -->
     <template v-else-if="element.type === 'stepper'">
-      <label class="block text-[12px] font-semibold text-slate-700 dark:text-white/70 mb-1.5">
+      <label class="lf-label">
         {{ element.label }}
-        <span v-if="element.required" class="text-rose-500 dark:text-rose-400 ms-1">*</span>
+        <span v-if="element.required" class="lf-req">*</span>
       </label>
-      <div
-        class="flex items-stretch border border-slate-200 dark:border-white/[0.07] rounded-lg overflow-hidden bg-white dark:bg-white/[0.03]"
-      >
+      <div class="lf-stepper">
         <button
           type="button"
           :disabled="stepperAtMin"
           @click="bumpStepper(-1)"
-          class="px-4 flex items-center justify-center text-slate-700 dark:text-white/70 hover:bg-slate-50 dark:hover:bg-white/[0.05] disabled:opacity-30 disabled:pointer-events-none transition-colors"
           :aria-label="'Decrement ' + element.label"
         >
-          <Minus class="h-4 w-4" />
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 12 12"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.6"
+            stroke-linecap="round"
+          >
+            <path d="M2.5 6h7" />
+          </svg>
         </button>
-        <input
-          type="number"
-          :value="stepperValue"
-          :min="element.min"
-          :max="element.max"
-          :step="element.step"
-          @input="emit('update:modelValue', String(clampStep(Number(($event.target as HTMLInputElement).value))))"
-          class="flex-1 min-w-0 text-center text-sm font-medium text-slate-900 dark:text-white bg-transparent border-x border-slate-200 dark:border-white/[0.07] focus:outline-none focus:bg-slate-50 dark:focus:bg-white/[0.04] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-        />
+        <div class="lf-stepper-value">{{ stepperValue }}</div>
         <button
           type="button"
           :disabled="stepperAtMax"
           @click="bumpStepper(1)"
-          class="px-4 flex items-center justify-center text-slate-700 dark:text-white/70 hover:bg-slate-50 dark:hover:bg-white/[0.05] disabled:opacity-30 disabled:pointer-events-none transition-colors"
           :aria-label="'Increment ' + element.label"
         >
-          <Plus class="h-4 w-4" />
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 12 12"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.6"
+            stroke-linecap="round"
+          >
+            <path d="M6 2.5v7M2.5 6h7" />
+          </svg>
         </button>
       </div>
     </template>
 
+    <!-- Date range -->
     <template v-else-if="element.type === 'daterange'">
-      <label class="block text-[12px] font-semibold text-slate-700 dark:text-white/70 mb-1.5">
+      <label class="lf-label">
+        <CalendarRange v-if="labelLeadIcon" class="h-3.5 w-3.5 lf-label-icon" />
         {{ element.label }}
-        <span v-if="element.required" class="text-rose-500 dark:text-rose-400 ms-1">*</span>
+        <span v-if="element.required" class="lf-req">*</span>
       </label>
-      <div
-        class="flex items-center gap-2 border border-slate-200 dark:border-white/[0.07] rounded-lg px-3 py-2 bg-white dark:bg-white/[0.03]"
-      >
+      <div class="lf-daterange">
+        <CalendarRange class="h-4 w-4 lf-daterange-icon" />
         <input
           type="date"
           :value="rangeParts.start"
           @input="setRangeStart(($event.target as HTMLInputElement).value)"
-          class="flex-1 min-w-0 bg-transparent text-sm text-slate-900 dark:text-white focus:outline-none"
+          class="lf-daterange-input"
         />
-        <span class="text-slate-400 dark:text-white/30 text-sm rtl:rotate-180">→</span>
+        <span class="lf-daterange-divider rtl:rotate-180">→</span>
         <input
           type="date"
           :value="rangeParts.end"
           :min="rangeParts.start || undefined"
           @input="setRangeEnd(($event.target as HTMLInputElement).value)"
-          class="flex-1 min-w-0 bg-transparent text-sm text-slate-900 dark:text-white focus:outline-none"
+          class="lf-daterange-input"
         />
-        <span
-          v-if="rangeDelta"
-          class="text-[12px] font-medium text-indigo-600 dark:text-indigo-300 ms-2 shrink-0"
-        >
-          {{ rangeDelta }}
-        </span>
+        <span v-if="rangeDelta" class="lf-daterange-delta">{{ rangeDelta }}</span>
       </div>
     </template>
 
+    <!-- Date / time / datetime -->
+    <template
+      v-else-if="
+        element.type === 'date' ||
+        element.type === 'time' ||
+        element.type === 'datetime'
+      "
+    >
+      <label class="lf-label">
+        <Calendar class="h-3.5 w-3.5 lf-label-icon" />
+        {{ element.label }}
+        <span v-if="element.required" class="lf-req">*</span>
+      </label>
+      <input
+        :type="element.type === 'datetime' ? 'datetime-local' : element.type"
+        :value="stringValue"
+        @input="emit('update:modelValue', ($event.target as HTMLInputElement).value)"
+        :placeholder="element.placeholder"
+        class="lf-input"
+      />
+    </template>
+
+    <!-- File -->
+    <template v-else-if="element.type === 'file'">
+      <label class="lf-label">
+        {{ element.label }}
+        <span v-if="element.required" class="lf-req">*</span>
+      </label>
+      <input
+        type="file"
+        @change="emit('update:modelValue', ($event.target as HTMLInputElement).files?.[0]?.name ?? '')"
+        class="lf-input"
+      />
+    </template>
+
+    <!-- Radio cards -->
     <template v-else-if="element.type === 'radiocards'">
-      <label class="block text-[12px] font-semibold text-slate-700 dark:text-white/70 mb-1.5">
+      <label class="lf-label">
         {{ element.label }}
-        <span v-if="element.required" class="text-rose-500 dark:text-rose-400 ms-1">*</span>
+        <span v-if="element.required" class="lf-req">*</span>
       </label>
-      <div class="space-y-2">
-        <label
+      <div class="lf-radio-list">
+        <button
           v-for="card in element.cards ?? []"
           :key="card.value"
-          :class="[
-            'flex items-center gap-3 p-3 rounded-lg border transition-all cursor-pointer',
-            isCardSelected(card.value)
-              ? 'border-indigo-500 bg-indigo-50 dark:border-indigo-500/50 dark:bg-indigo-500/[0.08]'
-              : 'border-slate-200 hover:border-slate-300 bg-white dark:border-white/[0.07] dark:hover:border-white/15 dark:bg-white/[0.02]',
-          ]"
-          style="transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1)"
+          type="button"
+          :class="['lf-radio-row', { 'is-selected': isCardSelected(card.value) }]"
+          @click="selectRadioCard(card.value)"
         >
-          <span
-            :class="[
-              'w-4 h-4 rounded-full border-2 shrink-0 relative',
-              isCardSelected(card.value)
-                ? 'border-indigo-500 dark:border-indigo-400'
-                : 'border-slate-300 dark:border-white/20',
-            ]"
-          >
-            <span
-              v-if="isCardSelected(card.value)"
-              class="absolute inset-1 rounded-full bg-indigo-500 dark:bg-indigo-400"
-            />
-          </span>
-          <input
-            type="radio"
-            :checked="isCardSelected(card.value)"
-            @change="selectRadioCard(card.value)"
-            class="sr-only"
-          />
-          <div class="flex-1 min-w-0">
-            <div class="text-sm font-semibold text-slate-900 dark:text-white truncate">{{ card.title }}</div>
-            <div
-              v-if="card.description"
-              class="text-[12px] text-slate-500 dark:text-white/50 truncate"
-            >
-              {{ card.description }}
-            </div>
+          <span class="lf-radio-dot" />
+          <div class="lf-row-content">
+            <div class="lf-row-title">{{ card.title }}</div>
+            <div v-if="card.description" class="lf-row-sub">{{ card.description }}</div>
           </div>
-          <div
-            v-if="card.meta"
-            class="text-sm font-medium text-slate-700 dark:text-white/80 shrink-0 ms-3"
-          >
-            {{ card.meta }}
-          </div>
-        </label>
+          <div v-if="card.meta" class="lf-row-meta">{{ card.meta }}</div>
+        </button>
       </div>
     </template>
 
+    <!-- Checkbox cards -->
     <template v-else-if="element.type === 'checkboxcards'">
-      <label class="block text-[12px] font-semibold text-slate-700 dark:text-white/70 mb-1.5">
+      <label class="lf-label">
         {{ element.label }}
-        <span v-if="element.required" class="text-rose-500 dark:text-rose-400 ms-1">*</span>
+        <span v-if="element.required" class="lf-req">*</span>
       </label>
-      <div class="space-y-2">
-        <label
+      <div class="lf-check-list">
+        <button
           v-for="card in element.cards ?? []"
           :key="card.value"
-          :class="[
-            'flex items-center gap-3 p-3 rounded-lg border transition-all cursor-pointer',
-            isCardSelected(card.value)
-              ? 'border-indigo-500 bg-indigo-50 dark:border-indigo-500/50 dark:bg-indigo-500/[0.08]'
-              : 'border-slate-200 hover:border-slate-300 bg-white dark:border-white/[0.07] dark:hover:border-white/15 dark:bg-white/[0.02]',
-          ]"
-          style="transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1)"
+          type="button"
+          :class="['lf-check-row', { 'is-checked': isCardSelected(card.value) }]"
+          @click="toggleCheckboxCard(card.value)"
         >
-          <span
-            :class="[
-              'w-4 h-4 rounded shrink-0 flex items-center justify-center border',
-              isCardSelected(card.value)
-                ? 'bg-indigo-500 border-indigo-500 dark:bg-indigo-400 dark:border-indigo-400'
-                : 'bg-white border-slate-300 dark:bg-white/[0.05] dark:border-white/20',
-            ]"
-          >
+          <span class="lf-checkbox">
             <svg
               v-if="isCardSelected(card.value)"
-              class="w-3 h-3 text-white"
-              viewBox="0 0 12 12"
+              width="11"
+              height="11"
+              viewBox="0 0 10 10"
               fill="none"
               stroke="currentColor"
               stroke-width="2"
               stroke-linecap="round"
               stroke-linejoin="round"
             >
-              <polyline points="2.5,6.5 5,9 9.5,3.5" />
+              <path d="M2 5l2 2 4-4.5" />
             </svg>
           </span>
-          <input
-            type="checkbox"
-            :checked="isCardSelected(card.value)"
-            @change="toggleCheckboxCard(card.value)"
-            class="sr-only"
-          />
-          <div class="flex-1 min-w-0">
-            <div class="text-sm font-semibold text-slate-900 dark:text-white truncate">{{ card.title }}</div>
-            <div
-              v-if="card.description"
-              class="text-[12px] text-slate-500 dark:text-white/50 truncate"
-            >
-              {{ card.description }}
-            </div>
+          <div class="lf-row-content">
+            <div class="lf-row-title">{{ card.title }}</div>
+            <div v-if="card.description" class="lf-row-sub">{{ card.description }}</div>
           </div>
-          <div
-            v-if="card.meta"
-            class="text-sm font-medium text-slate-700 dark:text-white/80 shrink-0 ms-3"
-          >
-            {{ card.meta }}
-          </div>
-        </label>
+          <div v-if="card.meta" class="lf-row-meta">{{ card.meta }}</div>
+        </button>
       </div>
     </template>
 
+    <!-- Default text-like input -->
     <template v-else>
-      <label class="block text-[12px] font-semibold text-slate-700 dark:text-white/70 mb-1.5">
+      <label class="lf-label">
+        <component
+          v-if="labelLeadIcon"
+          :is="labelLeadIcon"
+          class="h-3.5 w-3.5 lf-label-icon"
+        />
         {{ element.label }}
-        <span v-if="element.required" class="text-rose-500 dark:text-rose-400 ms-1">*</span>
+        <span v-if="element.required" class="lf-req">*</span>
       </label>
       <input
         :type="inputType()"
         :value="stringValue"
         @input="emit('update:modelValue', ($event.target as HTMLInputElement).value)"
-        @focus="focused = true"
-        @blur="focused = false"
         :placeholder="element.placeholder"
-        :class="inputClass"
+        class="lf-input"
       />
     </template>
   </div>
 </template>
+
+<style scoped>
+.lf-field {
+  --lf-paper: #ffffff;
+  --lf-ink: #0f172a;
+  --lf-muted: #64748b;
+  --lf-muted-2: #94a3b8;
+  --lf-line: #e5e7eb;
+  --lf-line-2: #eef0f4;
+  --lf-primary: #6a4cff;
+  --lf-primary-soft: #efeaff;
+  --lf-warn: #dc2626;
+  --lf-radius: 8px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+  color: var(--lf-ink);
+  min-width: 0;
+}
+
+.lf-label {
+  font-size: 13px;
+  color: var(--lf-ink);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.lf-label-icon {
+  color: var(--lf-muted);
+}
+
+.lf-req {
+  color: var(--lf-warn);
+}
+
+.lf-input,
+.lf-textarea,
+.lf-select {
+  width: 100%;
+  border: 1px solid var(--lf-line);
+  background: var(--lf-paper);
+  border-radius: var(--lf-radius);
+  padding: 11px 14px;
+  font-size: 14px;
+  color: var(--lf-ink);
+  font-family: inherit;
+  transition:
+    border-color 120ms ease,
+    box-shadow 120ms ease;
+}
+
+.lf-input:focus,
+.lf-textarea:focus,
+.lf-select:focus {
+  outline: none;
+  border-color: var(--lf-primary);
+  box-shadow: 0 0 0 3px var(--lf-primary-soft);
+}
+
+.lf-input::placeholder,
+.lf-textarea::placeholder {
+  color: var(--lf-muted-2);
+}
+
+.lf-textarea {
+  resize: vertical;
+  min-height: 88px;
+}
+
+.lf-select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='12' height='12' viewBox='0 0 12 12' xmlns='http://www.w3.org/2000/svg' fill='none' stroke='%2364748B' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 4.5l3 3 3-3'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  padding-right: 36px;
+}
+
+[dir='rtl'] .lf-select {
+  background-position: left 14px center;
+  padding-right: 14px;
+  padding-left: 36px;
+}
+
+.lf-otp-cell {
+  width: 44px;
+  height: 48px;
+  border: 1px solid var(--lf-line);
+  background: var(--lf-paper);
+  color: var(--lf-ink);
+  border-radius: var(--lf-radius);
+  text-align: center;
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-size: 18px;
+  transition:
+    border-color 120ms ease,
+    box-shadow 120ms ease;
+}
+.lf-otp-cell:focus {
+  outline: none;
+  border-color: var(--lf-primary);
+  box-shadow: 0 0 0 3px var(--lf-primary-soft);
+}
+
+.lf-radio-list,
+.lf-check-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.lf-radio-row,
+.lf-check-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--lf-line);
+  border-radius: var(--lf-radius);
+  background: var(--lf-paper);
+  cursor: pointer;
+  width: 100%;
+  text-align: start;
+  font-family: inherit;
+  color: inherit;
+  transition:
+    border-color 120ms ease,
+    background-color 120ms ease,
+    box-shadow 120ms ease;
+}
+.lf-radio-row:hover,
+.lf-check-row:hover {
+  border-color: var(--lf-muted);
+}
+.lf-radio-row.is-selected {
+  border-color: var(--lf-primary);
+  background: #fafaff;
+  box-shadow: 0 0 0 1px var(--lf-primary) inset;
+}
+.lf-check-row.is-checked {
+  border-color: var(--lf-primary);
+  background: #fafaff;
+}
+
+.lf-radio-dot {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1.5px solid var(--lf-line);
+  background: var(--lf-paper);
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.lf-radio-row.is-selected .lf-radio-dot {
+  border-color: var(--lf-primary);
+}
+.lf-radio-row.is-selected .lf-radio-dot::after {
+  content: '';
+  width: 8px;
+  height: 8px;
+  background: var(--lf-primary);
+  border-radius: 50%;
+}
+
+.lf-checkbox {
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid var(--lf-line);
+  background: var(--lf-paper);
+  color: var(--lf-paper);
+  border-radius: 4px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease;
+}
+.lf-check-row.is-checked .lf-checkbox {
+  background: var(--lf-primary);
+  border-color: var(--lf-primary);
+}
+
+.lf-radio-label,
+.lf-check-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--lf-ink);
+}
+
+.lf-row-content {
+  flex: 1;
+  min-width: 0;
+}
+.lf-row-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--lf-ink);
+}
+.lf-row-sub {
+  font-size: 12px;
+  color: var(--lf-muted);
+  margin-top: 1px;
+}
+.lf-row-meta {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--lf-ink);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  margin-inline-start: 8px;
+}
+
+.lf-stepper {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--lf-line);
+  border-radius: var(--lf-radius);
+  background: var(--lf-paper);
+  width: 100%;
+  height: 44px;
+}
+.lf-stepper button {
+  width: 42px;
+  height: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--lf-ink);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background-color 120ms ease;
+}
+.lf-stepper button:hover:not(:disabled) {
+  background: var(--lf-line-2);
+}
+.lf-stepper button:disabled {
+  color: var(--lf-muted-2);
+  cursor: not-allowed;
+}
+.lf-stepper-value {
+  flex: 1;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  font-size: 14px;
+  font-weight: 600;
+  border-inline-start: 1px solid var(--lf-line);
+  border-inline-end: 1px solid var(--lf-line);
+  height: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lf-daterange {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--lf-line);
+  background: var(--lf-paper);
+  border-radius: var(--lf-radius);
+  padding: 8px 14px;
+  transition:
+    border-color 120ms ease,
+    box-shadow 120ms ease;
+}
+.lf-daterange:focus-within {
+  border-color: var(--lf-primary);
+  box-shadow: 0 0 0 3px var(--lf-primary-soft);
+}
+.lf-daterange-icon {
+  color: var(--lf-muted);
+  flex-shrink: 0;
+}
+.lf-daterange-input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  font-size: 14px;
+  color: var(--lf-ink);
+  font-family: inherit;
+  padding: 4px 0;
+}
+.lf-daterange-input:focus {
+  outline: none;
+}
+.lf-daterange-divider {
+  color: var(--lf-muted-2);
+  font-size: 14px;
+}
+.lf-daterange-delta {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--lf-primary);
+  white-space: nowrap;
+  margin-inline-start: 4px;
+}
+</style>
