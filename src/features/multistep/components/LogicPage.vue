@@ -3,9 +3,15 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { ChevronLeft, ChevronRight, Plus, HelpCircle } from 'lucide-vue-next'
 import {
   useMultiStepFormStore,
+  flattenStepFields,
   type LogicRule,
   type RuleKind,
+  type FormStep,
 } from '../../../stores/multistepForm'
+
+function fieldCount(step: FormStep): number {
+  return flattenStepFields(step.elements).length
+}
 import { STEP_ICONS, RULE_KIND_META } from '../utils/icons'
 import RuleEditor from './RuleEditor.vue'
 import TourTooltip from '../../../components/shared/TourTooltip.vue'
@@ -266,7 +272,7 @@ function activate(id: string) {
                       {{ s.title }}
                     </p>
                     <p class="text-[10.5px] text-slate-500 dark:text-white/40 mt-0.5">
-                      {{ s.elements.length }} fields
+                      {{ fieldCount(s) }} fields
                     </p>
                   </div>
                   <button

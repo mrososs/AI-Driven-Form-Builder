@@ -11,9 +11,13 @@ import {
   FolderInput,
   X,
 } from 'lucide-vue-next'
-import { useMultiStepFormStore } from '../../../stores/multistepForm'
+import { useMultiStepFormStore, flattenStepFields } from '../../../stores/multistepForm'
 import { STEP_ICONS } from '../utils/icons'
 import type { FormStep } from '../../../stores/multistepForm'
+
+function fieldCount(step: FormStep): number {
+  return flattenStepFields(step.elements).length
+}
 import ImportFormDialog from './ImportFormDialog.vue'
 import { useMultiStepUI } from '../composables/useMultiStepUI'
 
@@ -181,8 +185,8 @@ function onRenameKey(step: FormStep, e: KeyboardEvent) {
               {{ step.title }}
             </p>
             <p class="text-[11px] text-slate-400 dark:text-white/40 mt-0.5 truncate">
-              {{ step.elements.length }}
-              {{ step.elements.length === 1 ? 'field' : 'fields' }}
+              {{ fieldCount(step) }}
+              {{ fieldCount(step) === 1 ? 'field' : 'fields' }}
             </p>
           </div>
         </button>

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { Settings2, Trash2, GripVertical, ChevronDown, Calendar, Upload } from 'lucide-vue-next'
+import { Settings2, Trash2, GripVertical, ChevronDown, Calendar, CalendarRange, Upload, Minus, Plus } from 'lucide-vue-next'
 import type { MultiStepElement } from '../../../stores/multistepForm'
 import { placeholderFor } from '../utils/catalog'
 
@@ -152,6 +152,96 @@ const placeholder = computed(() => props.element.placeholder || placeholderFor(p
         class="border border-dashed border-slate-300 dark:border-white/[0.12] rounded-lg px-3 py-4 bg-slate-50 dark:bg-white/[0.04] flex items-center justify-center gap-2 text-sm text-slate-500 dark:text-white/40"
       >
         <Upload class="h-3.5 w-3.5" /> Click to upload
+      </div>
+    </template>
+
+    <template v-else-if="element.type === 'stepper'">
+      <div
+        class="flex items-stretch border border-slate-200 dark:border-white/[0.07] rounded-lg overflow-hidden bg-slate-50 dark:bg-white/[0.04]"
+      >
+        <div class="px-4 flex items-center justify-center text-slate-400 dark:text-white/40">
+          <Minus class="h-3.5 w-3.5" />
+        </div>
+        <div
+          class="flex-1 text-center text-sm font-medium text-slate-500 dark:text-white/50 py-2 border-x border-slate-200 dark:border-white/[0.07]"
+        >
+          {{ element.defaultValue ?? element.min ?? 0 }}
+        </div>
+        <div class="px-4 flex items-center justify-center text-slate-400 dark:text-white/40">
+          <Plus class="h-3.5 w-3.5" />
+        </div>
+      </div>
+    </template>
+
+    <template v-else-if="element.type === 'daterange'">
+      <div
+        class="flex items-center gap-2 border border-slate-200 dark:border-white/[0.07] rounded-lg px-3 py-2.5 bg-slate-50 dark:bg-white/[0.04]"
+      >
+        <CalendarRange class="h-3.5 w-3.5 text-slate-400 dark:text-white/30 shrink-0" />
+        <span class="text-slate-400 dark:text-white/30 text-sm flex-1">Start date</span>
+        <span class="text-slate-300 dark:text-white/20 text-sm rtl:rotate-180">→</span>
+        <span class="text-slate-400 dark:text-white/30 text-sm flex-1">End date</span>
+        <span class="text-[11px] text-indigo-600 dark:text-indigo-300 font-medium ms-2 shrink-0">
+          {{ element.rangeUnit ?? 'days' }}
+        </span>
+      </div>
+    </template>
+
+    <template v-else-if="element.type === 'radiocards'">
+      <div class="space-y-2">
+        <div
+          v-for="card in element.cards ?? []"
+          :key="card.value"
+          class="flex items-center gap-3 p-2.5 rounded-lg border border-slate-200 dark:border-white/[0.07] bg-white dark:bg-white/[0.02]"
+        >
+          <div
+            class="h-4 w-4 rounded-full border-2 border-slate-300 dark:border-white/20 bg-white dark:bg-white/[0.05] shrink-0"
+          />
+          <div class="flex-1 min-w-0">
+            <div class="text-sm font-semibold text-slate-700 dark:text-white/80 truncate">{{ card.title }}</div>
+            <div
+              v-if="card.description"
+              class="text-[12px] text-slate-500 dark:text-white/40 truncate"
+            >
+              {{ card.description }}
+            </div>
+          </div>
+          <div
+            v-if="card.meta"
+            class="text-sm font-medium text-slate-600 dark:text-white/60 shrink-0 ms-2"
+          >
+            {{ card.meta }}
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <template v-else-if="element.type === 'checkboxcards'">
+      <div class="space-y-2">
+        <div
+          v-for="card in element.cards ?? []"
+          :key="card.value"
+          class="flex items-center gap-3 p-2.5 rounded-lg border border-slate-200 dark:border-white/[0.07] bg-white dark:bg-white/[0.02]"
+        >
+          <div
+            class="h-4 w-4 rounded border-2 border-slate-300 dark:border-white/20 bg-white dark:bg-white/[0.05] shrink-0"
+          />
+          <div class="flex-1 min-w-0">
+            <div class="text-sm font-semibold text-slate-700 dark:text-white/80 truncate">{{ card.title }}</div>
+            <div
+              v-if="card.description"
+              class="text-[12px] text-slate-500 dark:text-white/40 truncate"
+            >
+              {{ card.description }}
+            </div>
+          </div>
+          <div
+            v-if="card.meta"
+            class="text-sm font-medium text-slate-600 dark:text-white/60 shrink-0 ms-2"
+          >
+            {{ card.meta }}
+          </div>
+        </div>
       </div>
     </template>
 

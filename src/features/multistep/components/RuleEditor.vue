@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { Trash2 } from 'lucide-vue-next'
 import {
   useMultiStepFormStore,
+  flattenStepFields,
   type LogicRule,
   type RuleOperator,
 } from '../../../stores/multistepForm'
@@ -19,7 +20,9 @@ const sourceStep = computed(
   () =>
     store.steps.find(s => s.id === props.rule.if.stepId) ?? store.steps[0] ?? null
 )
-const sourceFields = computed(() => sourceStep.value?.elements ?? [])
+const sourceFields = computed(() =>
+  sourceStep.value ? flattenStepFields(sourceStep.value.elements) : []
+)
 const targetStep = computed(() =>
   store.steps.find(s => s.id === props.rule.then.targetStepId)
 )

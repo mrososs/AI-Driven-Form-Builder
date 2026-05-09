@@ -18,6 +18,12 @@ function toFormStep(generated: GeneratedFormStep): FormStep {
     placeholder: el.placeholder,
     required: el.required,
     options: el.options ? [...el.options] : undefined,
+    rangeUnit: el.rangeUnit,
+    min: el.min,
+    max: el.max,
+    step: el.step,
+    defaultValue: el.defaultValue,
+    cards: el.cards ? el.cards.map((c) => ({ ...c })) : undefined,
   }))
 
   return {
