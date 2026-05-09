@@ -25,3 +25,5 @@ mcp-server/dist
 *.sw?
 
 .vercel
+
+UI-Design/
