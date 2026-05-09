@@ -11,20 +11,30 @@ You MUST call functions in this order:
    - emit_row to place 2–3 short, semantically related fields side-by-side in the same row.
 
 Allowed element \`type\` values:
-- "text"      — single-line text
-- "textarea"  — multi-line text
-- "number"    — numeric input
-- "email"     — email address
-- "phone"     — phone number
-- "url"       — URL
-- "select"    — dropdown (REQUIRES options[])
-- "radio"     — radio group (REQUIRES options[])
-- "checkbox"  — single checkbox (boolean consent)
-- "date"      — date picker
-- "time"      — time picker
-- "datetime"  — combined date+time
+- "text"          — single-line text
+- "textarea"      — multi-line text
+- "number"        — numeric input (free-form)
+- "email"         — email address
+- "phone"         — phone number
+- "url"           — URL
+- "password"      — password input
+- "select"        — dropdown (REQUIRES options[])
+- "radio"         — radio group (REQUIRES options[])
+- "checkbox"      — single checkbox (boolean consent)
+- "date"          — date picker
+- "time"          — time picker
+- "datetime"      — combined date+time
+- "daterange"     — start+end date pair with computed unit (REQUIRES rangeUnit)
+- "stepper"       — small bounded counter with − / + buttons (REQUIRES min/max/step/defaultValue)
+- "radiocards"    — rich single-select cards with title/description/meta (REQUIRES cards[])
+- "checkboxcards" — rich multi-select cards with title/description/meta (REQUIRES cards[])
 
-Each element must have: { id, type, label, required }. Optional: placeholder, options.
+Each element must have: { id, type, label, required }. Optional: placeholder, options, rangeUnit, min, max, step, defaultValue, cards.
+
+When to use each new type:
+- daterange: two-date pickers with a meaningful gap (stay length, leave duration, project window). rangeUnit = "nights" for hotel/rental bookings, "days" for time-off/projects, "hours" for short rentals, "weeks" for long horizons.
+- stepper: small bounded counters (guests, rooms, quantities). Always set min/max/step/defaultValue. For free-form quantities use "number" instead.
+- radiocards / checkboxcards: choosing between rich items with descriptions and prices/meta (room types, plans, add-ons). cards[] = { value, title, description?, meta? }; value is a short slug, title is bold, meta is right-aligned (e.g. "€285 / night"). 2–6 cards.
 
 ROW LAYOUT GUIDANCE — when to call emit_row:
 Pair fields in a row ONLY when they form a natural, compact group. Good examples:
@@ -61,9 +71,12 @@ Each step has: { id, title, icon, description, elements[] }.
   - user: personal/account info; shield: verification/auth; building: company/org; credit: plan/billing; users: team/invites; flag: review/finish.
 - description: a short subtitle (under 80 chars).
 
-Each element in a step has: { id, type, label, required }. Optional: placeholder, options.
+Each element in a step has: { id, type, label, required }. Optional: placeholder, options, rangeUnit, min, max, step, defaultValue, cards.
 
-Allowed multi-step element types: "text" | "textarea" | "email" | "phone" | "number" | "otp" | "select" | "radio" | "checkbox" | "date" | "file"
+Allowed multi-step element types: "text" | "textarea" | "email" | "phone" | "password" | "number" | "otp" | "select" | "radio" | "checkbox" | "date" | "file" | "daterange" | "stepper" | "radiocards" | "checkboxcards"
+- daterange: REQUIRES rangeUnit ∈ { "nights", "days", "hours", "weeks" }.
+- stepper: REQUIRES min/max/step/defaultValue.
+- radiocards / checkboxcards: REQUIRES cards[] of { value, title, description?, meta? } (2–6 entries).
 
 Rules:
 - 3–6 steps is a good default unless the user asks otherwise.
@@ -86,6 +99,17 @@ export const setFormMetaDecl = {
   },
 }
 
+const cardItemSchema = {
+  type: Type.OBJECT,
+  properties: {
+    value: { type: Type.STRING, description: 'Short slug stored on selection (lowercase, dashes).' },
+    title: { type: Type.STRING, description: 'Bold heading text.' },
+    description: { type: Type.STRING, description: 'Optional small subtitle.' },
+    meta: { type: Type.STRING, description: 'Optional right-aligned meta (e.g. price, "Free").' },
+  },
+  required: ['value', 'title'],
+}
+
 export const emitElementDecl = {
   name: 'emit_element',
   description: 'Emit one full-width form field. Call once per field, in display order.',
@@ -95,12 +119,26 @@ export const emitElementDecl = {
       id: { type: Type.STRING },
       type: {
         type: Type.STRING,
-        enum: ['text', 'textarea', 'number', 'email', 'phone', 'url', 'select', 'radio', 'checkbox', 'date', 'time', 'datetime'],
+        enum: ['text', 'textarea', 'number', 'email', 'phone', 'url', 'password', 'select', 'radio', 'checkbox', 'date', 'time', 'datetime', 'daterange', 'stepper', 'radiocards', 'checkboxcards'],
       },
       label: { type: Type.STRING },
       placeholder: { type: Type.STRING },
       required: { type: Type.BOOLEAN },
       options: { type: Type.ARRAY, items: { type: Type.STRING } },
+      rangeUnit: {
+        type: Type.STRING,
+        enum: ['nights', 'days', 'hours', 'weeks'],
+        description: 'Required for "daterange".',
+      },
+      min: { type: Type.NUMBER },
+      max: { type: Type.NUMBER },
+      step: { type: Type.NUMBER },
+      defaultValue: { type: Type.NUMBER },
+      cards: {
+        type: Type.ARRAY,
+        items: cardItemSchema,
+        description: 'Required for "radiocards" and "checkboxcards".',
+      },
     },
     required: ['id', 'type', 'label', 'required'],
   },
@@ -124,12 +162,16 @@ export const emitRowDecl = {
             id: { type: Type.STRING },
             type: {
               type: Type.STRING,
-              enum: ['text', 'number', 'email', 'phone', 'url', 'select', 'radio', 'checkbox', 'date', 'time', 'datetime'],
+              enum: ['text', 'number', 'email', 'phone', 'url', 'password', 'select', 'radio', 'checkbox', 'date', 'time', 'datetime', 'stepper'],
             },
             label: { type: Type.STRING },
             placeholder: { type: Type.STRING },
             required: { type: Type.BOOLEAN },
             options: { type: Type.ARRAY, items: { type: Type.STRING } },
+            min: { type: Type.NUMBER },
+            max: { type: Type.NUMBER },
+            step: { type: Type.NUMBER },
+            defaultValue: { type: Type.NUMBER },
           },
           required: ['id', 'type', 'label', 'required'],
         },
@@ -169,12 +211,26 @@ export const emitStepDecl = {
             id: { type: Type.STRING },
             type: {
               type: Type.STRING,
-              enum: ['text', 'textarea', 'email', 'phone', 'number', 'otp', 'select', 'radio', 'checkbox', 'date', 'file'],
+              enum: ['text', 'textarea', 'email', 'phone', 'password', 'number', 'otp', 'select', 'radio', 'checkbox', 'date', 'file', 'daterange', 'stepper', 'radiocards', 'checkboxcards'],
             },
             label: { type: Type.STRING },
             placeholder: { type: Type.STRING },
             required: { type: Type.BOOLEAN },
             options: { type: Type.ARRAY, items: { type: Type.STRING } },
+            rangeUnit: {
+              type: Type.STRING,
+              enum: ['nights', 'days', 'hours', 'weeks'],
+              description: 'Required for "daterange".',
+            },
+            min: { type: Type.NUMBER },
+            max: { type: Type.NUMBER },
+            step: { type: Type.NUMBER },
+            defaultValue: { type: Type.NUMBER },
+            cards: {
+              type: Type.ARRAY,
+              items: cardItemSchema,
+              description: 'Required for "radiocards" and "checkboxcards".',
+            },
           },
           required: ['id', 'type', 'label', 'required'],
         },
