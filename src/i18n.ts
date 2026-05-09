@@ -151,6 +151,12 @@ const messages = {
         title: 'Three calls to a finished component',
         subtitle: 'The typical agent session: authenticate once, generate a schema, then export code.',
         step: 'Step',
+        diagram: {
+          eyebrow: 'Protocol view',
+          title: 'How a tool call flows under the hood',
+          subtitle: 'A single agent session traced across the wire — authenticate, generate, export.',
+          legend: { request: 'request', response: 'response' },
+        },
         auth: {
           title: 'Authenticate',
           desc: 'Call authenticate with your FormAI email and password. Store the returned token — it\'s required by all other tools and lasts one hour.',
@@ -741,6 +747,12 @@ const messages = {
         title: 'ثلاث استدعاءات إلى مكوّن نهائي',
         subtitle: 'جلسة الوكيل النموذجية: مصادقة مرة واحدة، توليد مخطط، ثم تصدير الكود.',
         step: 'خطوة',
+        diagram: {
+          eyebrow: 'منظور البروتوكول',
+          title: 'كيف يتدفّق استدعاء الأداة خلف الكواليس',
+          subtitle: 'جلسة وكيل واحدة مُتتبّعة عبر الشبكة — مصادقة، توليد، تصدير.',
+          legend: { request: 'طلب', response: 'استجابة' },
+        },
         auth: {
           title: 'المصادقة',
           desc: 'استدعِ authenticate ببريدك وكلمة مرور FormAI. احتفظ بالرمز المُعاد — مطلوب لكل الأدوات ويستمر لساعة واحدة.',

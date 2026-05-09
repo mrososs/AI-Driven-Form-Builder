@@ -690,6 +690,166 @@ const colorMap: Record<ToolColor, { icon: string; badge: string; border: string;
       </p>
     </div>
 
+    <!-- ── PROTOCOL SEQUENCE DIAGRAM ─────────────────────────────── -->
+    <div class="mx-auto mt-24 max-w-5xl px-6 lg:px-8">
+      <div class="text-center mb-10">
+        <p class="text-xs font-semibold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-2">
+          {{ t('mcp.flow.diagram.eyebrow') }}
+        </p>
+        <h3 class="font-heading font-bold text-2xl sm:text-3xl text-slate-900 dark:text-white">
+          {{ t('mcp.flow.diagram.title') }}
+        </h3>
+        <p class="mt-3 text-sm text-slate-500 dark:text-slate-400 max-w-2xl mx-auto">
+          {{ t('mcp.flow.diagram.subtitle') }}
+        </p>
+      </div>
+
+      <!-- Frame -->
+      <div class="rounded-2xl p-4 sm:p-8
+        bg-white dark:bg-white/[0.03]
+        border border-slate-200 dark:border-white/[0.07]
+        shadow-sm">
+        <!-- Horizontal scroll on small screens, diagram is always LTR -->
+        <div class="overflow-x-auto -mx-2 px-2" dir="ltr">
+          <svg
+            viewBox="0 0 800 560"
+            class="w-full h-auto min-w-[720px]"
+            role="img"
+            aria-labelledby="mcp-flow-svg-title"
+            preserveAspectRatio="xMidYMid meet"
+          >
+            <title id="mcp-flow-svg-title">
+              MCP request sequence — AI agent to MCP server to Form API to AI provider
+            </title>
+
+            <defs>
+              <marker id="mcp-arr-violet" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+                <path d="M0,0 L10,5 L0,10 z" class="fill-violet-500 dark:fill-violet-400" />
+              </marker>
+              <marker id="mcp-arr-indigo" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+                <path d="M0,0 L10,5 L0,10 z" class="fill-indigo-500 dark:fill-indigo-400" />
+              </marker>
+              <marker id="mcp-arr-sky" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+                <path d="M0,0 L10,5 L0,10 z" class="fill-sky-500 dark:fill-sky-400" />
+              </marker>
+              <marker id="mcp-arr-slate" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                <path d="M0,0 L10,5 L0,10 z" class="fill-slate-400 dark:fill-slate-500" />
+              </marker>
+            </defs>
+
+            <!-- ── ACTORS ── -->
+            <!-- AI Agent -->
+            <g>
+              <rect x="20" y="14" width="160" height="60" rx="12"
+                class="fill-white dark:fill-white/[0.05] stroke-slate-200 dark:stroke-white/[0.10]" stroke-width="1" />
+              <text x="100" y="40" text-anchor="middle" font-size="14" font-weight="600"
+                class="fill-slate-900 dark:fill-white">AI Agent</text>
+              <text x="100" y="58" text-anchor="middle" font-size="11"
+                class="fill-slate-500 dark:fill-slate-400">Claude · Cursor</text>
+            </g>
+
+            <!-- MCP Server (highlighted) -->
+            <g>
+              <rect x="220" y="14" width="160" height="60" rx="12"
+                class="fill-indigo-50 dark:fill-indigo-500/[0.10] stroke-indigo-200 dark:stroke-indigo-500/30" stroke-width="1" />
+              <text x="300" y="40" text-anchor="middle" font-size="14" font-weight="600"
+                class="fill-indigo-700 dark:fill-indigo-200">MCP Server</text>
+              <text x="300" y="58" text-anchor="middle" font-size="11" class="font-mono fill-indigo-500 dark:fill-indigo-300">ai-form-builder</text>
+            </g>
+
+            <!-- Form API -->
+            <g>
+              <rect x="420" y="14" width="160" height="60" rx="12"
+                class="fill-white dark:fill-white/[0.05] stroke-slate-200 dark:stroke-white/[0.10]" stroke-width="1" />
+              <text x="500" y="40" text-anchor="middle" font-size="14" font-weight="600"
+                class="fill-slate-900 dark:fill-white">Form API</text>
+              <text x="500" y="58" text-anchor="middle" font-size="11"
+                class="fill-slate-500 dark:fill-slate-400">Firebase · REST</text>
+            </g>
+
+            <!-- AI Provider -->
+            <g>
+              <rect x="620" y="14" width="160" height="60" rx="12"
+                class="fill-white dark:fill-white/[0.05] stroke-slate-200 dark:stroke-white/[0.10]" stroke-width="1" />
+              <text x="700" y="40" text-anchor="middle" font-size="14" font-weight="600"
+                class="fill-slate-900 dark:fill-white">AI Provider</text>
+              <text x="700" y="58" text-anchor="middle" font-size="11"
+                class="fill-slate-500 dark:fill-slate-400">Gemini</text>
+            </g>
+
+            <!-- ── LIFELINES ── -->
+            <line x1="100" y1="78" x2="100" y2="490" class="stroke-slate-200 dark:stroke-white/[0.10]" stroke-width="1" stroke-dasharray="3 4" />
+            <line x1="300" y1="78" x2="300" y2="490" class="stroke-indigo-300/70 dark:stroke-indigo-500/40" stroke-width="1" stroke-dasharray="3 4" />
+            <line x1="500" y1="78" x2="500" y2="490" class="stroke-slate-200 dark:stroke-white/[0.10]" stroke-width="1" stroke-dasharray="3 4" />
+            <line x1="700" y1="78" x2="700" y2="490" class="stroke-slate-200 dark:stroke-white/[0.10]" stroke-width="1" stroke-dasharray="3 4" />
+
+            <!-- ── PHASE 1 · AUTHENTICATE (violet) ── -->
+            <!-- 1: AI Agent → MCP -->
+            <text x="200" y="105" text-anchor="middle" font-size="11" class="font-mono fill-violet-600 dark:fill-violet-300">authenticate(email, pwd)</text>
+            <line x1="100" y1="115" x2="294" y2="115" stroke-linecap="round" stroke-width="1.5"
+              class="stroke-violet-500 dark:stroke-violet-400" marker-end="url(#mcp-arr-violet)" />
+
+            <!-- 2: MCP → Form API -->
+            <text x="400" y="143" text-anchor="middle" font-size="11" class="font-mono fill-violet-600 dark:fill-violet-300">verify credentials</text>
+            <line x1="300" y1="153" x2="494" y2="153" stroke-linecap="round" stroke-width="1.5"
+              class="stroke-violet-500 dark:stroke-violet-400" marker-end="url(#mcp-arr-violet)" />
+
+            <!-- 3: Form API → MCP (response, dashed) -->
+            <text x="400" y="181" text-anchor="middle" font-size="11" class="font-mono fill-violet-500 dark:fill-violet-400">JWT token · 1h</text>
+            <line x1="500" y1="191" x2="306" y2="191" stroke-linecap="round" stroke-width="1.5" stroke-dasharray="5 4"
+              class="stroke-violet-400 dark:stroke-violet-400/70" marker-end="url(#mcp-arr-violet)" />
+
+            <!-- 4: MCP → AI Agent (response, dashed) -->
+            <text x="200" y="219" text-anchor="middle" font-size="11" class="font-mono fill-violet-500 dark:fill-violet-400">token</text>
+            <line x1="300" y1="229" x2="106" y2="229" stroke-linecap="round" stroke-width="1.5" stroke-dasharray="5 4"
+              class="stroke-violet-400 dark:stroke-violet-400/70" marker-end="url(#mcp-arr-violet)" />
+
+            <!-- ── PHASE 2 · GENERATE (indigo) ── -->
+            <!-- 5: AI Agent → MCP -->
+            <text x="200" y="257" text-anchor="middle" font-size="11" class="font-mono fill-indigo-600 dark:fill-indigo-300">generate_form(prompt, token)</text>
+            <line x1="100" y1="267" x2="294" y2="267" stroke-linecap="round" stroke-width="1.5"
+              class="stroke-indigo-500 dark:stroke-indigo-400" marker-end="url(#mcp-arr-indigo)" />
+
+            <!-- 6: MCP → AI Provider -->
+            <text x="500" y="295" text-anchor="middle" font-size="11" class="font-mono fill-indigo-600 dark:fill-indigo-300">Gemini completion</text>
+            <line x1="300" y1="305" x2="694" y2="305" stroke-linecap="round" stroke-width="1.5"
+              class="stroke-indigo-500 dark:stroke-indigo-400" marker-end="url(#mcp-arr-indigo)" />
+
+            <!-- 7: AI Provider → MCP (response, dashed) -->
+            <text x="500" y="333" text-anchor="middle" font-size="11" class="font-mono fill-indigo-500 dark:fill-indigo-400">typed elements[]</text>
+            <line x1="700" y1="343" x2="306" y2="343" stroke-linecap="round" stroke-width="1.5" stroke-dasharray="5 4"
+              class="stroke-indigo-400 dark:stroke-indigo-400/70" marker-end="url(#mcp-arr-indigo)" />
+
+            <!-- 8: MCP → AI Agent (response, dashed) -->
+            <text x="200" y="371" text-anchor="middle" font-size="11" class="font-mono fill-indigo-500 dark:fill-indigo-400">form schema</text>
+            <line x1="300" y1="381" x2="106" y2="381" stroke-linecap="round" stroke-width="1.5" stroke-dasharray="5 4"
+              class="stroke-indigo-400 dark:stroke-indigo-400/70" marker-end="url(#mcp-arr-indigo)" />
+
+            <!-- ── PHASE 3 · CODE (sky) ── -->
+            <!-- 9: AI Agent → MCP -->
+            <text x="200" y="409" text-anchor="middle" font-size="11" class="font-mono fill-sky-600 dark:fill-sky-300">generate_code(elements, "vue")</text>
+            <line x1="100" y1="419" x2="294" y2="419" stroke-linecap="round" stroke-width="1.5"
+              class="stroke-sky-500 dark:stroke-sky-400" marker-end="url(#mcp-arr-sky)" />
+
+            <!-- 10: MCP → AI Agent (response, dashed) -->
+            <text x="200" y="447" text-anchor="middle" font-size="11" class="font-mono fill-sky-500 dark:fill-sky-400">&lt;Vue 3 SFC&gt;</text>
+            <line x1="300" y1="457" x2="106" y2="457" stroke-linecap="round" stroke-width="1.5" stroke-dasharray="5 4"
+              class="stroke-sky-400 dark:stroke-sky-400/70" marker-end="url(#mcp-arr-sky)" />
+
+            <!-- ── LEGEND ── -->
+            <g transform="translate(280, 525)">
+              <line x1="0" y1="0" x2="40" y2="0" stroke-linecap="round" stroke-width="1.5"
+                class="stroke-slate-500 dark:stroke-slate-400" marker-end="url(#mcp-arr-slate)" />
+              <text x="50" y="4" font-size="11" class="fill-slate-600 dark:fill-slate-400">{{ t('mcp.flow.diagram.legend.request') }}</text>
+              <line x1="130" y1="0" x2="170" y2="0" stroke-linecap="round" stroke-width="1.5" stroke-dasharray="5 4"
+                class="stroke-slate-400 dark:stroke-slate-500" marker-end="url(#mcp-arr-slate)" />
+              <text x="180" y="4" font-size="11" class="fill-slate-600 dark:fill-slate-400">{{ t('mcp.flow.diagram.legend.response') }}</text>
+            </g>
+          </svg>
+        </div>
+      </div>
+    </div>
+
     <!-- ── USAGE FLOW ─────────────────────────────────────────────── -->
     <div class="mx-auto mt-24 max-w-7xl px-6 lg:px-8">
       <div class="text-center mb-12">
