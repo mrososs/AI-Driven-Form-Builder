@@ -24,8 +24,8 @@ const placeholder = computed(() => props.element.placeholder || placeholderFor(p
     :class="[
       'group relative rounded-xl border p-5 transition-all duration-200',
       selected
-        ? 'border-indigo-500 bg-indigo-50 shadow-lg shadow-indigo-500/10 dark:border-indigo-500/50 dark:bg-[#13131a]'
-        : 'border-slate-200 bg-white hover:border-indigo-300 hover:shadow-md dark:border-white/[0.07] dark:bg-[#111118] dark:hover:border-indigo-500/30 dark:hover:shadow-black/30',
+        ? 'border-[#6A4CFF] bg-[#FAFAFF] shadow-lg shadow-[#6A4CFF]/10 dark:border-[#6A4CFF]/60 dark:bg-[#13131a]'
+        : 'border-slate-200 bg-white hover:border-[#6A4CFF]/40 hover:shadow-md dark:border-white/[0.07] dark:bg-[#111118] dark:hover:border-[#6A4CFF]/40 dark:hover:shadow-black/30',
     ]"
     style="transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1)"
   >
@@ -57,10 +57,10 @@ const placeholder = computed(() => props.element.placeholder || placeholderFor(p
           type="button"
           @click.stop="emit('select')"
           :class="[
-            'p-2 md:p-1.5 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-500/10',
+            'p-2 md:p-1.5 rounded-lg hover:bg-[#EFEAFF] dark:hover:bg-[#6A4CFF]/15',
             selected
-              ? 'text-indigo-700 bg-indigo-100 dark:text-indigo-300 dark:bg-indigo-500/10'
-              : 'text-slate-500 hover:text-indigo-600 dark:text-white/50 dark:hover:text-indigo-300',
+              ? 'text-[#4B33C7] bg-[#EFEAFF] dark:text-[#bdb1ff] dark:bg-[#6A4CFF]/15'
+              : 'text-slate-500 hover:text-[#4B33C7] dark:text-white/50 dark:hover:text-[#bdb1ff]',
           ]"
           aria-label="Edit field"
         >

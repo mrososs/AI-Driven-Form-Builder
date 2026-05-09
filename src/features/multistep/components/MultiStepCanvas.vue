@@ -50,22 +50,15 @@ function onElementAdded(event: { newIndex: number }) {
       >
         <ChevronLeft class="h-4 w-4 rtl:rotate-180" />
       </button>
-      <div class="flex-1 flex items-center gap-2 overflow-hidden">
+      <div class="flex-1 h-1.5 rounded-full overflow-hidden bg-slate-200 dark:bg-white/[0.07]">
         <div
-          v-for="(_, i) in store.steps"
-          :key="i"
-          :class="[
-            'h-1 flex-1 rounded-full transition-all',
-            i <= stepIndex
-              ? 'bg-gradient-to-r from-indigo-500 to-violet-500'
-              : 'bg-slate-200 dark:bg-white/[0.07]',
-          ]"
-          style="transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1)"
+          class="h-full rounded-full bg-[#6A4CFF]"
+          :style="{ width: `${total > 0 ? ((stepIndex + 1) / total) * 100 : 0}%` }"
+          style="transition: width 600ms cubic-bezier(0.2, 0.7, 0.2, 1)"
         />
       </div>
-      <span class="text-[11px] font-semibold tabular-nums text-slate-600 dark:text-white/60">
-        Step
-        <span class="text-indigo-700 dark:text-indigo-300">{{ stepIndex + 1 }}</span
+      <span class="text-[12px] font-medium tabular-nums text-slate-500 dark:text-white/60">
+        Step <span class="text-slate-900 dark:text-white">{{ stepIndex + 1 }}</span
         >/<span>{{ total }}</span>
       </span>
       <button
@@ -88,14 +81,14 @@ function onElementAdded(event: { newIndex: number }) {
       <div class="w-full max-w-2xl space-y-4 ms-step-enter">
         <!-- Step header card -->
         <div class="rounded-2xl border border-slate-200 dark:border-white/[0.07] bg-white dark:bg-[#111118] p-5 sm:p-6 xl:p-8 shadow-sm dark:shadow-none">
-          <div class="flex items-center gap-3 mb-3">
+          <div class="flex items-center mb-3">
             <div
-              class="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-100 to-violet-50 border border-indigo-200 dark:from-indigo-500/30 dark:to-violet-500/20 dark:border-indigo-500/30 flex items-center justify-center text-indigo-600 dark:text-indigo-300"
+              class="w-9 h-9 rounded-[10px] bg-[#EFEAFF] dark:bg-[#6A4CFF]/15 flex items-center justify-center text-[#6A4CFF] dark:text-[#a99cff]"
             >
-              <component :is="stepIcon" class="h-4 w-4" />
+              <component :is="stepIcon" class="h-[18px] w-[18px]" />
             </div>
             <span
-              class="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-white/[0.05] text-[10px] font-semibold text-slate-500 dark:text-white/50 uppercase tracking-wider border border-slate-200 dark:border-white/[0.06]"
+              class="ms-3 px-2.5 py-1 rounded-md text-[11px] font-semibold text-slate-500 dark:text-white/50 uppercase tracking-[0.08em] border border-slate-200 dark:border-white/[0.06]"
             >
               Step {{ stepIndex + 1 }} of {{ total }}
             </span>
@@ -174,7 +167,7 @@ function onElementAdded(event: { newIndex: number }) {
           <button
             type="button"
             @click="insertAfter"
-            class="self-start sm:self-auto flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-500/10 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 transition-colors whitespace-nowrap"
+            class="self-start sm:self-auto flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold text-[#4B33C7] dark:text-[#bdb1ff] bg-[#EFEAFF] dark:bg-[#6A4CFF]/15 hover:bg-[#e3dcff] dark:hover:bg-[#6A4CFF]/25 transition-colors whitespace-nowrap"
             style="transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1)"
           >
             <Plus class="h-3 w-3" /> Insert step after this
