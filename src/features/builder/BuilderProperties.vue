@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { useEventListener } from '@vueuse/core'
 import { useI18n } from 'vue-i18n'
-import { useFormStore, type DependencyOperator, type VisibilityRule, type OptionsMap } from '../../stores/form'
+import { useFormStore, type CardItem, type DependencyOperator, type RangeUnit, type VisibilityRule, type OptionsMap } from '../../stores/form'
 import { Settings2, X, Trash2, ChevronDown } from 'lucide-vue-next'
 import { getElementDefinition } from './elements'
 import { useBuilderUI } from '../../composables/useBuilderUI'
@@ -20,6 +20,65 @@ const definition = computed(() =>
 const showRequired = computed(() => selectedElement.value?.type !== 'row')
 const showPlaceholder = computed(() => definition.value?.hasPlaceholder === true)
 const showOptions = computed(() => definition.value?.hasOptions === true)
+const isStepper = computed(() => selectedElement.value?.type === 'stepper')
+const isDateRange = computed(() => selectedElement.value?.type === 'daterange')
+const isCardsKind = computed(
+  () =>
+    selectedElement.value?.type === 'radiocards' ||
+    selectedElement.value?.type === 'checkboxcards',
+)
+
+const RANGE_UNITS: RangeUnit[] = ['nights', 'days', 'hours', 'weeks']
+
+function slugify(input: string): string {
+  return (
+    input
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '') || 'option'
+  )
+}
+
+function patchSelected(patch: Partial<typeof selectedElement.value>) {
+  if (selectedElement.value) formStore.updateElement(selectedElement.value.id, patch as never)
+}
+
+function patchNumber(field: 'min' | 'max' | 'step' | 'defaultValue', raw: string) {
+  if (!selectedElement.value) return
+  const value = raw === '' ? undefined : Number(raw)
+  if (value !== undefined && !Number.isFinite(value)) return
+  patchSelected({ [field]: value } as never)
+}
+
+function patchCard(i: number, patch: Partial<CardItem>) {
+  if (!selectedElement.value) return
+  const list = selectedElement.value.cards ?? []
+  if (!list[i]) return
+  const next = [...list]
+  const merged: CardItem = { ...next[i], ...patch }
+  if (patch.title !== undefined && next[i].value === slugify(next[i].title)) {
+    merged.value = slugify(merged.title)
+  }
+  next[i] = merged
+  patchSelected({ cards: next })
+}
+
+function removeCard(i: number) {
+  if (!selectedElement.value) return
+  const next = [...(selectedElement.value.cards ?? [])]
+  next.splice(i, 1)
+  patchSelected({ cards: next })
+}
+
+function addCard() {
+  if (!selectedElement.value) return
+  const list = selectedElement.value.cards ?? []
+  const idx = list.length + 1
+  patchSelected({
+    cards: [...list, { value: `option-${idx}`, title: `Option ${idx}` }],
+  })
+}
 
 // Desktop: visible whenever something is selected. Mobile: gated by the sheet toggle.
 const isVisible = computed(() =>
@@ -307,6 +366,116 @@ function removeFallback(index: number) {
           class="w-full border border-slate-200 dark:border-white/[0.07] rounded-lg px-3 py-2 text-sm text-slate-700 dark:text-white bg-transparent dark:bg-white/[0.03] focus:outline-none focus:border-primary-500 dark:focus:border-indigo-500 focus:ring-1 focus:ring-primary-500 dark:focus:ring-indigo-500"
           :placeholder="t('builder.properties.placeholderHint')"
         />
+      </div>
+
+      <div v-if="isStepper">
+        <label class="block text-xs font-semibold text-slate-500 dark:text-white/40 uppercase tracking-wider mb-2">Stepper</label>
+        <div class="grid grid-cols-2 gap-2">
+          <label class="block">
+            <span class="text-[11px] font-medium text-slate-500 dark:text-white/50 uppercase tracking-wider">Min</span>
+            <input
+              type="number"
+              :value="selectedElement.min ?? ''"
+              @input="patchNumber('min', ($event.target as HTMLInputElement).value)"
+              class="mt-1 w-full border border-slate-200 dark:border-white/[0.07] rounded-lg px-3 py-1.5 text-sm text-slate-700 dark:text-white bg-transparent dark:bg-white/[0.03] focus:outline-none focus:border-primary-500 dark:focus:border-indigo-500 focus:ring-1 focus:ring-primary-500 dark:focus:ring-indigo-500"
+            />
+          </label>
+          <label class="block">
+            <span class="text-[11px] font-medium text-slate-500 dark:text-white/50 uppercase tracking-wider">Max</span>
+            <input
+              type="number"
+              :value="selectedElement.max ?? ''"
+              @input="patchNumber('max', ($event.target as HTMLInputElement).value)"
+              class="mt-1 w-full border border-slate-200 dark:border-white/[0.07] rounded-lg px-3 py-1.5 text-sm text-slate-700 dark:text-white bg-transparent dark:bg-white/[0.03] focus:outline-none focus:border-primary-500 dark:focus:border-indigo-500 focus:ring-1 focus:ring-primary-500 dark:focus:ring-indigo-500"
+            />
+          </label>
+          <label class="block">
+            <span class="text-[11px] font-medium text-slate-500 dark:text-white/50 uppercase tracking-wider">Step</span>
+            <input
+              type="number"
+              min="0"
+              :value="selectedElement.step ?? ''"
+              @input="patchNumber('step', ($event.target as HTMLInputElement).value)"
+              class="mt-1 w-full border border-slate-200 dark:border-white/[0.07] rounded-lg px-3 py-1.5 text-sm text-slate-700 dark:text-white bg-transparent dark:bg-white/[0.03] focus:outline-none focus:border-primary-500 dark:focus:border-indigo-500 focus:ring-1 focus:ring-primary-500 dark:focus:ring-indigo-500"
+            />
+          </label>
+          <label class="block">
+            <span class="text-[11px] font-medium text-slate-500 dark:text-white/50 uppercase tracking-wider">Default</span>
+            <input
+              type="number"
+              :value="selectedElement.defaultValue ?? ''"
+              @input="patchNumber('defaultValue', ($event.target as HTMLInputElement).value)"
+              class="mt-1 w-full border border-slate-200 dark:border-white/[0.07] rounded-lg px-3 py-1.5 text-sm text-slate-700 dark:text-white bg-transparent dark:bg-white/[0.03] focus:outline-none focus:border-primary-500 dark:focus:border-indigo-500 focus:ring-1 focus:ring-primary-500 dark:focus:ring-indigo-500"
+            />
+          </label>
+        </div>
+      </div>
+
+      <div v-if="isDateRange">
+        <label class="block text-xs font-semibold text-slate-500 dark:text-white/40 uppercase tracking-wider mb-2">Range unit</label>
+        <select
+          :value="selectedElement.rangeUnit ?? 'days'"
+          @change="patchSelected({ rangeUnit: ($event.target as HTMLSelectElement).value as RangeUnit })"
+          class="w-full border border-slate-200 dark:border-white/[0.07] rounded-lg px-3 py-2 text-sm text-slate-700 dark:text-white bg-white dark:bg-white/[0.03] focus:outline-none focus:border-primary-500 dark:focus:border-indigo-500 focus:ring-1 focus:ring-primary-500 dark:focus:ring-indigo-500 appearance-none"
+        >
+          <option v-for="u in RANGE_UNITS" :key="u" :value="u">{{ u }}</option>
+        </select>
+        <p class="mt-1.5 text-[11px] text-slate-500 dark:text-white/40 leading-relaxed">
+          Determines how the gap between dates is summarised under the field (e.g. "3 nights").
+        </p>
+      </div>
+
+      <div v-if="isCardsKind">
+        <label class="block text-xs font-semibold text-slate-500 dark:text-white/40 uppercase tracking-wider mb-2">Cards</label>
+        <div class="space-y-3">
+          <div
+            v-for="(card, i) in selectedElement.cards ?? []"
+            :key="i"
+            class="space-y-1.5 p-3 rounded-lg border border-slate-200 dark:border-white/[0.07] bg-slate-50/60 dark:bg-white/[0.02]"
+          >
+            <div class="flex items-start gap-2">
+              <input
+                :value="card.title"
+                @input="patchCard(i, { title: ($event.target as HTMLInputElement).value })"
+                placeholder="Title"
+                class="flex-1 min-w-0 border border-slate-200 dark:border-white/[0.07] rounded-lg px-3 py-1.5 text-sm font-semibold text-slate-900 dark:text-white bg-white dark:bg-white/[0.03] focus:border-primary-500 dark:focus:border-indigo-500 focus:ring-1 focus:ring-primary-500 dark:focus:ring-indigo-500 focus:outline-none"
+              />
+              <button
+                type="button"
+                @click="removeCard(i)"
+                class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:text-white/40 dark:hover:text-rose-400 dark:hover:bg-rose-500/10 rounded-lg shrink-0"
+                :aria-label="'Remove card ' + (i + 1)"
+              >
+                <Trash2 class="h-3.5 w-3.5" />
+              </button>
+            </div>
+            <input
+              :value="card.description ?? ''"
+              @input="patchCard(i, { description: ($event.target as HTMLInputElement).value })"
+              placeholder="Description (optional)"
+              class="w-full border border-slate-200 dark:border-white/[0.07] rounded-lg px-3 py-1.5 text-[12px] text-slate-700 dark:text-white/80 bg-white dark:bg-white/[0.03] focus:border-primary-500 dark:focus:border-indigo-500 focus:ring-1 focus:ring-primary-500 dark:focus:ring-indigo-500 focus:outline-none"
+            />
+            <input
+              :value="card.meta ?? ''"
+              @input="patchCard(i, { meta: ($event.target as HTMLInputElement).value })"
+              placeholder="Meta — e.g. €285 / night"
+              class="w-full border border-slate-200 dark:border-white/[0.07] rounded-lg px-3 py-1.5 text-[12px] text-slate-700 dark:text-white/80 bg-white dark:bg-white/[0.03] focus:border-primary-500 dark:focus:border-indigo-500 focus:ring-1 focus:ring-primary-500 dark:focus:ring-indigo-500 focus:outline-none"
+            />
+            <input
+              :value="card.value"
+              @input="patchCard(i, { value: ($event.target as HTMLInputElement).value })"
+              placeholder="value"
+              class="w-full border border-slate-200 dark:border-white/[0.07] rounded-lg px-3 py-1 text-[11px] font-mono text-slate-500 dark:text-white/50 bg-transparent focus:border-primary-500 dark:focus:border-indigo-500 focus:ring-1 focus:ring-primary-500 dark:focus:ring-indigo-500 focus:outline-none"
+            />
+          </div>
+          <button
+            type="button"
+            @click="addCard"
+            class="w-full py-2 text-sm font-medium text-primary-600 dark:text-indigo-400 bg-primary-50 dark:bg-indigo-500/10 hover:bg-primary-100 dark:hover:bg-indigo-500/20 rounded-lg transition-colors"
+          >
+            + Add card
+          </button>
+        </div>
       </div>
 
       <div v-if="showOptions && selectedElement.options && !optionsSourceEnabled">

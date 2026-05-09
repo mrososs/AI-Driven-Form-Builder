@@ -39,6 +39,15 @@ export interface OptionsMap {
   fallback?: string[]
 }
 
+export type RangeUnit = 'nights' | 'days' | 'hours' | 'weeks'
+
+export interface CardItem {
+  value: string
+  title: string
+  description?: string
+  meta?: string
+}
+
 export interface FormElement {
   id: string
   type: string
@@ -49,6 +58,12 @@ export interface FormElement {
   children?: FormElement[]
   visibility?: VisibilityRule
   optionsSource?: OptionsMap
+  rangeUnit?: RangeUnit
+  min?: number
+  max?: number
+  step?: number
+  defaultValue?: number
+  cards?: CardItem[]
 }
 
 export interface SavedForm {

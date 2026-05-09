@@ -13,6 +13,12 @@ function toFormElement(generated: GeneratedFormElement): FormElement {
     placeholder: generated.placeholder,
     required: generated.required,
     options: generated.options ? [...generated.options] : undefined,
+    rangeUnit: generated.rangeUnit,
+    min: generated.min,
+    max: generated.max,
+    step: generated.step,
+    defaultValue: generated.defaultValue,
+    cards: generated.cards ? generated.cards.map((c) => ({ ...c })) : undefined,
   }
 }
 

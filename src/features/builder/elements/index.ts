@@ -4,6 +4,7 @@ import { textElement } from './textElement'
 import { textareaElement } from './textareaElement'
 import { numberElement } from './numberElement'
 import { emailElement } from './emailElement'
+import { passwordElement } from './passwordElement'
 import { phoneElement } from './phoneElement'
 import { urlElement } from './urlElement'
 import { selectElement } from './selectElement'
@@ -14,20 +15,29 @@ import { timeElement } from './timeElement'
 import { datetimeElement } from './datetimeElement'
 import { fileElement } from './fileElement'
 import { rowElement } from './rowElement'
+import { daterangeElement } from './daterangeElement'
+import { stepperElement } from './stepperElement'
+import { radiocardsElement } from './radiocardsElement'
+import { checkboxcardsElement } from './checkboxcardsElement'
 
 export const ELEMENTS: ElementDefinition[] = [
   textElement,
   textareaElement,
   numberElement,
+  stepperElement,
   emailElement,
+  passwordElement,
   phoneElement,
   urlElement,
   selectElement,
   radioElement,
   checkboxElement,
+  radiocardsElement,
+  checkboxcardsElement,
   dateElement,
   timeElement,
   datetimeElement,
+  daterangeElement,
   fileElement,
   rowElement,
 ]

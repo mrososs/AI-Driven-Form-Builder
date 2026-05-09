@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import draggable from 'vuedraggable'
-import { GripVertical, Settings2, Trash2, ChevronDown, Calendar, Clock, CalendarClock, Upload } from 'lucide-vue-next'
+import { GripVertical, Settings2, Trash2, ChevronDown, Calendar, CalendarRange, Clock, CalendarClock, Upload, Minus, Plus } from 'lucide-vue-next'
 import type { FormElement } from '../../../stores/form'
 import { useFormStore } from '../../../stores/form'
 
-const TEXT_INPUT_TYPES = ['text', 'textarea', 'number', 'email', 'phone', 'url']
+const TEXT_INPUT_TYPES = ['text', 'textarea', 'number', 'email', 'phone', 'url', 'password']
 const DATE_TYPES = ['date', 'time', 'datetime']
 
 function dateIcon(type: string) {
@@ -144,6 +144,26 @@ function updateChildLabel(id: string, value: string) {
               <div v-else-if="colElement.type === 'file'" class="border border-dashed border-slate-300 dark:border-white/[0.12] rounded bg-slate-50 dark:bg-white/[0.04] px-2 py-1.5 flex items-center justify-center gap-1.5 text-xs text-slate-500 dark:text-white/30">
                 <Upload class="h-3 w-3" />
                 <span>Upload</span>
+              </div>
+              <div v-else-if="colElement.type === 'stepper'" class="flex items-stretch border border-slate-200 dark:border-white/[0.07] rounded bg-slate-50 dark:bg-white/[0.04] overflow-hidden">
+                <div class="px-2 py-1.5 text-slate-400 dark:text-white/40 flex items-center"><Minus class="h-3 w-3" /></div>
+                <div class="flex-1 text-center text-xs text-slate-500 dark:text-white/30 py-1.5 border-x border-slate-200 dark:border-white/[0.07]">{{ colElement.defaultValue ?? colElement.min ?? 0 }}</div>
+                <div class="px-2 py-1.5 text-slate-400 dark:text-white/40 flex items-center"><Plus class="h-3 w-3" /></div>
+              </div>
+              <div v-else-if="colElement.type === 'daterange'" class="flex items-center gap-1 border border-slate-200 dark:border-white/[0.07] rounded bg-slate-50 dark:bg-white/[0.04] px-2 py-1.5">
+                <CalendarRange class="h-3 w-3 text-slate-500 dark:text-white/30 shrink-0" />
+                <span class="text-xs text-slate-500 dark:text-white/30 truncate">Range · {{ colElement.rangeUnit ?? 'days' }}</span>
+              </div>
+              <div v-else-if="colElement.type === 'radiocards' || colElement.type === 'checkboxcards'" class="space-y-1">
+                <div
+                  v-for="card in (colElement.cards ?? []).slice(0, 2)"
+                  :key="card.value"
+                  class="flex items-center gap-1.5 border border-slate-200 dark:border-white/[0.07] rounded bg-white dark:bg-white/[0.02] px-2 py-1"
+                >
+                  <div class="h-2.5 w-2.5 rounded-full border border-slate-300 dark:border-white/20 bg-white dark:bg-white/[0.05] shrink-0" />
+                  <span class="text-[11px] font-medium text-slate-700 dark:text-white/70 truncate flex-1">{{ card.title }}</span>
+                  <span v-if="card.meta" class="text-[10px] text-slate-500 dark:text-white/40 shrink-0">{{ card.meta }}</span>
+                </div>
               </div>
             </div>
           </div>
