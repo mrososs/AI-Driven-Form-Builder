@@ -32,6 +32,7 @@ function toFormStep(generated: GeneratedFormStep): FormStep {
     icon: generated.icon,
     description: generated.description ?? '',
     elements,
+    behavior: generated.behavior ? { ...generated.behavior } : undefined,
   }
 }
 

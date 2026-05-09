@@ -13,11 +13,11 @@ import LogicPage from '../features/multistep/components/LogicPage.vue'
 import MultiStepExportDialog from '../features/multistep/components/MultiStepExportDialog.vue'
 import MultiStepSaveDialog from '../features/multistep/components/MultiStepSaveDialog.vue'
 import MultiStepMobileTabs from '../features/multistep/components/MultiStepMobileTabs.vue'
-import type { MultiStepMode } from '../features/multistep/components/types'
+import { useMultiStepUI } from '../features/multistep/composables/useMultiStepUI'
 
 const store = useMultiStepFormStore()
 const route = useRoute()
-const mode = ref<MultiStepMode>('build')
+const { mode, setMode } = useMultiStepUI()
 const exportOpen = ref(false)
 const saveDialogOpen = ref(false)
 
@@ -49,7 +49,7 @@ function openExport() {
 }
 
 function exitToBuilder() {
-  mode.value = 'build'
+  setMode('build')
 }
 </script>
 
@@ -60,7 +60,7 @@ function exitToBuilder() {
     <MultiStepNavbar
       :mode="mode"
       :form-name="store.formName"
-      @update:mode="mode = $event"
+      @update:mode="setMode($event)"
       @export="openExport"
       @save="handleSave"
     />

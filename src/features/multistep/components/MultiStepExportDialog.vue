@@ -31,8 +31,8 @@ watch(
   }
 )
 
-const generated = computed(() => generateMultiStepCode(fw.value, store.steps, store.rules))
-const prompt = computed(() => generateMultiStepPrompt(fw.value, store.steps, store.rules))
+const generated = computed(() => generateMultiStepCode(fw.value, store.steps, store.rules, store.flow))
+const prompt = computed(() => generateMultiStepPrompt(fw.value, store.steps, store.rules, store.flow))
 const isEmpty = computed(() => store.steps.length === 0 || store.totalFields === 0)
 const activeContent = computed(() =>
   view.value === 'prompt' ? prompt.value : generated.value.code

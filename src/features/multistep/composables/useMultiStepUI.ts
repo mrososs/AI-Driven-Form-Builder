@@ -1,10 +1,12 @@
 import { ref, computed, watch } from 'vue'
 import { useMediaQuery } from '@vueuse/core'
 import { useMultiStepFormStore } from '../../../stores/multistepForm'
+import type { MultiStepMode } from '../components/types'
 
 export type MultiStepPanel = 'canvas' | 'steps' | 'elements' | 'properties'
 
 const activePanel = ref<MultiStepPanel>('canvas')
+const mode = ref<MultiStepMode>('build')
 const isMobile = useMediaQuery('(max-width: 1023px)')
 
 let watcherInitialized = false
@@ -38,6 +40,10 @@ export function useMultiStepUI() {
     activePanel.value = 'canvas'
   }
 
+  function setMode(next: MultiStepMode) {
+    mode.value = next
+  }
+
   return {
     activePanel,
     isMobile,
@@ -46,5 +52,7 @@ export function useMultiStepUI() {
     isPropertiesOpen,
     setPanel,
     closeSheets,
+    mode,
+    setMode,
   }
 }

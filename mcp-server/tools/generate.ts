@@ -102,10 +102,15 @@ You MUST call functions in this order:
 1. ONE call to set_form_name with a short form name.
 2. THEN one call to emit_step for EACH step, in flow order.
 
-Each step has: { id, title, icon, description, elements[] }.
+Each step has: { id, title, icon, description, elements[], behavior? }.
 - icon must be one of: "user" | "shield" | "building" | "credit" | "users" | "flag"
   - user: personal/account info; shield: verification/auth; building: company/org; credit: plan/billing; users: team/invites; flag: review/finish.
 - description: a short subtitle (under 80 chars).
+- behavior is OPTIONAL { requireAll?, allowSkip?, sendVerificationOnEnter?, autoSaveOnExit? } — only include flags that should differ from the default. Set:
+  - requireAll: true for steps where every field must be filled (not just \`required\` ones).
+  - allowSkip: true for fully optional steps (e.g. "Invite teammates").
+  - sendVerificationOnEnter: true for OTP / "Verify email" / "Verify phone" steps.
+  - autoSaveOnExit defaults to true; only set false if you must preserve nothing on bail-out.
 
 Each element in a step has: { id, type, label, required }. Optional: placeholder, options, rangeUnit, min, max, step, defaultValue, cards, children.
 
@@ -254,6 +259,21 @@ export const emitStepDecl = {
       title: { type: Type.STRING },
       icon: { type: Type.STRING, enum: ['user', 'shield', 'building', 'credit', 'users', 'flag'] },
       description: { type: Type.STRING },
+      behavior: {
+        type: Type.OBJECT,
+        description:
+          'Optional per-step behavior flags. Omit when defaults apply. ' +
+          'requireAll: every field must be filled, not only "required" ones. ' +
+          'allowSkip: respondents may continue without filling anything. ' +
+          'sendVerificationOnEnter: trigger verification dispatch when this step opens (OTP / verify-email steps). ' +
+          'autoSaveOnExit: persist progress when the user leaves (default true).',
+        properties: {
+          requireAll: { type: Type.BOOLEAN },
+          allowSkip: { type: Type.BOOLEAN },
+          sendVerificationOnEnter: { type: Type.BOOLEAN },
+          autoSaveOnExit: { type: Type.BOOLEAN },
+        },
+      },
       elements: {
         type: Type.ARRAY,
         items: {

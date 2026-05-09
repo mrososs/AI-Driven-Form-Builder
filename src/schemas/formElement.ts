@@ -120,12 +120,22 @@ export const generatedMultiStepElementSchema = z
   })
   .superRefine(checkSpecificRequirements)
 
+export const stepBehaviorSchema = z
+  .object({
+    requireAll: z.boolean().optional(),
+    allowSkip: z.boolean().optional(),
+    sendVerificationOnEnter: z.boolean().optional(),
+    autoSaveOnExit: z.boolean().optional(),
+  })
+  .optional()
+
 export const generatedFormStepSchema = z.object({
   id: z.string().trim().min(1).max(64),
   title: z.string().trim().min(1).max(120),
   icon: z.enum(STEP_ICONS),
   description: z.string().trim().max(200).default(''),
   elements: z.array(generatedMultiStepElementSchema).max(20),
+  behavior: stepBehaviorSchema,
 })
 
 export const formNameSchema = z.object({

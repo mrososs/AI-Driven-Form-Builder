@@ -1,11 +1,14 @@
 import type {
   CardItem,
+  FlowSettings,
   FormStep,
   LogicRule,
   MultiStepElement,
   RangeUnit,
 } from '../../../stores/multistepForm'
 import { flattenStepFields } from '../../../stores/multistepForm'
+
+const DEFAULT_FLOW: FlowSettings = { linear: true, requireAll: true }
 
 export type MultiStepFramework = 'vue' | 'react' | 'angular'
 
@@ -32,6 +35,8 @@ interface FieldDescriptor {
 interface StepDescriptor {
   title: string
   description: string
+  requireAll: boolean
+  allowSkip: boolean
   fields: FieldDescriptor[]
 }
 
@@ -52,11 +57,13 @@ function slug(s: string): string {
     .replace(/^_|_$/g, '')
 }
 
-function describeFields(steps: FormStep[]): StepDescriptor[] {
+function describeFields(steps: FormStep[], flowRequireAll: boolean): StepDescriptor[] {
   const usedKeys = new Set<string>()
   return steps.map(s => ({
     title: s.title,
     description: s.description,
+    requireAll: s.behavior?.requireAll ?? flowRequireAll,
+    allowSkip: s.behavior?.allowSkip ?? false,
     fields: flattenStepFields(s.elements).map(e => {
       let key = slug(e.label) || `field_${Math.random().toString(36).slice(2, 6)}`
       let suffix = 1
@@ -215,6 +222,8 @@ interface Field {
 interface Step {
   title: string
   description: string
+  requireAll: boolean
+  allowSkip: boolean
   fields: Field[]
 }
 
@@ -318,7 +327,11 @@ function isFieldFilled(field: Field): boolean {
 }
 
 function stepValid(step: Step): boolean {
-  return step.fields.every(f => !f.required || isFieldFilled(f))
+  if (step.allowSkip) return true
+  return step.fields.every(f => {
+    const mustFill = step.requireAll || f.required
+    return !mustFill || isFieldFilled(f)
+  })
 }
 
 ${nextFn}
@@ -736,6 +749,8 @@ function stepperValue(field: Field, raw: unknown): number {
 interface Step {
   title: string
   description: string
+  requireAll: boolean
+  allowSkip: boolean
   fields: Field[]
 }
 
@@ -774,7 +789,11 @@ export default function MultiStepForm() {
   }
 
   function validateStep(): boolean {
-    return step.fields.every((f) => !f.required || isFilled(f, form[f.key]))
+    if (step.allowSkip) return true
+    return step.fields.every((f) => {
+      const mustFill = step.requireAll || f.required
+      return !mustFill || isFilled(f, form[f.key])
+    })
   }
 
   async function submit() {
@@ -1228,6 +1247,8 @@ const UNIT_MS: Record<RangeUnit, number> = {
 interface Step {
   title: string
   description: string
+  requireAll: boolean
+  allowSkip: boolean
   fields: Field[]
 }
 
@@ -1509,7 +1530,12 @@ export class MultiStepFormComponent {
   }
 
   validate(): boolean {
-    return this.currentStep().fields.every((f) => !f.required || this.isFilled(f))
+    const step = this.currentStep()
+    if (step.allowSkip) return true
+    return step.fields.every((f) => {
+      const mustFill = step.requireAll || f.required
+      return !mustFill || this.isFilled(f)
+    })
   }
 
   ${nextMethod}
@@ -1541,9 +1567,10 @@ export class MultiStepFormComponent {
 export function generateMultiStepCode(
   framework: MultiStepFramework,
   steps: FormStep[],
-  rules: LogicRule[] = []
+  rules: LogicRule[] = [],
+  flow: FlowSettings = DEFAULT_FLOW,
 ): GeneratedCode {
-  const descriptors = describeFields(steps)
+  const descriptors = describeFields(steps, flow.requireAll)
   const resolved = resolveRules(rules, steps, descriptors)
 
   if (framework === 'vue') {
@@ -1593,16 +1620,23 @@ function describeRuleForPrompt(r: LogicRule, steps: FormStep[]): string {
 export function generateMultiStepPrompt(
   framework: MultiStepFramework,
   steps: FormStep[],
-  rules: LogicRule[] = []
+  rules: LogicRule[] = [],
+  flow: FlowSettings = DEFAULT_FLOW,
 ): string {
-  const descriptors = describeFields(steps)
+  const descriptors = describeFields(steps, flow.requireAll)
   const stepBlocks = descriptors
-    .map(
-      (s, i) =>
+    .map((s, i) => {
+      const flags: string[] = []
+      if (s.allowSkip) flags.push('allow-skip')
+      if (s.requireAll) flags.push('require-all-fields')
+      const flagLine = flags.length ? `_(behavior: ${flags.join(', ')})_\n` : ''
+      return (
         `### Step ${i + 1}: ${s.title}\n` +
         (s.description ? `_${s.description}_\n` : '') +
+        flagLine +
         s.fields.map(fieldLine).join('\n')
-    )
+      )
+    })
     .join('\n\n')
 
   const enabledRules = rules.filter(r => r.enabled && r.if.fieldLabel)
@@ -1623,7 +1657,7 @@ ${logicSection}
 
 1. Render exactly one step at a time. The user advances with **Continue** and goes back with **Back**.
 2. The Continue button on the last step is labeled **Submit** and posts \`form\` as JSON to a placeholder \`/api/forms/submission\` endpoint, then shows a success state with a "Start over" action.
-3. Validate per-step before advancing: every \`required\` field must have a non-empty value. For checkbox-type fields, "non-empty" means checked (\`true\`). For OTP-type fields, "non-empty" means exactly 6 digits.
+3. Validate per-step before advancing: every \`required\` field must have a non-empty value. For checkbox-type fields, "non-empty" means checked (\`true\`). For OTP-type fields, "non-empty" means exactly 6 digits. Honor each step's behavior flags: when \`allow-skip\` is set, skip validation for that step; when \`require-all-fields\` is set, every field on that step (not just \`required\` ones) must be non-empty.
 4. Show inline error messages only after the user attempts to advance ("This field is required.").
 5. Maintain a single \`form\` state object keyed by each field's \`key\` (snake_case generated from the label).
 6. Render a slim progress bar at the top showing \`(stepIndex + 1) / totalSteps\` and a small "Step N of M" counter.

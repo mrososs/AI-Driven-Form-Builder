@@ -55,12 +55,20 @@ export interface MultiStepElement {
   children?: MultiStepElement[]
 }
 
+export interface StepBehavior {
+  requireAll?: boolean
+  allowSkip?: boolean
+  sendVerificationOnEnter?: boolean
+  autoSaveOnExit?: boolean
+}
+
 export interface FormStep {
   id: string
   title: string
   icon: 'user' | 'shield' | 'building' | 'credit' | 'users' | 'flag'
   description: string
   elements: MultiStepElement[]
+  behavior?: StepBehavior
 }
 
 export interface SingleFormResult {

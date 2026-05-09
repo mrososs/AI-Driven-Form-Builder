@@ -66,12 +66,20 @@ export interface MultiStepElement {
   cards?: CardItem[]
 }
 
+export interface StepBehavior {
+  requireAll?: boolean
+  allowSkip?: boolean
+  sendVerificationOnEnter?: boolean
+  autoSaveOnExit?: boolean
+}
+
 export interface FormStep {
   id: string
   title: string
   icon: StepIconKey
   description: string
   elements: MultiStepElement[]
+  behavior?: StepBehavior
 }
 
 export type ProgressStyle = 'numbered' | 'bar' | 'dots' | 'sidebar'
@@ -502,13 +510,19 @@ export const useMultiStepFormStore = defineStore('multistepForm', () => {
     flow.value = { ...flow.value, ...patch }
   }
 
-  function addRule(kind: RuleKind) {
+  function addRule(kind: RuleKind, stepId?: string) {
     if (!steps.value.length) return
+    const fromStepId = stepId ?? steps.value[0].id
+    const fromIdx = steps.value.findIndex(s => s.id === fromStepId)
+    const targetId =
+      fromIdx >= 0 && fromIdx < steps.value.length - 1
+        ? steps.value[fromIdx + 1].id
+        : steps.value[0].id
     const r: LogicRule = {
       id: newId(),
       kind,
       enabled: true,
-      if: { stepId: steps.value[0].id, fieldLabel: '', op: 'equals', value: '' },
+      if: { stepId: fromStepId, fieldLabel: '', op: 'equals', value: '' },
       then: {
         action:
           kind === 'branch'
@@ -518,11 +532,12 @@ export const useMultiStepFormStore = defineStore('multistepForm', () => {
               : kind === 'require'
                 ? 'gate'
                 : 'validate',
-        targetStepId: steps.value[0].id,
+        targetStepId: targetId,
         note: '',
       },
     }
     rules.value.push(r)
+    return r.id
   }
 
   function updateRule(id: string, patch: Partial<LogicRule>) {
