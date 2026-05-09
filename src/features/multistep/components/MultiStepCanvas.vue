@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight, Plus, Layers } from 'lucide-vue-next'
 import { useMultiStepFormStore } from '../../../stores/multistepForm'
 import { STEP_ICONS } from '../utils/icons'
 import ElementCard from './ElementCard.vue'
+import MultiStepRowCard from './MultiStepRowCard.vue'
 
 const store = useMultiStepFormStore()
 
@@ -128,7 +129,15 @@ function onElementAdded(event: { newIndex: number }) {
           @add="onElementAdded"
         >
           <template #item="{ element: el }">
+            <MultiStepRowCard
+              v-if="el.type === 'row'"
+              :element="el"
+              :selected="store.selectedElementId === el.id"
+              @select="store.selectElement(el.id)"
+              @remove="store.removeElement(el.id)"
+            />
             <ElementCard
+              v-else
               :element="el"
               :selected="store.selectedElementId === el.id"
               @select="store.selectElement(el.id)"

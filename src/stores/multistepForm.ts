@@ -27,6 +27,7 @@ export type MultiStepElementType =
   | 'textarea'
   | 'email'
   | 'phone'
+  | 'password'
   | 'number'
   | 'otp'
   | 'select'
@@ -34,6 +35,20 @@ export type MultiStepElementType =
   | 'checkbox'
   | 'date'
   | 'file'
+  | 'row'
+  | 'daterange'
+  | 'stepper'
+  | 'radiocards'
+  | 'checkboxcards'
+
+export type RangeUnit = 'nights' | 'days' | 'hours' | 'weeks'
+
+export interface CardItem {
+  value: string
+  title: string
+  description?: string
+  meta?: string
+}
 
 export interface MultiStepElement {
   id: string
@@ -42,6 +57,13 @@ export interface MultiStepElement {
   placeholder?: string
   required: boolean
   options?: string[]
+  children?: MultiStepElement[]
+  rangeUnit?: RangeUnit
+  min?: number
+  max?: number
+  step?: number
+  defaultValue?: number
+  cards?: CardItem[]
 }
 
 export interface FormStep {
@@ -104,6 +126,44 @@ export interface LogicRule {
 const STORAGE_KEY = 'multistep-form-draft'
 
 export const newId = () => Math.random().toString(36).slice(2, 11)
+
+function findElementInList(
+  list: MultiStepElement[],
+  id: string,
+): MultiStepElement | undefined {
+  for (const el of list) {
+    if (el.id === id) return el
+    if (el.children) {
+      const found = findElementInList(el.children, id)
+      if (found) return found
+    }
+  }
+  return undefined
+}
+
+function removeElementInList(list: MultiStepElement[], id: string): boolean {
+  const idx = list.findIndex(e => e.id === id)
+  if (idx !== -1) {
+    list.splice(idx, 1)
+    return true
+  }
+  for (const el of list) {
+    if (el.children && removeElementInList(el.children, id)) return true
+  }
+  return false
+}
+
+export function flattenStepFields(elements: MultiStepElement[]): MultiStepElement[] {
+  const out: MultiStepElement[] = []
+  for (const el of elements) {
+    if (el.type === 'row') {
+      if (el.children?.length) out.push(...flattenStepFields(el.children))
+    } else {
+      out.push(el)
+    }
+  }
+  return out
+}
 
 export interface MultiStepTemplate {
   id: string
@@ -289,10 +349,10 @@ export const useMultiStepFormStore = defineStore('multistepForm', () => {
   )
   const selectedElement = computed(() => {
     if (!activeStep.value || !selectedElementId.value) return null
-    return activeStep.value.elements.find(e => e.id === selectedElementId.value) ?? null
+    return findElementInList(activeStep.value.elements, selectedElementId.value) ?? null
   })
   const totalFields = computed(() =>
-    steps.value.reduce((sum, s) => sum + s.elements.length, 0)
+    steps.value.reduce((sum, s) => sum + flattenStepFields(s.elements).length, 0)
   )
 
   function selectStep(id: string | null) {
@@ -365,11 +425,30 @@ export const useMultiStepFormStore = defineStore('multistepForm', () => {
       id: newId(),
       type,
       label: defaultLabel,
-      placeholder: '',
       required: false,
+    }
+    if (type === 'row') {
+      el.children = []
+    } else {
+      el.placeholder = ''
     }
     if (type === 'select' || type === 'radio') {
       el.options = ['Option 1', 'Option 2']
+    }
+    if (type === 'daterange') {
+      el.rangeUnit = 'days'
+    }
+    if (type === 'stepper') {
+      el.min = 0
+      el.max = 99
+      el.step = 1
+      el.defaultValue = 0
+    }
+    if (type === 'radiocards' || type === 'checkboxcards') {
+      el.cards = [
+        { value: 'option-1', title: 'Option 1' },
+        { value: 'option-2', title: 'Option 2' },
+      ]
     }
     activeStep.value.elements.push(el)
     selectedElementId.value = el.id
@@ -377,22 +456,40 @@ export const useMultiStepFormStore = defineStore('multistepForm', () => {
 
   function updateElement(id: string, patch: Partial<MultiStepElement>) {
     if (!activeStep.value) return
-    const el = activeStep.value.elements.find(e => e.id === id)
+    const el = findElementInList(activeStep.value.elements, id)
     if (el) Object.assign(el, patch)
   }
 
   function removeElement(id: string) {
     if (!activeStep.value) return
-    activeStep.value.elements = activeStep.value.elements.filter(e => e.id !== id)
+    removeElementInList(activeStep.value.elements, id)
     if (selectedElementId.value === id) selectedElementId.value = null
+  }
+
+  function setRowChildren(rowId: string, children: MultiStepElement[]) {
+    if (!activeStep.value) return
+    const row = findElementInList(activeStep.value.elements, rowId)
+    if (row && row.type === 'row') row.children = children
+  }
+
+  function findElementById(id: string): MultiStepElement | undefined {
+    if (!activeStep.value) return undefined
+    return findElementInList(activeStep.value.elements, id)
   }
 
   function clearStepElements(id: string) {
     const step = steps.value.find(s => s.id === id)
     if (!step) return
-    const elementIds = new Set(step.elements.map(e => e.id))
+    const collected = new Set<string>()
+    function collect(list: MultiStepElement[]) {
+      for (const el of list) {
+        collected.add(el.id)
+        if (el.children) collect(el.children)
+      }
+    }
+    collect(step.elements)
     step.elements = []
-    if (selectedElementId.value && elementIds.has(selectedElementId.value)) {
+    if (selectedElementId.value && collected.has(selectedElementId.value)) {
       selectedElementId.value = null
     }
   }
@@ -604,6 +701,8 @@ export const useMultiStepFormStore = defineStore('multistepForm', () => {
     addElement,
     updateElement,
     removeElement,
+    setRowChildren,
+    findElementById,
     setProgressStyle,
     setFlow,
     addRule,

@@ -17,12 +17,17 @@ const IDENTITY_TYPES = new Set<MultiStepElementType>([
   'textarea',
   'email',
   'phone',
+  'password',
   'number',
   'select',
   'radio',
   'checkbox',
   'date',
   'file',
+  'daterange',
+  'stepper',
+  'radiocards',
+  'checkboxcards',
 ])
 
 function placeholderForCoerced(originalType: string, current?: string): string {
@@ -66,20 +71,44 @@ function mapElement(
     out.options = [...el.options]
   }
 
+  if (targetType === 'daterange' && el.rangeUnit) {
+    out.rangeUnit = el.rangeUnit
+  }
+  if (targetType === 'stepper') {
+    if (typeof el.min === 'number') out.min = el.min
+    if (typeof el.max === 'number') out.max = el.max
+    if (typeof el.step === 'number') out.step = el.step
+    if (typeof el.defaultValue === 'number') out.defaultValue = el.defaultValue
+  }
+  if ((targetType === 'radiocards' || targetType === 'checkboxcards') && el.cards) {
+    out.cards = el.cards.map((c) => ({ ...c }))
+  }
+
   return out
 }
 
-function flattenElements(
+function convertElements(
   elements: FormElement[],
-  summary: ConversionSummary
+  summary: ConversionSummary,
+  insideRow = false
 ): MultiStepElement[] {
   const out: MultiStepElement[] = []
   for (const el of elements) {
     if (el.type === 'row') {
-      summary.converted.row = (summary.converted.row ?? 0) + 1
-      if (el.children?.length) {
-        out.push(...flattenElements(el.children, summary))
+      if (insideRow) {
+        if (el.children?.length) out.push(...convertElements(el.children, summary, true))
+        continue
       }
+      const children = el.children?.length
+        ? convertElements(el.children, summary, true)
+        : []
+      out.push({
+        id: newId(),
+        type: 'row',
+        label: el.label || 'Row',
+        required: false,
+        children,
+      })
       continue
     }
     const mapped = mapElement(el, summary)
@@ -97,7 +126,7 @@ export function convertSavedFormToStep(form: SavedForm): {
     droppedVisibility: 0,
     droppedOptionsSource: 0,
   }
-  const elements = flattenElements(form.elements ?? [], summary)
+  const elements = convertElements(form.elements ?? [], summary)
   const step: FormStep = {
     id: newId(),
     title: form.title?.trim() || 'Imported step',

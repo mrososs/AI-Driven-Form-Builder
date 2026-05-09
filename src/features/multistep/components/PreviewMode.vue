@@ -11,7 +11,7 @@ const store = useMultiStepFormStore()
 
 const idx = ref(0)
 const done = ref(false)
-const values = reactive<Record<string, string>>({})
+const values = reactive<Record<string, string | string[]>>({})
 
 const step = computed(() => store.steps[idx.value] ?? null)
 const stepIcon = computed(() => (step.value ? STEP_ICONS[step.value.icon] : null))
@@ -222,13 +222,27 @@ function restart() {
           </p>
 
           <div class="space-y-4">
-            <LiveField
-              v-for="el in step.elements"
-              :key="el.id"
-              :element="el"
-              :model-value="values[el.id] ?? ''"
-              @update:model-value="(v: string) => (values[el.id] = v)"
-            />
+            <template v-for="el in step.elements" :key="el.id">
+              <div v-if="el.type === 'row'" class="flex flex-wrap gap-3">
+                <div
+                  v-for="child in el.children ?? []"
+                  :key="child.id"
+                  class="flex-1 min-w-[180px] basis-0"
+                >
+                  <LiveField
+                    :element="child"
+                    :model-value="values[child.id] ?? ''"
+                    @update:model-value="(v: string | string[]) => (values[child.id] = v)"
+                  />
+                </div>
+              </div>
+              <LiveField
+                v-else
+                :element="el"
+                :model-value="values[el.id] ?? ''"
+                @update:model-value="(v: string | string[]) => (values[el.id] = v)"
+              />
+            </template>
           </div>
 
           <div class="mt-8 flex items-center justify-between gap-3">

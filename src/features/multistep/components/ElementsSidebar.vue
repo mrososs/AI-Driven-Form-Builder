@@ -35,11 +35,30 @@ function cloneFromCatalog(entry: CatalogEntry): MultiStepElement {
     id: newId(),
     type: entry.type,
     label: entry.label,
-    placeholder: "",
     required: false,
   };
+  if (entry.type === "row") {
+    el.children = [];
+  } else {
+    el.placeholder = "";
+  }
   if (entry.type === "select" || entry.type === "radio") {
     el.options = ["Option 1", "Option 2"];
+  }
+  if (entry.type === "daterange") {
+    el.rangeUnit = "days";
+  }
+  if (entry.type === "stepper") {
+    el.min = 0;
+    el.max = 99;
+    el.step = 1;
+    el.defaultValue = 0;
+  }
+  if (entry.type === "radiocards" || entry.type === "checkboxcards") {
+    el.cards = [
+      { value: "option-1", title: "Option 1" },
+      { value: "option-2", title: "Option 2" },
+    ];
   }
   return el;
 }
