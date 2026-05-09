@@ -164,6 +164,48 @@ ${opts}
 </div>`
   }
 
+  if (field.type === 'daterange') {
+    return `<div className="space-y-2">
+  ${renderLabel(field)}
+  <div className="flex items-center gap-2 ${INPUT_CLASS}">
+    <input type="date" value={form.${name}_start ?? ''} onChange={e => setForm(prev => ({ ...prev, ${name}_start: e.target.value }))} className="flex-1 min-w-0 bg-transparent outline-none" />
+    <span aria-hidden="true" className="text-slate-400 text-sm">→</span>
+    <input type="date" value={form.${name}_end ?? ''} min={form.${name}_start || undefined} onChange={e => setForm(prev => ({ ...prev, ${name}_end: e.target.value }))} className="flex-1 min-w-0 bg-transparent outline-none" />
+  </div>
+</div>`
+  }
+
+  if (field.type === 'radiocards' || field.type === 'checkboxcards') {
+    const isCheckbox = field.type === 'checkboxcards'
+    const cards = field.cards ?? []
+    const items = cards.length
+      ? cards
+          .map((c) => {
+            const onChange = isCheckbox
+              ? `e => setForm(prev => { const list: string[] = Array.isArray(prev.${name}) ? [...(prev.${name} as string[])] : []; const i = list.indexOf("${escapeAttr(c.value)}"); if (e.target.checked && i === -1) list.push("${escapeAttr(c.value)}"); if (!e.target.checked && i !== -1) list.splice(i, 1); return { ...prev, ${name}: list }; })`
+              : `() => setForm(prev => ({ ...prev, ${name}: "${escapeAttr(c.value)}" }))`
+            const checkedExpr = isCheckbox
+              ? `Array.isArray(form.${name}) && (form.${name} as string[]).includes("${escapeAttr(c.value)}")`
+              : `form.${name} === "${escapeAttr(c.value)}"`
+            return `    <label key="${escapeAttr(c.value)}" className="flex items-center gap-3 p-3 rounded-lg border border-slate-200 dark:border-white/10 cursor-pointer hover:border-indigo-300 dark:hover:border-indigo-400">
+      <input type="${isCheckbox ? 'checkbox' : 'radio'}" ${isCheckbox ? '' : `name="${name}"`} value="${escapeAttr(c.value)}" checked={${checkedExpr}} onChange={${onChange}}${reqAttr} className="${isCheckbox ? 'rounded' : ''} h-4 w-4 text-indigo-600" />
+      <div className="flex-1 min-w-0">
+        <div className="text-sm font-semibold text-slate-900 dark:text-white truncate">${escapeAttr(c.title)}</div>
+        ${c.description ? `<div className="text-xs text-slate-500 dark:text-white/50 truncate">${escapeAttr(c.description)}</div>` : ''}
+      </div>
+      ${c.meta ? `<div className="text-sm font-medium text-slate-700 dark:text-white/80 shrink-0">${escapeAttr(c.meta)}</div>` : ''}
+    </label>`
+          })
+          .join('\n')
+      : '    {/* TODO: add cards */}'
+    return `<div className="space-y-2">
+  ${renderLabel(field)}
+  <div className="space-y-2">
+${items}
+  </div>
+</div>`
+  }
+
   return `{/* Unsupported field type: ${field.type} */}`
 }
 

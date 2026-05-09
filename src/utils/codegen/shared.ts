@@ -1,4 +1,4 @@
-import type { FormElement, OptionsMap, VisibilityRule } from '../../stores/form'
+import type { CardItem, FormElement, OptionsMap, RangeUnit, VisibilityRule } from '../../stores/form'
 
 export type Framework = 'vue' | 'react' | 'angular'
 
@@ -11,9 +11,11 @@ export interface GeneratedComponent {
 export const HTML_INPUT_TYPE: Record<string, string> = {
   text: 'text',
   number: 'number',
+  stepper: 'number',
   email: 'email',
   phone: 'tel',
   url: 'url',
+  password: 'password',
   date: 'date',
   time: 'time',
   datetime: 'datetime-local',
@@ -30,6 +32,12 @@ export interface Field {
   htmlInputType: string | null
   visibility?: VisibilityRule
   optionsSource?: OptionsMap
+  cards?: CardItem[]
+  rangeUnit?: RangeUnit
+  min?: number
+  max?: number
+  step?: number
+  defaultValue?: number
 }
 
 export type CodegenNode =
@@ -152,6 +160,12 @@ export function buildCodegenTree(elements: FormElement[]): CodegenNode[] {
         htmlInputType: HTML_INPUT_TYPE[el.type] ?? null,
         visibility: el.visibility,
         optionsSource: el.optionsSource,
+        cards: el.cards ? el.cards.map(c => ({ ...c })) : undefined,
+        rangeUnit: el.rangeUnit,
+        min: el.min,
+        max: el.max,
+        step: el.step,
+        defaultValue: el.defaultValue,
       }
       return { kind: 'field' as const, field }
     })

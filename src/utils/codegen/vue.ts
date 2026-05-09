@@ -156,6 +156,43 @@ ${opts}
 </div>`
   }
 
+  if (field.type === 'daterange') {
+    return `<div${vIf} class="space-y-2">
+  ${renderLabel(field)}
+  <div class="flex items-center gap-2 ${INPUT_CLASS}">
+    <input type="date" v-model="form.${name}_start" class="flex-1 min-w-0 bg-transparent outline-none" />
+    <span aria-hidden="true" class="text-slate-400 text-sm">→</span>
+    <input type="date" v-model="form.${name}_end" :min="form.${name}_start || undefined" class="flex-1 min-w-0 bg-transparent outline-none" />
+  </div>
+</div>`
+  }
+
+  if (field.type === 'radiocards' || field.type === 'checkboxcards') {
+    const isCheckbox = field.type === 'checkboxcards'
+    const inputType = isCheckbox ? 'checkbox' : 'radio'
+    const cards = field.cards ?? []
+    const items = cards.length
+      ? cards
+          .map(
+            (c) => `    <label class="flex items-center gap-3 p-3 rounded-lg border border-slate-200 dark:border-white/10 cursor-pointer hover:border-indigo-300 dark:hover:border-indigo-400">
+      <input type="${inputType}" ${isCheckbox ? '' : `name="${name}"`} value="${escapeAttr(c.value)}" v-model="form.${name}"${reqAttr} class="${isCheckbox ? 'rounded' : ''} h-4 w-4 text-indigo-600" />
+      <div class="flex-1 min-w-0">
+        <div class="text-sm font-semibold text-slate-900 dark:text-white truncate">${escapeAttr(c.title)}</div>
+        ${c.description ? `<div class="text-xs text-slate-500 dark:text-white/50 truncate">${escapeAttr(c.description)}</div>` : ''}
+      </div>
+      ${c.meta ? `<div class="text-sm font-medium text-slate-700 dark:text-white/80 shrink-0">${escapeAttr(c.meta)}</div>` : ''}
+    </label>`,
+          )
+          .join('\n')
+      : '    <!-- TODO: add cards -->'
+    return `<div${vIf} class="space-y-2">
+  ${renderLabel(field)}
+  <div class="space-y-2">
+${items}
+  </div>
+</div>`
+  }
+
   return `<!-- Unsupported field type: ${field.type} -->`
 }
 

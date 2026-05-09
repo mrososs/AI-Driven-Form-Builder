@@ -1,4 +1,11 @@
-import type { FormStep, MultiStepElement, LogicRule } from '../../../stores/multistepForm'
+import type {
+  CardItem,
+  FormStep,
+  LogicRule,
+  MultiStepElement,
+  RangeUnit,
+} from '../../../stores/multistepForm'
+import { flattenStepFields } from '../../../stores/multistepForm'
 
 export type MultiStepFramework = 'vue' | 'react' | 'angular'
 
@@ -14,6 +21,12 @@ interface FieldDescriptor {
   placeholder: string
   required: boolean
   options: string[]
+  cards: CardItem[]
+  rangeUnit: RangeUnit
+  min: number | null
+  max: number | null
+  step: number
+  defaultValue: number | null
 }
 
 interface StepDescriptor {
@@ -44,7 +57,7 @@ function describeFields(steps: FormStep[]): StepDescriptor[] {
   return steps.map(s => ({
     title: s.title,
     description: s.description,
-    fields: s.elements.map(e => {
+    fields: flattenStepFields(s.elements).map(e => {
       let key = slug(e.label) || `field_${Math.random().toString(36).slice(2, 6)}`
       let suffix = 1
       while (usedKeys.has(key)) {
@@ -59,6 +72,12 @@ function describeFields(steps: FormStep[]): StepDescriptor[] {
         placeholder: e.placeholder ?? '',
         required: !!e.required,
         options: e.options ?? [],
+        cards: (e.cards ?? []).map((c) => ({ ...c })),
+        rangeUnit: (e.rangeUnit ?? 'days') as RangeUnit,
+        min: typeof e.min === 'number' ? e.min : null,
+        max: typeof e.max === 'number' ? e.max : null,
+        step: typeof e.step === 'number' ? e.step : 1,
+        defaultValue: typeof e.defaultValue === 'number' ? e.defaultValue : null,
       }
     }),
   }))
@@ -177,6 +196,7 @@ function generateVue(steps: StepDescriptor[], rules: ResolvedRule[]): string {
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 
+interface Card { value: string; title: string; description?: string; meta?: string }
 interface Field {
   key: string
   type: string
@@ -184,6 +204,12 @@ interface Field {
   placeholder: string
   required: boolean
   options: string[]
+  cards: Card[]
+  rangeUnit: 'nights' | 'days' | 'hours' | 'weeks'
+  min: number | null
+  max: number | null
+  step: number
+  defaultValue: number | null
 }
 
 interface Step {
@@ -206,10 +232,88 @@ const isFirst = computed(() => stepIndex.value === 0)
 const isLast = computed(() => stepIndex.value === steps.length - 1)
 const progress = computed(() => ((stepIndex.value + 1) / steps.length) * 100)
 
+const UNIT_MS: Record<Field['rangeUnit'], number> = {
+  hours: 3_600_000,
+  days: 86_400_000,
+  nights: 86_400_000,
+  weeks: 7 * 86_400_000,
+}
+
+function rangeParts(field: Field) {
+  const raw = String(formData.value[field.key] ?? '')
+  const [start = '', end = ''] = raw.split('|')
+  return { start, end }
+}
+
+function setRangeStart(field: Field, value: string) {
+  const { end } = rangeParts(field)
+  formData.value[field.key] = \`\${value}|\${end}\`
+}
+
+function setRangeEnd(field: Field, value: string) {
+  const { start } = rangeParts(field)
+  formData.value[field.key] = \`\${start}|\${value}\`
+}
+
+function rangeDelta(field: Field): string {
+  const { start, end } = rangeParts(field)
+  if (!start || !end) return ''
+  const a = Date.parse(start)
+  const b = Date.parse(end)
+  if (!Number.isFinite(a) || !Number.isFinite(b) || b < a) return ''
+  const delta = Math.max(0, Math.round((b - a) / UNIT_MS[field.rangeUnit]))
+  const label = delta === 1 ? field.rangeUnit.replace(/s$/, '') : field.rangeUnit
+  return \`\${delta} \${label}\`
+}
+
+function clampStep(field: Field, v: number): number {
+  const min = field.min ?? 0
+  const max = field.max ?? Number.POSITIVE_INFINITY
+  return Math.min(max, Math.max(min, v))
+}
+
+function stepperValue(field: Field): number {
+  const raw = formData.value[field.key]
+  const parsed = Number(raw)
+  if (Number.isFinite(parsed)) return parsed
+  return field.defaultValue ?? field.min ?? 0
+}
+
+function bumpStepper(field: Field, direction: 1 | -1) {
+  const next = clampStep(field, stepperValue(field) + direction * field.step)
+  formData.value[field.key] = next
+}
+
+function isCardSelected(field: Field, value: string): boolean {
+  const raw = formData.value[field.key]
+  if (Array.isArray(raw)) return raw.includes(value)
+  return raw === value
+}
+
+function selectRadioCard(field: Field, value: string) {
+  formData.value[field.key] = value
+}
+
+function toggleCheckboxCard(field: Field, value: string) {
+  const raw = formData.value[field.key]
+  const list = Array.isArray(raw) ? [...raw] : []
+  const idx = list.indexOf(value)
+  if (idx === -1) list.push(value)
+  else list.splice(idx, 1)
+  formData.value[field.key] = list
+}
+
 function isFieldFilled(field: Field): boolean {
   const value = formData.value[field.key]
   if (field.type === 'checkbox') return value === true
   if (field.type === 'otp') return typeof value === 'string' && value.length === 6
+  if (field.type === 'stepper') return typeof value === 'number' && Number.isFinite(value)
+  if (field.type === 'daterange') {
+    const { start, end } = rangeParts(field)
+    return !!start && !!end
+  }
+  if (field.type === 'radiocards') return typeof value === 'string' && value.length > 0
+  if (field.type === 'checkboxcards') return Array.isArray(value) && value.length > 0
   return value !== undefined && value !== null && String(value).trim() !== ''
 }
 
@@ -295,7 +399,7 @@ function reset() {
 
           <!-- text/email/number/phone/date -->
           <input
-            v-if="['text', 'email', 'phone', 'number', 'date', 'url'].includes(field.type)"
+            v-if="['text', 'email', 'phone', 'number', 'date', 'url', 'password'].includes(field.type)"
             v-model="formData[field.key]"
             :type="field.type === 'phone' ? 'tel' : field.type"
             :placeholder="field.placeholder"
@@ -378,6 +482,122 @@ function reset() {
             :required="field.required"
             class="w-full text-sm text-slate-700"
           />
+
+          <!-- stepper -->
+          <div
+            v-else-if="field.type === 'stepper'"
+            class="flex items-stretch border border-slate-200 rounded-lg overflow-hidden bg-white"
+          >
+            <button
+              type="button"
+              :disabled="stepperValue(field) <= (field.min ?? 0)"
+              @click="bumpStepper(field, -1)"
+              class="px-4 py-2 text-slate-700 hover:bg-slate-50 disabled:opacity-30"
+              :aria-label="'Decrement ' + field.label"
+            >
+              −
+            </button>
+            <input
+              type="number"
+              :value="stepperValue(field)"
+              :min="field.min ?? undefined"
+              :max="field.max ?? undefined"
+              :step="field.step"
+              @input="(e) => (formData[field.key] = clampStep(field, Number((e.target as HTMLInputElement).value)))"
+              class="flex-1 min-w-0 text-center text-sm font-medium text-slate-900 bg-transparent border-x border-slate-200 outline-none"
+            />
+            <button
+              type="button"
+              :disabled="field.max != null && stepperValue(field) >= field.max"
+              @click="bumpStepper(field, 1)"
+              class="px-4 py-2 text-slate-700 hover:bg-slate-50 disabled:opacity-30"
+              :aria-label="'Increment ' + field.label"
+            >
+              +
+            </button>
+          </div>
+
+          <!-- daterange -->
+          <div
+            v-else-if="field.type === 'daterange'"
+            class="flex items-center gap-2 border border-slate-200 rounded-lg px-3 py-2 bg-white"
+          >
+            <input
+              type="date"
+              :value="rangeParts(field).start"
+              @input="(e) => setRangeStart(field, (e.target as HTMLInputElement).value)"
+              class="flex-1 min-w-0 bg-transparent text-sm text-slate-900 outline-none"
+            />
+            <span class="text-slate-400 text-sm" aria-hidden="true">→</span>
+            <input
+              type="date"
+              :value="rangeParts(field).end"
+              :min="rangeParts(field).start || undefined"
+              @input="(e) => setRangeEnd(field, (e.target as HTMLInputElement).value)"
+              class="flex-1 min-w-0 bg-transparent text-sm text-slate-900 outline-none"
+            />
+            <span
+              v-if="rangeDelta(field)"
+              class="text-xs font-medium text-indigo-600 ms-2 shrink-0"
+            >
+              {{ rangeDelta(field) }}
+            </span>
+          </div>
+
+          <!-- radiocards -->
+          <div v-else-if="field.type === 'radiocards'" class="space-y-2">
+            <label
+              v-for="card in field.cards"
+              :key="card.value"
+              :class="[
+                'flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors',
+                isCardSelected(field, card.value)
+                  ? 'border-indigo-500 bg-indigo-50'
+                  : 'border-slate-200 hover:border-slate-300 bg-white',
+              ]"
+            >
+              <input
+                type="radio"
+                :name="field.key"
+                :value="card.value"
+                :checked="isCardSelected(field, card.value)"
+                @change="selectRadioCard(field, card.value)"
+                :required="field.required"
+                class="text-indigo-600"
+              />
+              <div class="flex-1 min-w-0">
+                <div class="text-sm font-semibold text-slate-900 truncate">{{ card.title }}</div>
+                <div v-if="card.description" class="text-xs text-slate-500 truncate">{{ card.description }}</div>
+              </div>
+              <div v-if="card.meta" class="text-sm font-medium text-slate-700 shrink-0">{{ card.meta }}</div>
+            </label>
+          </div>
+
+          <!-- checkboxcards -->
+          <div v-else-if="field.type === 'checkboxcards'" class="space-y-2">
+            <label
+              v-for="card in field.cards"
+              :key="card.value"
+              :class="[
+                'flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors',
+                isCardSelected(field, card.value)
+                  ? 'border-indigo-500 bg-indigo-50'
+                  : 'border-slate-200 hover:border-slate-300 bg-white',
+              ]"
+            >
+              <input
+                type="checkbox"
+                :checked="isCardSelected(field, card.value)"
+                @change="toggleCheckboxCard(field, card.value)"
+                class="text-indigo-600 rounded"
+              />
+              <div class="flex-1 min-w-0">
+                <div class="text-sm font-semibold text-slate-900 truncate">{{ card.title }}</div>
+                <div v-if="card.description" class="text-xs text-slate-500 truncate">{{ card.description }}</div>
+              </div>
+              <div v-if="card.meta" class="text-sm font-medium text-slate-700 shrink-0">{{ card.meta }}</div>
+            </label>
+          </div>
 
           <!-- inline error -->
           <p
@@ -462,6 +682,7 @@ function generateReact(steps: StepDescriptor[], rules: ResolvedRule[]): string {
 // Drop into any React + Tailwind project. No external runtime required.
 import { useMemo, useState, type ChangeEvent } from 'react'
 
+interface Card { value: string; title: string; description?: string; meta?: string }
 interface Field {
   key: string
   type: string
@@ -469,6 +690,47 @@ interface Field {
   placeholder: string
   required: boolean
   options: string[]
+  cards: Card[]
+  rangeUnit: 'nights' | 'days' | 'hours' | 'weeks'
+  min: number | null
+  max: number | null
+  step: number
+  defaultValue: number | null
+}
+
+const UNIT_MS: Record<Field['rangeUnit'], number> = {
+  hours: 3_600_000,
+  days: 86_400_000,
+  nights: 86_400_000,
+  weeks: 7 * 86_400_000,
+}
+
+function parseRange(raw: unknown): { start: string; end: string } {
+  const [start = '', end = ''] = String(raw ?? '').split('|')
+  return { start, end }
+}
+
+function computeDelta(field: Field, raw: unknown): string {
+  const { start, end } = parseRange(raw)
+  if (!start || !end) return ''
+  const a = Date.parse(start)
+  const b = Date.parse(end)
+  if (!Number.isFinite(a) || !Number.isFinite(b) || b < a) return ''
+  const delta = Math.max(0, Math.round((b - a) / UNIT_MS[field.rangeUnit]))
+  const label = delta === 1 ? field.rangeUnit.replace(/s$/, '') : field.rangeUnit
+  return \`\${delta} \${label}\`
+}
+
+function clampStep(field: Field, v: number): number {
+  const min = field.min ?? 0
+  const max = field.max ?? Number.POSITIVE_INFINITY
+  return Math.min(max, Math.max(min, v))
+}
+
+function stepperValue(field: Field, raw: unknown): number {
+  const parsed = Number(raw)
+  if (Number.isFinite(parsed)) return parsed
+  return field.defaultValue ?? field.min ?? 0
 }
 
 interface Step {
@@ -485,6 +747,13 @@ type FormState = Record<string, unknown>
 function isFilled(field: Field, value: unknown): boolean {
   if (field.type === 'checkbox') return value === true
   if (field.type === 'otp') return typeof value === 'string' && value.length === 6
+  if (field.type === 'stepper') return typeof value === 'number' && Number.isFinite(value)
+  if (field.type === 'daterange') {
+    const { start, end } = parseRange(value)
+    return !!start && !!end
+  }
+  if (field.type === 'radiocards') return typeof value === 'string' && value.length > 0
+  if (field.type === 'checkboxcards') return Array.isArray(value) && value.length > 0
   return value !== undefined && value !== null && String(value).trim() !== ''
 }
 
@@ -591,7 +860,7 @@ export default function MultiStepForm() {
                   {field.required && <span className="text-rose-500" aria-hidden="true">*</span>}
                 </label>
 
-                {['text', 'email', 'phone', 'number', 'date', 'url'].includes(field.type) && (
+                {['text', 'email', 'phone', 'number', 'date', 'url', 'password'].includes(field.type) && (
                   <input
                     type={field.type === 'phone' ? 'tel' : field.type}
                     value={(value as string) ?? ''}
@@ -686,6 +955,119 @@ export default function MultiStepForm() {
                     required={field.required}
                     className="w-full text-sm text-slate-700"
                   />
+                )}
+
+                {field.type === 'stepper' && (
+                  <div className="flex items-stretch border border-slate-200 rounded-lg overflow-hidden bg-white">
+                    <button
+                      type="button"
+                      disabled={stepperValue(field, value) <= (field.min ?? 0)}
+                      onClick={() => setField(field.key, clampStep(field, stepperValue(field, value) - field.step))}
+                      className="px-4 py-2 text-slate-700 hover:bg-slate-50 disabled:opacity-30"
+                    >−</button>
+                    <input
+                      type="number"
+                      value={stepperValue(field, value)}
+                      min={field.min ?? undefined}
+                      max={field.max ?? undefined}
+                      step={field.step}
+                      onChange={(e) => setField(field.key, clampStep(field, Number(e.target.value)))}
+                      className="flex-1 min-w-0 text-center text-sm font-medium bg-transparent border-x border-slate-200 outline-none"
+                    />
+                    <button
+                      type="button"
+                      disabled={field.max != null && stepperValue(field, value) >= field.max}
+                      onClick={() => setField(field.key, clampStep(field, stepperValue(field, value) + field.step))}
+                      className="px-4 py-2 text-slate-700 hover:bg-slate-50 disabled:opacity-30"
+                    >+</button>
+                  </div>
+                )}
+
+                {field.type === 'daterange' && (() => {
+                  const parts = parseRange(value)
+                  const delta = computeDelta(field, value)
+                  return (
+                    <div className="flex items-center gap-2 border border-slate-200 rounded-lg px-3 py-2 bg-white">
+                      <input
+                        type="date"
+                        value={parts.start}
+                        onChange={(e) => setField(field.key, \`\${e.target.value}|\${parts.end}\`)}
+                        className="flex-1 min-w-0 bg-transparent text-sm text-slate-900 outline-none"
+                      />
+                      <span aria-hidden="true" className="text-slate-400 text-sm">→</span>
+                      <input
+                        type="date"
+                        value={parts.end}
+                        min={parts.start || undefined}
+                        onChange={(e) => setField(field.key, \`\${parts.start}|\${e.target.value}\`)}
+                        className="flex-1 min-w-0 bg-transparent text-sm text-slate-900 outline-none"
+                      />
+                      {delta && (
+                        <span className="text-xs font-medium text-indigo-600 ms-2 shrink-0">{delta}</span>
+                      )}
+                    </div>
+                  )
+                })()}
+
+                {field.type === 'radiocards' && (
+                  <div className="space-y-2">
+                    {field.cards.map((card) => {
+                      const selected = value === card.value
+                      return (
+                        <label
+                          key={card.value}
+                          className={\`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors \${selected ? 'border-indigo-500 bg-indigo-50' : 'border-slate-200 hover:border-slate-300 bg-white'}\`}
+                        >
+                          <input
+                            type="radio"
+                            name={field.key}
+                            value={card.value}
+                            checked={selected}
+                            onChange={() => setField(field.key, card.value)}
+                            required={field.required}
+                            className="text-indigo-600"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-semibold text-slate-900 truncate">{card.title}</div>
+                            {card.description && <div className="text-xs text-slate-500 truncate">{card.description}</div>}
+                          </div>
+                          {card.meta && <div className="text-sm font-medium text-slate-700 shrink-0">{card.meta}</div>}
+                        </label>
+                      )
+                    })}
+                  </div>
+                )}
+
+                {field.type === 'checkboxcards' && (
+                  <div className="space-y-2">
+                    {field.cards.map((card) => {
+                      const selectedList = Array.isArray(value) ? value as string[] : []
+                      const selected = selectedList.includes(card.value)
+                      return (
+                        <label
+                          key={card.value}
+                          className={\`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors \${selected ? 'border-indigo-500 bg-indigo-50' : 'border-slate-200 hover:border-slate-300 bg-white'}\`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selected}
+                            onChange={() => {
+                              const next = selected
+                                ? selectedList.filter((v) => v !== card.value)
+                                : [...selectedList, card.value]
+                              setField(field.key, next)
+                            }}
+                            className="text-indigo-600 rounded"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-semibold text-slate-900 truncate">{card.title}</div>
+                            {card.description && <div className="text-xs text-slate-500 truncate">{card.description}</div>}
+                          </div>
+                          {card.meta && <div className="text-sm font-medium text-slate-700 shrink-0">{card.meta}</div>}
+                        </label>
+                      )
+                    })}
+                  </div>
                 )}
 
                 {error && <p className="mt-1.5 text-xs text-rose-600">This field is required.</p>}
@@ -799,7 +1181,9 @@ function generateAngular(steps: StepDescriptor[], rules: ResolvedRule[]): string
     }
   }`
   const gateTemplateBlock = hasRules
-    ? `\n          <div *ngIf="gateError()" class="mt-4 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{{ gateError() }}</div>`
+    ? `\n          @if (gateError()) {
+            <div class="mt-4 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{{ gateError() }}</div>
+          }`
     : ''
   const submitBtn = hasRules
     ? `<button type="submit" [disabled]="asyncPending()"
@@ -815,9 +1199,10 @@ function generateAngular(steps: StepDescriptor[], rules: ResolvedRule[]): string
 // Stack: Angular 17+ standalone component + signals + Tailwind CSS
 // Drop into any Angular 17+ project (zoneless-friendly).
 import { Component, signal, computed } from '@angular/core'
-import { CommonModule } from '@angular/common'
 import { FormsModule } from '@angular/forms'
 
+interface Card { value: string; title: string; description?: string; meta?: string }
+type RangeUnit = 'nights' | 'days' | 'hours' | 'weeks'
 interface Field {
   key: string
   type: string
@@ -825,6 +1210,19 @@ interface Field {
   placeholder: string
   required: boolean
   options: string[]
+  cards: Card[]
+  rangeUnit: RangeUnit
+  min: number | null
+  max: number | null
+  step: number
+  defaultValue: number | null
+}
+
+const UNIT_MS: Record<RangeUnit, number> = {
+  hours: 3_600_000,
+  days: 86_400_000,
+  nights: 86_400_000,
+  weeks: 7 * 86_400_000,
 }
 
 interface Step {
@@ -839,7 +1237,7 @@ ${rulesBlock}
 @Component({
   selector: 'app-multi-step-form',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule],
   template: \`
     <div class="mx-auto w-full max-w-xl p-6">
       <div class="mb-6">
@@ -852,69 +1250,163 @@ ${rulesBlock}
         </p>
       </div>
 
-      <ng-container *ngIf="!completed(); else doneTpl">
+      @if (!completed()) {
         <form (submit)="$event.preventDefault(); next()"
               class="rounded-2xl border border-slate-200 bg-white p-8">
           <h1 class="text-2xl font-bold text-slate-900">{{ currentStep().title }}</h1>
-          <p *ngIf="currentStep().description" class="mt-1 text-sm text-slate-500">
-            {{ currentStep().description }}
-          </p>
+          @if (currentStep().description) {
+            <p class="mt-1 text-sm text-slate-500">{{ currentStep().description }}</p>
+          }
 
           <div class="mt-6 space-y-4">
-            <div *ngFor="let field of currentStep().fields">
-              <label class="block text-sm font-semibold text-slate-700 mb-1.5">
-                {{ field.label }}
-                <span *ngIf="field.required" class="text-rose-500" aria-hidden="true">*</span>
-              </label>
-
-              <input *ngIf="textTypes.includes(field.type)"
-                     [type]="field.type === 'phone' ? 'tel' : field.type"
-                     [placeholder]="field.placeholder"
-                     [required]="field.required"
-                     [(ngModel)]="form[field.key]" [name]="field.key"
-                     class="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-indigo-500 outline-none" />
-
-              <textarea *ngIf="field.type === 'textarea'"
-                        [placeholder]="field.placeholder"
-                        [required]="field.required"
-                        rows="3"
-                        [(ngModel)]="form[field.key]" [name]="field.key"
-                        class="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-indigo-500 outline-none resize-none"></textarea>
-
-              <select *ngIf="field.type === 'select'"
-                      [required]="field.required"
-                      [(ngModel)]="form[field.key]" [name]="field.key"
-                      class="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-indigo-500 outline-none bg-white">
-                <option value="">Select…</option>
-                <option *ngFor="let o of field.options" [value]="o">{{ o }}</option>
-              </select>
-
-              <div *ngIf="field.type === 'radio'" class="space-y-2">
-                <label *ngFor="let o of field.options"
-                       class="flex items-center gap-3 p-3 rounded-lg border border-slate-200 hover:border-indigo-300 cursor-pointer">
-                  <input type="radio" [name]="field.key" [value]="o"
-                         [(ngModel)]="form[field.key]" [required]="field.required"
-                         class="text-indigo-600" />
-                  <span class="text-sm text-slate-700">{{ o }}</span>
+            @for (field of currentStep().fields; track field.key) {
+              <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-1.5">
+                  {{ field.label }}
+                  @if (field.required) {
+                    <span class="text-rose-500" aria-hidden="true">*</span>
+                  }
                 </label>
+
+                @if (textTypes.includes(field.type)) {
+                  <input
+                    [type]="field.type === 'phone' ? 'tel' : field.type"
+                    [placeholder]="field.placeholder"
+                    [required]="field.required"
+                    [(ngModel)]="form[field.key]" [name]="field.key"
+                    class="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-indigo-500 outline-none" />
+                } @else if (field.type === 'textarea') {
+                  <textarea
+                    [placeholder]="field.placeholder"
+                    [required]="field.required"
+                    rows="3"
+                    [(ngModel)]="form[field.key]" [name]="field.key"
+                    class="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-indigo-500 outline-none resize-none"></textarea>
+                } @else if (field.type === 'select') {
+                  <select
+                    [required]="field.required"
+                    [(ngModel)]="form[field.key]" [name]="field.key"
+                    class="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-indigo-500 outline-none bg-white">
+                    <option value="">Select…</option>
+                    @for (o of field.options; track o) {
+                      <option [value]="o">{{ o }}</option>
+                    }
+                  </select>
+                } @else if (field.type === 'radio') {
+                  <div class="space-y-2">
+                    @for (o of field.options; track o) {
+                      <label class="flex items-center gap-3 p-3 rounded-lg border border-slate-200 hover:border-indigo-300 cursor-pointer">
+                        <input type="radio" [name]="field.key" [value]="o"
+                               [(ngModel)]="form[field.key]" [required]="field.required"
+                               class="text-indigo-600" />
+                        <span class="text-sm text-slate-700">{{ o }}</span>
+                      </label>
+                    }
+                  </div>
+                } @else if (field.type === 'checkbox') {
+                  <label class="flex items-start gap-3 p-3 rounded-lg border border-slate-200 cursor-pointer">
+                    <input type="checkbox" [(ngModel)]="form[field.key]"
+                           [name]="field.key" [required]="field.required"
+                           class="mt-0.5 text-indigo-600 rounded" />
+                    <span class="text-sm text-slate-700">{{ field.label }}</span>
+                  </label>
+                } @else if (field.type === 'file') {
+                  <input type="file"
+                         (change)="form[field.key] = $any($event.target).files?.[0]"
+                         [required]="field.required"
+                         class="w-full text-sm text-slate-700" />
+                } @else if (field.type === 'stepper') {
+                  <div class="flex items-stretch border border-slate-200 rounded-lg overflow-hidden bg-white">
+                    <button type="button"
+                            [disabled]="stepperValue(field) <= (field.min ?? 0)"
+                            (click)="bumpStepper(field, -1)"
+                            class="px-4 py-2 text-slate-700 hover:bg-slate-50 disabled:opacity-30">−</button>
+                    <input type="number"
+                           [value]="stepperValue(field)"
+                           [min]="field.min" [max]="field.max" [step]="field.step"
+                           (input)="form[field.key] = $any($event.target).valueAsNumber"
+                           class="flex-1 min-w-0 text-center text-sm font-medium bg-transparent border-x border-slate-200 outline-none" />
+                    <button type="button"
+                            [disabled]="field.max != null && stepperValue(field) >= field.max"
+                            (click)="bumpStepper(field, 1)"
+                            class="px-4 py-2 text-slate-700 hover:bg-slate-50 disabled:opacity-30">+</button>
+                  </div>
+                } @else if (field.type === 'daterange') {
+                  @let parts = rangeParts(field);
+                  @let delta = rangeDelta(field);
+                  <div class="flex items-center gap-2 border border-slate-200 rounded-lg px-3 py-2 bg-white">
+                    <input type="date"
+                           [value]="parts.start"
+                           (input)="setRangeStart(field, $any($event.target).value)"
+                           class="flex-1 min-w-0 bg-transparent text-sm text-slate-900 outline-none" />
+                    <span aria-hidden="true" class="text-slate-400 text-sm">→</span>
+                    <input type="date"
+                           [value]="parts.end"
+                           [min]="parts.start || null"
+                           (input)="setRangeEnd(field, $any($event.target).value)"
+                           class="flex-1 min-w-0 bg-transparent text-sm text-slate-900 outline-none" />
+                    @if (delta) {
+                      <span class="text-xs font-medium text-indigo-600 ms-2 shrink-0">{{ delta }}</span>
+                    }
+                  </div>
+                } @else if (field.type === 'radiocards') {
+                  <div class="space-y-2">
+                    @for (card of field.cards; track card.value) {
+                      @let selected = isCardSelected(field, card.value);
+                      <label
+                        [class]="'flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ' + (selected ? 'border-indigo-500 bg-indigo-50' : 'border-slate-200 hover:border-slate-300 bg-white')">
+                        <input type="radio"
+                               [name]="field.key"
+                               [value]="card.value"
+                               [checked]="selected"
+                               (change)="selectRadioCard(field, card.value)"
+                               [required]="field.required"
+                               class="text-indigo-600" />
+                        <div class="flex-1 min-w-0">
+                          <div class="text-sm font-semibold text-slate-900 truncate">{{ card.title }}</div>
+                          @if (card.description) {
+                            <div class="text-xs text-slate-500 truncate">{{ card.description }}</div>
+                          }
+                        </div>
+                        @if (card.meta) {
+                          <div class="text-sm font-medium text-slate-700 shrink-0">{{ card.meta }}</div>
+                        }
+                      </label>
+                    } @empty {
+                      <p class="text-xs text-slate-400 italic">No cards configured.</p>
+                    }
+                  </div>
+                } @else if (field.type === 'checkboxcards') {
+                  <div class="space-y-2">
+                    @for (card of field.cards; track card.value) {
+                      @let selected = isCardSelected(field, card.value);
+                      <label
+                        [class]="'flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ' + (selected ? 'border-indigo-500 bg-indigo-50' : 'border-slate-200 hover:border-slate-300 bg-white')">
+                        <input type="checkbox"
+                               [checked]="selected"
+                               (change)="toggleCheckboxCard(field, card.value)"
+                               class="text-indigo-600 rounded" />
+                        <div class="flex-1 min-w-0">
+                          <div class="text-sm font-semibold text-slate-900 truncate">{{ card.title }}</div>
+                          @if (card.description) {
+                            <div class="text-xs text-slate-500 truncate">{{ card.description }}</div>
+                          }
+                        </div>
+                        @if (card.meta) {
+                          <div class="text-sm font-medium text-slate-700 shrink-0">{{ card.meta }}</div>
+                        }
+                      </label>
+                    } @empty {
+                      <p class="text-xs text-slate-400 italic">No cards configured.</p>
+                    }
+                  </div>
+                }
+
+                @if (showErrors() && field.required && !isFilled(field)) {
+                  <p class="mt-1.5 text-xs text-rose-600">This field is required.</p>
+                }
               </div>
-
-              <label *ngIf="field.type === 'checkbox'"
-                     class="flex items-start gap-3 p-3 rounded-lg border border-slate-200 cursor-pointer">
-                <input type="checkbox" [(ngModel)]="form[field.key]"
-                       [name]="field.key" [required]="field.required"
-                       class="mt-0.5 text-indigo-600 rounded" />
-                <span class="text-sm text-slate-700">{{ field.label }}</span>
-              </label>
-
-              <input *ngIf="field.type === 'file'" type="file"
-                     (change)="form[field.key] = $any($event.target).files?.[0]"
-                     [required]="field.required"
-                     class="w-full text-sm text-slate-700" />
-
-              <p *ngIf="showErrors() && field.required && !isFilled(field)"
-                 class="mt-1.5 text-xs text-rose-600">This field is required.</p>
-            </div>
+            }
           </div>
 
           ${gateTemplateBlock}
@@ -925,22 +1417,20 @@ ${rulesBlock}
             ${submitBtn}
           </div>
         </form>
-      </ng-container>
-
-      <ng-template #doneTpl>
+      } @else {
         <div class="rounded-2xl border border-emerald-200 bg-emerald-50 p-8 text-center">
           <h1 class="text-2xl font-bold text-slate-900 mb-2">All done!</h1>
           <p class="text-sm text-slate-600 mb-6">Your responses have been submitted.</p>
           <button type="button" (click)="reset()"
                   class="px-4 py-2 rounded-lg text-sm font-semibold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50">Start over</button>
         </div>
-      </ng-template>
+      }
     </div>
   \`,
 })
 export class MultiStepFormComponent {
   steps = STEPS
-  textTypes = ['text', 'email', 'phone', 'number', 'date', 'url']
+  textTypes = ['text', 'email', 'phone', 'number', 'date', 'url', 'password']
   stepIndex = signal(0)
   completed = signal(false)
   showErrors = signal(false)
@@ -956,7 +1446,66 @@ export class MultiStepFormComponent {
     const value = this.form[field.key]
     if (field.type === 'checkbox') return value === true
     if (field.type === 'otp') return typeof value === 'string' && value.length === 6
+    if (field.type === 'stepper') return typeof value === 'number' && Number.isFinite(value)
+    if (field.type === 'daterange') {
+      const { start, end } = this.rangeParts(field)
+      return !!start && !!end
+    }
+    if (field.type === 'radiocards') return typeof value === 'string' && value.length > 0
+    if (field.type === 'checkboxcards') return Array.isArray(value) && value.length > 0
     return value !== undefined && value !== null && String(value).trim() !== ''
+  }
+
+  rangeParts(field: Field): { start: string; end: string } {
+    const raw = String(this.form[field.key] ?? '')
+    const [start = '', end = ''] = raw.split('|')
+    return { start, end }
+  }
+  setRangeStart(field: Field, value: string): void {
+    const { end } = this.rangeParts(field)
+    this.form[field.key] = \`\${value}|\${end}\`
+  }
+  setRangeEnd(field: Field, value: string): void {
+    const { start } = this.rangeParts(field)
+    this.form[field.key] = \`\${start}|\${value}\`
+  }
+  rangeDelta(field: Field): string {
+    const { start, end } = this.rangeParts(field)
+    if (!start || !end) return ''
+    const a = Date.parse(start)
+    const b = Date.parse(end)
+    if (!Number.isFinite(a) || !Number.isFinite(b) || b < a) return ''
+    const delta = Math.max(0, Math.round((b - a) / UNIT_MS[field.rangeUnit]))
+    const label = delta === 1 ? field.rangeUnit.replace(/s$/, '') : field.rangeUnit
+    return \`\${delta} \${label}\`
+  }
+  stepperValue(field: Field): number {
+    const raw = this.form[field.key]
+    const parsed = Number(raw)
+    if (Number.isFinite(parsed)) return parsed
+    return field.defaultValue ?? field.min ?? 0
+  }
+  bumpStepper(field: Field, direction: 1 | -1): void {
+    const min = field.min ?? 0
+    const max = field.max ?? Number.POSITIVE_INFINITY
+    const next = Math.min(max, Math.max(min, this.stepperValue(field) + direction * field.step))
+    this.form[field.key] = next
+  }
+  isCardSelected(field: Field, value: string): boolean {
+    const raw = this.form[field.key]
+    if (Array.isArray(raw)) return raw.includes(value)
+    return raw === value
+  }
+  selectRadioCard(field: Field, value: string): void {
+    this.form[field.key] = value
+  }
+  toggleCheckboxCard(field: Field, value: string): void {
+    const raw = this.form[field.key]
+    const list: string[] = Array.isArray(raw) ? [...raw] : []
+    const idx = list.indexOf(value)
+    if (idx === -1) list.push(value)
+    else list.splice(idx, 1)
+    this.form[field.key] = list
   }
 
   validate(): boolean {
@@ -1080,7 +1629,7 @@ ${logicSection}
 6. Render a slim progress bar at the top showing \`(stepIndex + 1) / totalSteps\` and a small "Step N of M" counter.
 7. Disable **Back** on the first step. Reset \`showErrors\` whenever the active step changes.
 ${
-  steps.some(s => s.elements.some(e => e.type === 'otp'))
+  steps.some(s => flattenStepFields(s.elements).some(e => e.type === 'otp'))
     ? `8. For OTP fields, render six 1-character inputs side-by-side, auto-advance focus to the next box on input, and combine them into a single string in \`form[key]\`.\n`
     : ''
 }
@@ -1089,7 +1638,7 @@ ${
 
 | type | element |
 |---|---|
-| text / email / phone / number / date / url | \`<input>\` with the matching HTML type (use \`tel\` for phone) |
+| text / email / phone / number / date / url / password | \`<input>\` with the matching HTML type (use \`tel\` for phone) |
 | textarea | \`<textarea rows=3>\` |
 | select | \`<select>\` with options + a default "Select…" placeholder |
 | radio | stacked label cards with one \`<input type="radio">\` each |
