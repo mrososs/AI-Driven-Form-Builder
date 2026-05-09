@@ -52,6 +52,7 @@ export interface MultiStepElement {
   step?: number
   defaultValue?: number
   cards?: CardItem[]
+  children?: MultiStepElement[]
 }
 
 export interface FormStep {
